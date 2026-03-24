@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Briefly — Noticias en vivo</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#07070f;color:#f0ede8;font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
+::-webkit-scrollbar{display:none;}
+@keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.9;transform:scale(1)}50%{opacity:.2;transform:scale(.65)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.pill{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:100px;padding:7px 15px;font-size:11px;font-family:'DM Sans',sans-serif;white-space:nowrap;cursor:pointer;transition:all .2s;color:rgba(255,255,255,0.55);outline:none;}
+.pill:hover,.pill.on{background:rgba(255,255,255,0.14);border-color:rgba(255,255,255,0.28);color:#fff;}
+.ibtn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#f0ede8;transition:all .2s;width:44px;height:44px;font-size:17px;}
+.ibtn:hover{background:rgba(255,255,255,0.14);transform:scale(1.08);}
+.pdot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.18);cursor:pointer;transition:all .3s;}
+.pdot.on{width:22px;border-radius:3px;}
+#filters{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+#cards-area{width:100%;max-width:420px;padding:14px 20px 0;flex:1;}
+.card{border-radius:32px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.07);position:relative;animation:cardIn .5s cubic-bezier(.175,.885,.32,1.275);}
+</style>
+</head>
+<body>
+
+<div id="loading" style="position:fixed;inset:0;background:#07070f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;">
+  <div style="font-family:'Playfair Display',serif;font-size:40px;font-weight:900;font-style:italic;margin-bottom:8px;">briefly</div>
+  <div style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:40px;">cargando noticias</div>
+  <div style="display:flex;gap:14px;" id="dots"></div>
+</div>
+
+<div id="app" style="display:none;width:100%;max-width:420px;padding:28px 20px 0;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+    <div>
+      <div id="dateStr" style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:5px;"></div>
+      <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;letter-spacing:-1px;font-style:italic;">briefly</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="ibtn" onclick="loadNews()" style="width:36px;height:36px;font-size:16px;">↻</button>
+      <div style="text-align:right;">
+        <div id="timeStr" style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#FFD94A;"></div>
+        <div id="countStr" style="font-size:9px;color:rgba(255,255,255,0.2);margin-top:2px;"></div>
+      </div>
+    </div>
+  </div>
+  <div id="filters" style="margin-bottom:6px;"></div>
+</div>
+
+<div id="cards-area" style="width:100%;max-width:420px;padding:14px 20px 0;flex:1;display:none;">
+  <div id="stack" style="position:relative;margin-bottom:14px;"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px;margin-bottom:14px;">
+    <button class="ibtn" id="btnPrev" onclick="prevCard()">←</button>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button class="ibtn" id="btnLike" onclick="toggleLike()">♡</button>
+      <button id="btnPremium" onclick="showPaywall()" style="padding:11px 20px;background:linear-gradient(135deg,#FFD94A,#FF9500);border:none;border-radius:100px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#07070f;display:flex;align-items:center;gap:6px;">
+        <span>✦</span> Premium
+      </button>
+      <button class="ibtn" onclick="showPaywall()">🎧</button>
+    </div>
+    <button class="ibtn" id="btnNext" onclick="nextCard()">→</button>
+  </div>
+  <div id="dots-nav" style="display:flex;justify-content:center;gap:5px;margin-bottom:8px;"></div>
+  <div id="counter" style="text-align:center;margin-bottom:24px;font-size:9px;color:rgba(255,255,255,0.15);letter-spacing:2px;text-transform:uppercase;"></div>
+</div>
+
+<div id="paywall" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.93);backdrop-filter:blur(20px);align-items:flex-end;justify-content:center;">
+  <div style="width:100%;max-width:420px;background:linear-gradient(160deg,#0f0f1e,#07070f);border-radius:32px 32px 0 0;border:1px solid rgba(255,217,74,0.18);padding:28px 26px 48px;animation:slideUp .4s cubic-bezier(.175,.885,.32,1.275);">
+    <div style="width:36px;height:4px;background:rgba(255,255,255,0.12);border-radius:2px;margin:0 auto 28px;"></div>
+    <div style="text-align:center;margin-bottom:22px;">
+      <div style="font-size:50px;margin-bottom:12px;">✦</div>
+      <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:900;margin-bottom:8px;">Briefly Premium</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7;margin-bottom:14px;">El mundo completo, en tiempo real.</div>
+      <div style="font-family:'Playfair Display',serif;font-size:44px;font-weight:900;color:#FFD94A;">$4.99<span style="font-size:15px;color:rgba(255,255,255,0.25);font-family:'DM Sans',sans-serif;font-weight:300;">/mes</span></div>
+    </div>
+    <button onclick="activatePremium()" style="width:100%;padding:17px 0;background:linear-gradient(135deg,#FFD94A,#FF9500);border:none;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;color:#07070f;cursor:pointer;margin-top:20px;margin-bottom:10px;">Comenzar 7 días gratis →</button>
+    <button onclick="hidePaywall()" style="width:100%;padding:13px 0;background:none;border:1px solid rgba(255,255,255,0.1);border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(255,255,255,0.28);">Seguir con titulares gratis</button>
+  </div>
+</div>
+
+<div id="toast" style="display:none;position:fixed;bottom:36px;left:50%;transform:translateX(-50%);background:rgba(12,12,24,0.97);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.09);border-radius:100px;padding:12px 22px;font-size:13px;white-space:nowrap;z-index:200;animation:toastIn .3s ease;"></div>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwVaTDeCQ342YdAV3EGrRaaZ3LYnctnM0AahdoxCX2SvVG_pvlp1bGKxMdn4taF5qZE8g/exec";
+
+const INTERESTS = [
+  {id:"tech",label:"Tecnología",emoji:"🤖",color:"#9b5de5"},
+  {id:"economy",label:"Economía",emoji:"📈",color:"#00b4d8"},
+  {id:"world",label:"Mundo",emoji:"🌍",color:"#e94560"},
+  {id:"sports",label:"Deportes",emoji:"🏆",color:"#52b788"},
+  {id:"science",label:"Ciencia",emoji:"🧬",color:"#f77f00"},
+  {id:"business",label:"Negocios",emoji:"🚀",color:"#ef476f"},
+];
+const CAT_COLORS={tech:"#9b5de5",economy:"#00b4d8",world:"#e94560",sports:"#52b788",science:"#f77f00",business:"#ef476f"};
+const BG={tech:"linear-gradient(135deg,#1a0533,#0d0d1f)",economy:"linear-gradient(135deg,#001a2e,#0d0d1f)",world:"linear-gradient(135deg,#2e0010,#0d0d1f)",sports:"linear-gradient(135deg,#002e14,#0d0d1f)",science:"linear-gradient(135deg,#2e1400,#0d0d1f)",business:"linear-gradient(135deg,#2e0020,#0d0d1f)"};
+
+let allNews=[],filtered=[],idx=0,liked=[],isPremium=false,filter="all";
+let dragStart=null,dragOffset=0,isDragging=false;
+
+// Dots animation
+const dotsEl=document.getElementById("dots");
+INTERESTS.forEach((cat,i)=>{
+  const d=document.createElement("div");
+  d.style.cssText=`width:9px;height:9px;border-radius:50%;background:${cat.color};animation:pulse 1.6s ${i*0.2}s infinite`;
+  dotsEl.appendChild(d);
+});
+
+// Clock
+function updateClock(){
+  const now=new Date();
+  document.getElementById("timeStr").textContent=now.toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"});
+  document.getElementById("dateStr").textContent=now.toLocaleDateString("es",{weekday:"long",day:"numeric",month:"long"});
+}
+updateClock(); setInterval(updateClock,1000);
+
+async function loadNews(){
+  document.getElementById("loading").style.display="flex";
+  document.getElementById("app").style.display="none";
+  document.getElementById("cards-area").style.display="none";
+  try{
+    const res=await fetch(GAS_URL);
+    allNews=await res.json();
+    if(!Array.isArray(allNews)||allNews.length===0) throw new Error("empty");
+    applyFilter("all");
+    document.getElementById("loading").style.display="none";
+    document.getElementById("app").style.display="block";
+    document.getElementById("cards-area").style.display="block";
+    renderFilters();
+    renderCard();
+  }catch(e){
+    document.getElementById("loading").innerHTML=`
+      <div style="font-family:'Playfair Display',serif;font-size:36px;font-weight:900;font-style:italic;margin-bottom:16px;">briefly</div>
+      <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.4);text-align:center;padding:0 40px;line-height:1.8;">No se pudieron cargar las noticias.</div>
+      <button onclick="loadNews()" style="margin-top:20px;background:linear-gradient(135deg,#FFD94A,#FF9500);border:none;border-radius:100px;padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:#07070f;cursor:pointer;">↻ Reintentar</button>`;
+  }
+}
+
+function applyFilter(f){
+  filter=f;idx=0;
+  filtered=f==="all"?allNews:allNews.filter(n=>n.category===f);
+}
+
+function renderFilters(){
+  const el=document.getElementById("filters");
+  el.innerHTML=`<button class="pill ${filter==="all"?"on":""}" onclick="setFilter('all')">⚡ Todo (${allNews.length})</button>`;
+  INTERESTS.forEach(i=>{
+    const cnt=allNews.filter(n=>n.category===i.id).length;
+    if(cnt>0) el.innerHTML+=`<button class="pill ${filter===i.id?"on":""}" onclick="setFilter('${i.id}')" style="${filter===i.id?`border-color:${i.color}55;color:${i.color};background:${i.color}18`:""}">${i.emoji} ${i.label} (${cnt})</button>`;
+  });
+  document.getElementById("countStr").textContent=`⬤ ${allNews.length} artículos`;
+}
+
+function setFilter(f){applyFilter(f);renderFilters();renderCard();}
+
+function renderCard(){
+  const stack=document.getElementById("stack");
+  const current=filtered[idx];
+  if(!current){stack.innerHTML='<div style="text-align:center;padding:80px 0;color:rgba(255,255,255,0.25);">Sin noticias.</div>';return;}
+  const color=CAT_COLORS[current.category]||"#FFD94A";
+  const accent=color;
+  document.body.style.background=`radial-gradient(ellipse at 25% 0%,${color}22 0%,#07070f 58%)`;
+  document.getElementById("btnPremium").style.background=`linear-gradient(135deg,${color},${color}bb)`;
+  document.getElementById("btnLike").textContent=liked.includes(current.id)?"♥":"♡";
+  document.getElementById("btnLike").style.color=liked.includes(current.id)?color:"#f0ede8";
+  document.getElementById("btnPrev").style.opacity=idx>0?1:.2;
+  document.getElementById("btnNext").style.opacity=idx<filtered.length-1?1:.2;
+
+  // Ghost cards
+  let ghostHTML="";
+  if(filtered[idx+2]) ghostHTML+=`<div style="position:absolute;top:18px;left:50%;transform:translateX(-50%);width:calc(100% - 44px);height:160px;background:#0c0c18;border-radius:32px;z-index:1;opacity:.3;"></div>`;
+  if(filtered[idx+1]) ghostHTML+=`<div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:calc(100% - 22px);height:180px;background:${BG[filtered[idx+1].category]||BG.world};border-radius:32px;z-index:2;opacity:.5;display:flex;align-items:center;justify-content:center;font-size:60px;">${INTERESTS.find(i=>i.id===filtered[idx+1].category)?.emoji||"📰"}</div>`;
+
+  const emoji=INTERESTS.find(i=>i.id===current.category)?.emoji||"📰";
+  const label=INTERESTS.find(i=>i.id===current.category)?.label||current.category;
+
+  stack.innerHTML=ghostHTML+`
+  <div class="card" id="mainCard" style="position:relative;z-index:10;">
+    <div style="position:relative;height:220px;background:${BG[current.category]||BG.world};overflow:hidden;">
+      ${current.image?`<img src="${current.image}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">`:""}
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+        <div style="position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,${color}30 0%,transparent 70%);top:-70px;right:-70px;"></div>
+        <div style="font-size:76px;position:relative;z-index:1;">${emoji}</div>
+      </div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.05) 0%,rgba(7,7,15,.96) 100%);"></div>
+      <div style="position:absolute;top:16px;left:16px;z-index:2;">
+        <span style="background:${color}ee;border-radius:100px;padding:5px 13px;font-size:10px;color:#fff;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;">${emoji} ${current.source}</span>
+      </div>
+      <div style="position:absolute;top:16px;right:16px;z-index:2;">
+        <span style="background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);border-radius:100px;padding:5px 11px;font-size:10px;color:rgba(255,255,255,0.7);">${current.time}</span>
+      </div>
+    </div>
+    <div style="background:#0c0c18;padding:22px 22px 26px;">
+      ${current.tag?`<div style="display:inline-block;background:${color}22;border:1px solid ${color}44;border-radius:100px;padding:3px 10px;font-size:10px;color:${color};letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;font-weight:600;">${current.tag}</div>`:""}
+      <a href="${current.link&&current.link!="#"?current.link:"#"}" target="_blank" style="text-decoration:none;">
+        <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:900;line-height:1.3;color:#f5f0eb;margin-bottom:16px;letter-spacing:-.3px;">${current.title}</div>
+      </a>
+      <div style="position:relative;min-height:64px;margin-bottom:18px;">
+        <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.8;filter:${isPremium?"none":"blur(5px)"};user-select:${isPremium?"auto":"none"};">${current.summary||"Sin descripción."}</div>
+        ${!isPremium?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <button onclick="showPaywall()" style="background:linear-gradient(135deg,${color}28,${color}10);border:1px solid ${color}50;border-radius:16px;padding:11px 22px;cursor:pointer;display:flex;align-items:center;gap:9px;backdrop-filter:blur(4px);">
+            <span style="font-size:17px;">🔒</span>
+            <div style="text-align:left;">
+              <div style="font-size:12px;font-weight:700;color:${color};line-height:1;">Leer resumen completo</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.32);margin-top:2px;">$4.99/mes · 7 días gratis</div>
+            </div>
+          </button>
+        </div>`:""}
+      </div>
+      <div style="height:2px;background:linear-gradient(90deg,${color}77,transparent);border-radius:1px;margin-bottom:14px;"></div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.2);">${emoji} ${label}</div>
+    </div>
+  </div>`;
+
+  // Touch/drag
+  const card=document.getElementById("mainCard");
+  card.addEventListener("touchstart",e=>{ dragStart=e.touches[0].clientX; },{ passive:true });
+  card.addEventListener("touchmove",e=>{ if(dragStart===null)return; dragOffset=e.touches[0].clientX-dragStart; card.style.transform=`translateX(${dragOffset}px) rotate(${dragOffset*0.018}deg)`; },{ passive:true });
+  card.addEventListener("touchend",()=>{ if(dragOffset>100&&idx>0)prevCard(); else if(dragOffset<-100&&idx<filtered.length-1)nextCard(); else{card.style.transform="";} dragStart=null;dragOffset=0; });
+
+  // Dots nav
+  const dotsNav=document.getElementById("dots-nav");
+  dotsNav.innerHTML=filtered.map((_,i)=>`<div class="pdot ${i===idx?"on":""}" onclick="goTo(${i})" style="${i===idx?`background:${color};width:22px;border-radius:3px;`:""}"></div>`).join("");
+  document.getElementById("counter").textContent=`${idx+1} de ${filtered.length} · desliza para navegar`;
+}
+
+function nextCard(){if(idx<filtered.length-1){idx++;renderCard();}}
+function prevCard(){if(idx>0){idx--;renderCard();}}
+function goTo(i){idx=i;renderCard();}
+function toggleLike(){
+  const id=filtered[idx]?.id; if(!id)return;
+  liked=liked.includes(id)?liked.filter(x=>x!==id):[...liked,id];
+  showToast(liked.includes(id)?"📌 Guardado":"Eliminado");
+  renderCard();
+}
+function showPaywall(){document.getElementById("paywall").style.display="flex";}
+function hidePaywall(){document.getElementById("paywall").style.display="none";}
+function activatePremium(){isPremium=true;hidePaywall();showToast("🎉 ¡7 días Premium activados!");renderCard();}
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.style.display="block";
+  setTimeout(()=>{t.style.display="none";},2800);
+}
+
+loadNews();
+</script>
+</body>
+      </html>
