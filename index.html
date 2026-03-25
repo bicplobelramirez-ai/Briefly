@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-  <link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#07070f">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QuickNews by AI — Noticias en vivo</title>
@@ -24,15 +24,14 @@ body{background:#07070f;color:#f0ede8;font-family:'DM Sans',sans-serif;min-heigh
 .pdot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.18);cursor:pointer;transition:all .3s;}
 .pdot.on{width:22px;border-radius:3px;}
 #filters{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
-#cards-area{width:100%;max-width:420px;padding:14px 20px 0;flex:1;}
 .card{border-radius:32px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.07);position:relative;animation:cardIn .5s cubic-bezier(.175,.885,.32,1.275);}
 </style>
 </head>
 <body>
 
 <div id="loading" style="position:fixed;inset:0;background:#07070f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;">
-  <div style="font-family:'Playfair Display',serif;font-size:40px;font-weight:900;font-style:italic;margin-bottom:8px;">QuickNews</div>
-  <div style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:40px;">cargando noticias</div>
+  <div style="font-family:'Playfair Display',serif;font-size:36px;font-weight:900;margin-bottom:4px;letter-spacing:-1px;">QuickNews</div>
+  <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#FFD94A;letter-spacing:3px;text-transform:uppercase;margin-bottom:40px;">by AI</div>
   <div style="display:flex;gap:14px;" id="dots"></div>
 </div>
 
@@ -40,7 +39,10 @@ body{background:#07070f;color:#f0ede8;font-family:'DM Sans',sans-serif;min-heigh
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
     <div>
       <div id="dateStr" style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:5px;"></div>
-      <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;letter-spacing:-1px;font-style:italic;">briefly</div>
+      <div style="display:flex;align-items:baseline;gap:6px;">
+        <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:900;letter-spacing:-1px;">QuickNews</div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#FFD94A;letter-spacing:2px;text-transform:uppercase;font-weight:600;">by AI</div>
+      </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
       <button class="ibtn" onclick="loadNews()" style="width:36px;height:36px;font-size:16px;">↻</button>
@@ -75,8 +77,8 @@ body{background:#07070f;color:#f0ede8;font-family:'DM Sans',sans-serif;min-heigh
     <div style="width:36px;height:4px;background:rgba(255,255,255,0.12);border-radius:2px;margin:0 auto 28px;"></div>
     <div style="text-align:center;margin-bottom:22px;">
       <div style="font-size:50px;margin-bottom:12px;">✦</div>
-      <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:900;margin-bottom:8px;">Premium</div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7;margin-bottom:14px;">El mundo completo, en tiempo real.</div>
+      <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:900;margin-bottom:8px;">QuickNews Premium</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7;margin-bottom:14px;">El mundo completo, en tiempo real, sin límites.</div>
       <div style="font-family:'Playfair Display',serif;font-size:44px;font-weight:900;color:#FFD94A;">$4.99<span style="font-size:15px;color:rgba(255,255,255,0.25);font-family:'DM Sans',sans-serif;font-weight:300;">/mes</span></div>
     </div>
     <button onclick="activatePremium()" style="width:100%;padding:17px 0;background:linear-gradient(135deg,#FFD94A,#FF9500);border:none;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;color:#07070f;cursor:pointer;margin-top:20px;margin-bottom:10px;">Comenzar 7 días gratis →</button>
@@ -101,9 +103,8 @@ const CAT_COLORS={tech:"#9b5de5",economy:"#00b4d8",world:"#e94560",sports:"#52b7
 const BG={tech:"linear-gradient(135deg,#1a0533,#0d0d1f)",economy:"linear-gradient(135deg,#001a2e,#0d0d1f)",world:"linear-gradient(135deg,#2e0010,#0d0d1f)",sports:"linear-gradient(135deg,#002e14,#0d0d1f)",science:"linear-gradient(135deg,#2e1400,#0d0d1f)",business:"linear-gradient(135deg,#2e0020,#0d0d1f)"};
 
 let allNews=[],filtered=[],idx=0,liked=[],isPremium=false,filter="all";
-let dragStart=null,dragOffset=0,isDragging=false;
+let dragStart=null,dragOffset=0;
 
-// Dots animation
 const dotsEl=document.getElementById("dots");
 INTERESTS.forEach((cat,i)=>{
   const d=document.createElement("div");
@@ -111,7 +112,6 @@ INTERESTS.forEach((cat,i)=>{
   dotsEl.appendChild(d);
 });
 
-// Clock
 function updateClock(){
   const now=new Date();
   document.getElementById("timeStr").textContent=now.toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"});
@@ -135,17 +135,15 @@ async function loadNews(){
     renderCard();
   }catch(e){
     document.getElementById("loading").innerHTML=`
-      <div style="font-family:'Playfair Display',serif;font-size:36px;font-weight:900;font-style:italic;margin-bottom:16px;">briefly</div>
+      <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;margin-bottom:4px;">QuickNews</div>
+      <div style="font-size:11px;color:#FFD94A;letter-spacing:3px;margin-bottom:24px;">by AI</div>
       <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
       <div style="font-size:14px;color:rgba(255,255,255,0.4);text-align:center;padding:0 40px;line-height:1.8;">No se pudieron cargar las noticias.</div>
       <button onclick="loadNews()" style="margin-top:20px;background:linear-gradient(135deg,#FFD94A,#FF9500);border:none;border-radius:100px;padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:#07070f;cursor:pointer;">↻ Reintentar</button>`;
   }
 }
 
-function applyFilter(f){
-  filter=f;idx=0;
-  filtered=f==="all"?allNews:allNews.filter(n=>n.category===f);
-}
+function applyFilter(f){filter=f;idx=0;filtered=f==="all"?allNews:allNews.filter(n=>n.category===f);}
 
 function renderFilters(){
   const el=document.getElementById("filters");
@@ -164,7 +162,6 @@ function renderCard(){
   const current=filtered[idx];
   if(!current){stack.innerHTML='<div style="text-align:center;padding:80px 0;color:rgba(255,255,255,0.25);">Sin noticias.</div>';return;}
   const color=CAT_COLORS[current.category]||"#FFD94A";
-  const accent=color;
   document.body.style.background=`radial-gradient(ellipse at 25% 0%,${color}22 0%,#07070f 58%)`;
   document.getElementById("btnPremium").style.background=`linear-gradient(135deg,${color},${color}bb)`;
   document.getElementById("btnLike").textContent=liked.includes(current.id)?"♥":"♡";
@@ -172,7 +169,6 @@ function renderCard(){
   document.getElementById("btnPrev").style.opacity=idx>0?1:.2;
   document.getElementById("btnNext").style.opacity=idx<filtered.length-1?1:.2;
 
-  // Ghost cards
   let ghostHTML="";
   if(filtered[idx+2]) ghostHTML+=`<div style="position:absolute;top:18px;left:50%;transform:translateX(-50%);width:calc(100% - 44px);height:160px;background:#0c0c18;border-radius:32px;z-index:1;opacity:.3;"></div>`;
   if(filtered[idx+1]) ghostHTML+=`<div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:calc(100% - 22px);height:180px;background:${BG[filtered[idx+1].category]||BG.world};border-radius:32px;z-index:2;opacity:.5;display:flex;align-items:center;justify-content:center;font-size:60px;">${INTERESTS.find(i=>i.id===filtered[idx+1].category)?.emoji||"📰"}</div>`;
@@ -218,13 +214,11 @@ function renderCard(){
     </div>
   </div>`;
 
-  // Touch/drag
   const card=document.getElementById("mainCard");
-  card.addEventListener("touchstart",e=>{ dragStart=e.touches[0].clientX; },{ passive:true });
-  card.addEventListener("touchmove",e=>{ if(dragStart===null)return; dragOffset=e.touches[0].clientX-dragStart; card.style.transform=`translateX(${dragOffset}px) rotate(${dragOffset*0.018}deg)`; },{ passive:true });
-  card.addEventListener("touchend",()=>{ if(dragOffset>100&&idx>0)prevCard(); else if(dragOffset<-100&&idx<filtered.length-1)nextCard(); else{card.style.transform="";} dragStart=null;dragOffset=0; });
+  card.addEventListener("touchstart",e=>{dragStart=e.touches[0].clientX;},{passive:true});
+  card.addEventListener("touchmove",e=>{if(dragStart===null)return;dragOffset=e.touches[0].clientX-dragStart;card.style.transform=`translateX(${dragOffset}px) rotate(${dragOffset*0.018}deg)`;},{passive:true});
+  card.addEventListener("touchend",()=>{if(dragOffset>100&&idx>0)prevCard();else if(dragOffset<-100&&idx<filtered.length-1)nextCard();else{card.style.transform="";}dragStart=null;dragOffset=0;});
 
-  // Dots nav
   const dotsNav=document.getElementById("dots-nav");
   dotsNav.innerHTML=filtered.map((_,i)=>`<div class="pdot ${i===idx?"on":""}" onclick="goTo(${i})" style="${i===idx?`background:${color};width:22px;border-radius:3px;`:""}"></div>`).join("");
   document.getElementById("counter").textContent=`${idx+1} de ${filtered.length} · desliza para navegar`;
@@ -234,7 +228,7 @@ function nextCard(){if(idx<filtered.length-1){idx++;renderCard();}}
 function prevCard(){if(idx>0){idx--;renderCard();}}
 function goTo(i){idx=i;renderCard();}
 function toggleLike(){
-  const id=filtered[idx]?.id; if(!id)return;
+  const id=filtered[idx]?.id;if(!id)return;
   liked=liked.includes(id)?liked.filter(x=>x!==id):[...liked,id];
   showToast(liked.includes(id)?"📌 Guardado":"Eliminado");
   renderCard();
@@ -251,5 +245,4 @@ function showToast(msg){
 loadNews();
 </script>
 </body>
-      </html>
-
+</html>
