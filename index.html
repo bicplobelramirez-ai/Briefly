@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:#07070f;color:#f0ede8;font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
+body{background:#020b18;color:#e8f0fe;font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
 ::-webkit-scrollbar{display:none;}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
@@ -29,9 +29,9 @@ body{background:#07070f;color:#f0ede8;font-family:'DM Sans',sans-serif;min-heigh
 </head>
 <body>
 
-<div id="loading" style="position:fixed;inset:0;background:#07070f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;">
+<div id="loading" style="position:fixed;inset:0;background:#020b18;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;">
   <div style="font-family:'Playfair Display',serif;font-size:36px;font-weight:900;margin-bottom:4px;letter-spacing:-1px;">QuickNews</div>
-  <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#FFD94A;letter-spacing:3px;text-transform:uppercase;margin-bottom:40px;">by AI</div>
+  <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#64b5f6;letter-spacing:3px;text-transform:uppercase;margin-bottom:40px;">by AI</div>
   <div style="display:flex;gap:14px;" id="dots"></div>
 </div>
 
@@ -41,13 +41,13 @@ body{background:#07070f;color:#f0ede8;font-family:'DM Sans',sans-serif;min-heigh
       <div id="dateStr" style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:5px;"></div>
       <div style="display:flex;align-items:baseline;gap:6px;">
         <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:900;letter-spacing:-1px;">QuickNews</div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#FFD94A;letter-spacing:2px;text-transform:uppercase;font-weight:600;">by AI</div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#64b5f6;letter-spacing:2px;text-transform:uppercase;font-weight:600;">by AI</div>
       </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
       <button class="ibtn" onclick="loadNews()" style="width:36px;height:36px;font-size:16px;">↻</button>
       <div style="text-align:right;">
-        <div id="timeStr" style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#FFD94A;"></div>
+        <div id="timeStr" style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#64b5f6;"></div>
         <div id="countStr" style="font-size:9px;color:rgba(255,255,255,0.2);margin-top:2px;"></div>
       </div>
     </div>
@@ -79,9 +79,9 @@ body{background:#07070f;color:#f0ede8;font-family:'DM Sans',sans-serif;min-heigh
       <div style="font-size:50px;margin-bottom:12px;">✦</div>
       <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:900;margin-bottom:8px;">QuickNews Premium</div>
       <div style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7;margin-bottom:14px;">El mundo completo, en tiempo real, sin límites.</div>
-      <div style="font-family:'Playfair Display',serif;font-size:44px;font-weight:900;color:#FFD94A;">$4.99<span style="font-size:15px;color:rgba(255,255,255,0.25);font-family:'DM Sans',sans-serif;font-weight:300;">/mes</span></div>
+      <div style="font-family:'Playfair Display',serif;font-size:44px;font-weight:900;color:#64b5f6;">$4.99<span style="font-size:15px;color:rgba(255,255,255,0.25);font-family:'DM Sans',sans-serif;font-weight:300;">/mes</span></div>
     </div>
-    <button onclick="activatePremium()" style="width:100%;padding:17px 0;background:linear-gradient(135deg,#FFD94A,#FF9500);border:none;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;color:#07070f;cursor:pointer;margin-top:20px;margin-bottom:10px;">Comenzar 7 días gratis →</button>
+    <button onclick="activatePremium()" style="width:100%;padding:17px 0;    background:linear-gradient(135deg,#1565c0,#0288d1);border:none;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;color:#fff;cursor:pointer;margin-top:20px;margin-bottom:10px;">Comenzar 7 días gratis →</button>
     <button onclick="hidePaywall()" style="width:100%;padding:13px 0;background:none;border:1px solid rgba(255,255,255,0.1);border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(255,255,255,0.28);">Seguir con titulares gratis</button>
   </div>
 </div>
@@ -99,8 +99,8 @@ const INTERESTS = [
   {id:"science",label:"Ciencia",emoji:"🧬",color:"#f77f00"},
   {id:"business",label:"Negocios",emoji:"🚀",color:"#ef476f"},
 ];
-const CAT_COLORS={tech:"#9b5de5",economy:"#00b4d8",world:"#e94560",sports:"#52b788",science:"#f77f00",business:"#ef476f"};
-const BG={tech:"linear-gradient(135deg,#1a0533,#0d0d1f)",economy:"linear-gradient(135deg,#001a2e,#0d0d1f)",world:"linear-gradient(135deg,#2e0010,#0d0d1f)",sports:"linear-gradient(135deg,#002e14,#0d0d1f)",science:"linear-gradient(135deg,#2e1400,#0d0d1f)",business:"linear-gradient(135deg,#2e0020,#0d0d1f)"};
+const CAT_COLORS={tech:"#2196f3",economy:"#00b8d4",world:"#1565c0",sports:"#0097a7",science:"#0288d1",business:"#1976d2"};
+const BG={tech:"linear-gradient(135deg,#0d1b2a,#020b18)",economy:"linear-gradient(135deg,#002233,#020b18)",world:"linear-gradient(135deg,#001433,#020b18)",sports:"linear-gradient(135deg,#002233,#020b18)",science:"linear-gradient(135deg,#001a33,#020b18)",business:"linear-gradient(135deg,#0d1b2a,#020b18)"};
 
 let allNews=[],filtered=[],idx=0,liked=[],isPremium=false,filter="all";
 let dragStart=null,dragOffset=0;
@@ -197,14 +197,16 @@ function renderCard(){
       <a href="${current.link&&current.link!="#"?current.link:"#"}" target="_blank" style="text-decoration:none;">
         <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:900;line-height:1.3;color:#f5f0eb;margin-bottom:16px;letter-spacing:-.3px;">${current.title}</div>
       </a>
-      <div style="position:relative;min-height:64px;margin-bottom:18px;">
-        <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.8;filter:${isPremium?"none":"blur(5px)"};user-select:${isPremium?"auto":"none"};">${current.summary||"Sin descripción."}</div>
-        ${!isPremium?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
-          <button onclick="showPaywall()" style="background:linear-gradient(135deg,${color}28,${color}10);border:1px solid ${color}50;border-radius:16px;padding:11px 22px;cursor:pointer;display:flex;align-items:center;gap:9px;backdrop-filter:blur(4px);">
-            <span style="font-size:17px;">🔒</span>
+      <div style="position:relative;margin-bottom:18px;">
+        <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.8;">${(current.summary||"Sin descripción.").slice(0,120)}${!isPremium&&(current.summary||"").length>120?"...":""}</div>
+        ${!isPremium&&(current.summary||"").length>120?`
+        <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.8;filter:blur(5px);user-select:none;margin-top:4px;">${(current.summary||"").slice(120)}</div>
+        <div style="display:flex;justify-content:center;margin-top:12px;">
+          <button onclick="showPaywall()" style="background:linear-gradient(135deg,#1565c0,#0288d1);border:none;border-radius:16px;padding:12px 24px;cursor:pointer;display:flex;align-items:center;gap:9px;box-shadow:0 4px 20px rgba(21,101,192,0.4);">
+            <span style="font-size:17px;">🔓</span>
             <div style="text-align:left;">
-              <div style="font-size:12px;font-weight:700;color:${color};line-height:1;">Leer resumen completo</div>
-              <div style="font-size:10px;color:rgba(255,255,255,0.32);margin-top:2px;">$4.99/mes · 7 días gratis</div>
+              <div style="font-size:13px;font-weight:700;color:#fff;line-height:1;">Desbloquear ahora</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:2px;">Empieza gratis 7 días</div>
             </div>
           </button>
         </div>`:""}
