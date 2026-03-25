@@ -1,6 +1,6 @@
 {
-  "name": "Briefly — Noticias en vivo",
-  "short_name": "Briefly",
+  "name": "QuickNews by AI — Noticias en vivo",
+  "short_name": "QuickNews",
   "description": "Tu resumen de noticias del mundo, en tiempo real.",
   "start_url": "/",
   "display": "standalone",
