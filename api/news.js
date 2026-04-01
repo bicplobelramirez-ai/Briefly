@@ -3,7 +3,7 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET");
 
   const key = process.env.CLAVE_API_DE_NOTICIAS
-  const url = `https://newsapi.org/v2/top-headlines?country=us&pageSize=10&apiKey=${key}`;
+  const url = 'https://newsapi.org/v2/top-headlines?language=es&pageSize=10&apiKey=${key}`;
 
   try {
     const r = await fetch(url);
