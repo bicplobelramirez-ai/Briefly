@@ -290,8 +290,24 @@ function App(){
   const [aiAns,setAiAns]=useState("");
   const [aiLoad,setAiLoad]=useState(false);
   const [aiN,setAiN]=useState(0);
+  const [articles,setArticles]=useState(NEWS);
+  const [loading,setLoading]=useState(true);
   const ty=useRef(null);
-  const s=NEWS[si];
+
+  React.useEffect(()=>{
+    fetch("/api/news")
+      .then(r=>r.json())
+      .then(data=>{
+        if(Array.isArray(data)&&data.length>0){
+          setArticles(data);
+          setSi(0);
+        }
+      })
+      .catch(()=>{})
+      .finally(()=>setLoading(false));
+  },[]);
+
+  const s=articles[si]||NEWS[0];
   const vd=VIBES.find(v=>v.k===vibe)||VIBES[1];
 
   function swipe(d){setAiAns("");setShowAI(false);setShowPro(false);if(d===1&&si<NEWS.length-1)setSi(i=>i+1);if(d===-1&&si>0)setSi(i=>i-1);}
@@ -323,6 +339,18 @@ function App(){
         {STARS.map(([x,y,r,d],i)=><div key={i} style={{position:"absolute",left:`${x}%`,top:`${y}%`,width:r*2,height:r*2,borderRadius:"50%",background:"#fff",animation:`twinkle ${d}s ${i*0.3}s ease-in-out infinite`}}/>)}
       </div>
 
+      {loading&&(
+        <div style={{position:"fixed",inset:0,zIndex:500,background:"#05050f",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
+          <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
+            <defs><linearGradient id="pg2" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#a78bfa"/><stop offset="100%" stopColor="#3b82f6"/></linearGradient></defs>
+            <path d="M8 40 L68 14 L50 66 L38 48 Z" fill="url(#pg2)"/>
+          </svg>
+          <div style={{fontSize:14,fontWeight:700,color:"rgba(255,255,255,0.6)"}}>Cargando noticias...</div>
+          <div style={{display:"flex",gap:6}}>
+            {[0,1,2].map(i=><div key={i} style={{width:6,height:6,borderRadius:"50%",background:"#6366f1",animation:`blink 1s ${i*0.3}s infinite`}}/>)}
+          </div>
+        </div>
+      )}
       {showPro&&<ProPanel story={s} onClose={()=>setShowPro(false)}/>}
       {showPay&&<Paywall onClose={()=>setShowPay(false)} onBuy={()=>{setIsPro(true);setShowPay(false);}}/>}
       {showBriefing&&<BriefingPanel onClose={()=>setShowBriefing(false)} isPro={isPro} onUpgrade={()=>{setShowBriefing(false);setShowPay(true);}}/>}
