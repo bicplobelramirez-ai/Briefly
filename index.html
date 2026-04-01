@@ -1,250 +1,469 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#07070f">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QuickNews by AI — Noticias en vivo</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:#020b18;color:#e8f0fe;font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
-::-webkit-scrollbar{display:none;}
-@keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-@keyframes pulse{0%,100%{opacity:.9;transform:scale(1)}50%{opacity:.2;transform:scale(.65)}}
-@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-.pill{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:100px;padding:7px 15px;font-size:11px;font-family:'DM Sans',sans-serif;white-space:nowrap;cursor:pointer;transition:all .2s;color:rgba(255,255,255,0.55);outline:none;}
-.pill:hover,.pill.on{background:rgba(255,255,255,0.14);border-color:rgba(255,255,255,0.28);color:#fff;}
-.ibtn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#f0ede8;transition:all .2s;width:44px;height:44px;font-size:17px;}
-.ibtn:hover{background:rgba(255,255,255,0.14);transform:scale(1.08);}
-.pdot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.18);cursor:pointer;transition:all .3s;}
-.pdot.on{width:22px;border-radius:3px;}
-#filters{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
-.card{border-radius:32px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.07);position:relative;animation:cardIn .5s cubic-bezier(.175,.885,.32,1.275);}
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+  <title>QuickNews</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#05050f;font-family:'DM Sans',sans-serif;color:#fff;overflow:hidden;}
+    ::-webkit-scrollbar{display:none;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes twinkle{0%,100%{opacity:0.2;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
+    @keyframes neonglow{0%,100%{box-shadow:0 0 6px rgba(139,92,246,0.4)}50%{box-shadow:0 0 18px rgba(139,92,246,0.7)}}
+    @keyframes wave{0%,100%{height:4px}50%{height:26px}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .neon{border:1px solid rgba(139,92,246,0.35)!important;animation:neonglow 3s ease-in-out infinite;}
+    .neon-b{border:1px solid rgba(59,130,246,0.4)!important;box-shadow:0 0 8px rgba(59,130,246,0.2);}
+  </style>
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef}=React;
 
-<div id="loading" style="position:fixed;inset:0;background:#020b18;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;">
-  <div style="font-family:'Playfair Display',serif;font-size:36px;font-weight:900;margin-bottom:4px;letter-spacing:-1px;">QuickNews</div>
-  <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#64b5f6;letter-spacing:3px;text-transform:uppercase;margin-bottom:40px;">by AI</div>
-  <div style="display:flex;gap:14px;" id="dots"></div>
-</div>
-
-<div id="app" style="display:none;width:100%;max-width:420px;padding:28px 20px 0;">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
-    <div>
-      <div id="dateStr" style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:5px;"></div>
-      <div style="display:flex;align-items:baseline;gap:6px;">
-        <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:900;letter-spacing:-1px;">QuickNews</div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#64b5f6;letter-spacing:2px;text-transform:uppercase;font-weight:600;">by AI</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <button class="ibtn" onclick="loadNews()" style="width:36px;height:36px;font-size:16px;">↻</button>
-      <div style="text-align:right;">
-        <div id="timeStr" style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#64b5f6;"></div>
-        <div id="countStr" style="font-size:9px;color:rgba(255,255,255,0.2);margin-top:2px;"></div>
-      </div>
-    </div>
-  </div>
-  <div id="filters" style="margin-bottom:6px;"></div>
-</div>
-
-<div id="cards-area" style="width:100%;max-width:420px;padding:14px 20px 0;flex:1;display:none;">
-  <div id="stack" style="position:relative;margin-bottom:14px;"></div>
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px;margin-bottom:14px;">
-    <button class="ibtn" id="btnPrev" onclick="prevCard()">←</button>
-    <div style="display:flex;gap:10px;align-items:center;">
-      <button class="ibtn" id="btnLike" onclick="toggleLike()">♡</button>
-      <button id="btnPremium" onclick="showPaywall()" style="padding:11px 20px;background:linear-gradient(135deg,#FFD94A,#FF9500);border:none;border-radius:100px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:#07070f;display:flex;align-items:center;gap:6px;">
-        <span>✦</span> Premium
-      </button>
-      <button class="ibtn" onclick="showPaywall()">🎧</button>
-    </div>
-    <button class="ibtn" id="btnNext" onclick="nextCard()">→</button>
-  </div>
-  <div id="dots-nav" style="display:flex;justify-content:center;gap:5px;margin-bottom:8px;"></div>
-  <div id="counter" style="text-align:center;margin-bottom:24px;font-size:9px;color:rgba(255,255,255,0.15);letter-spacing:2px;text-transform:uppercase;"></div>
-</div>
-
-<div id="paywall" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.93);backdrop-filter:blur(20px);align-items:flex-end;justify-content:center;">
-  <div style="width:100%;max-width:420px;background:linear-gradient(160deg,#0f0f1e,#07070f);border-radius:32px 32px 0 0;border:1px solid rgba(255,217,74,0.18);padding:28px 26px 48px;animation:slideUp .4s cubic-bezier(.175,.885,.32,1.275);">
-    <div style="width:36px;height:4px;background:rgba(255,255,255,0.12);border-radius:2px;margin:0 auto 28px;"></div>
-    <div style="text-align:center;margin-bottom:22px;">
-      <div style="font-size:50px;margin-bottom:12px;">✦</div>
-      <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:900;margin-bottom:8px;">QuickNews Premium</div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7;margin-bottom:14px;">El mundo completo, en tiempo real, sin límites.</div>
-      <div style="font-family:'Playfair Display',serif;font-size:44px;font-weight:900;color:#64b5f6;">$4.99<span style="font-size:15px;color:rgba(255,255,255,0.25);font-family:'DM Sans',sans-serif;font-weight:300;">/mes</span></div>
-    </div>
-    <button onclick="activatePremium()" style="width:100%;padding:17px 0;    background:linear-gradient(135deg,#1565c0,#0288d1);border:none;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;color:#fff;cursor:pointer;margin-top:20px;margin-bottom:10px;">Comenzar 7 días gratis →</button>
-    <button onclick="hidePaywall()" style="width:100%;padding:13px 0;background:none;border:1px solid rgba(255,255,255,0.1);border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(255,255,255,0.28);">Seguir con titulares gratis</button>
-  </div>
-</div>
-
-<div id="toast" style="display:none;position:fixed;bottom:36px;left:50%;transform:translateX(-50%);background:rgba(12,12,24,0.97);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.09);border-radius:100px;padding:12px 22px;font-size:13px;white-space:nowrap;z-index:200;animation:toastIn .3s ease;"></div>
-
-<script>
-const GAS_URL = "/api/news";
-
-const INTERESTS = [
-  {id:"tech",label:"Tecnología",emoji:"🤖",color:"#9b5de5"},
-  {id:"economy",label:"Economía",emoji:"📈",color:"#00b4d8"},
-  {id:"world",label:"Mundo",emoji:"🌍",color:"#e94560"},
-  {id:"sports",label:"Deportes",emoji:"🏆",color:"#52b788"},
-  {id:"science",label:"Ciencia",emoji:"🧬",color:"#f77f00"},
-  {id:"business",label:"Negocios",emoji:"🚀",color:"#ef476f"},
+const NEWS=[
+  {id:1,cat:"Política",time:"hace 28 min",
+   headline:"La Casa Blanca rechaza la oferta de Elon Musk de pagar a trabajadores del TSA.",
+   memeText:"Elon: Yo pago 💸\nGobierno: no gracias 🚪",
+   img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Elon_Musk_Royal_Society_%28crop2%29.jpg/400px-Elon_Musk_Royal_Society_%28crop2%29.jpg",
+   r:{h:"9.5K",c:"3.9K",s:"1.6K"},
+   vibes:{ELI5:"Como cuando mamá rechaza tu ayuda aunque la necesite. El gobierno dijo no a Elon.",Quick:"Elon ofreció pagar salarios federales del TSA, pero la Casa Blanca rechazó la oferta.",Real:"La administración rechazó la propuesta citando conflictos de interés con los contratos activos de Musk.",Meme:"Billonario: 'Yo pago todo' 💸\nGobierno: 'No gracias' 🚪\nInternet: 💀💀💀"},
+   pro:{imgCaption:"Elon Musk — CEO de Tesla y SpaceX",summary:"La Casa Blanca rechazó formalmente la oferta de Elon Musk de financiar salarios del TSA, citando conflictos de interés y precedentes peligrosos.",datos:[{t:"TSA emplea a más de 60,000 trabajadores",e:"👮"},{t:"Musk ofreció cubrir $2.1B en nómina",e:"💸"},{t:"Primer rechazo formal de financiamiento privado",e:"🏛️"},{t:"El cierre afectó a 800K empleados",e:"📊"}],porQue:"Este rechazo marca un precedente sobre los límites del sector privado en funciones de gobierno.",impacto:[{i:"✈️",t:"Viajes",d:"Retrasos"},{i:"💼",t:"Economía",d:"Incertidumbre"},{i:"⚖️",t:"Legal",d:"Debate ético"}],fuentes:["The Washington Post","Reuters, AP News"]}},
+  {id:2,cat:"Tech",time:"hace 2 min",
+   headline:"OpenAI lanza GPT-5 con capacidades que superan al humano en ciencia.",
+   memeText:"Estudié 20 años 📚\nGPT-5 lo hace en 3 seg:",
+   img:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Sam_Altman_at_AI_for_Good_2024_%28cropped%29.jpg/400px-Sam_Altman_at_AI_for_Good_2024_%28cropped%29.jpg",
+   r:{h:"12.4K",c:"5.8K",s:"2.3K"},
+   vibes:{ELI5:"Una computadora ahora sabe más de ciencias que casi todos los científicos. Así de loco.",Quick:"GPT-5 supera a los humanos en biología, química y física. La IA sigue avanzando.",Real:"GPT-5 alcanzó percentil 99 en exámenes doctorales según evaluaciones de MIT y Stanford.",Meme:"Profesores universitarios: 👁️👄👁️\nEstudiantes: ya pa qué estudiar 💀"},
+   pro:{imgCaption:"Sam Altman — CEO de OpenAI",summary:"GPT-5 supera el rendimiento humano en biología, química y física teórica según benchmarks de MIT y Stanford.",datos:[{t:"Mejora del 40% en razonamiento lógico",e:"🧠"},{t:"Supera a expertos en biología",e:"🧬"},{t:"100+ billones de parámetros",e:"💾"},{t:"Disponible en julio 2026",e:"📅"}],porQue:"Este avance puede acelerar descubrimientos científicos y cambiar el mercado laboral.",impacto:[{i:"💼",t:"Trabajo",d:"Automatización"},{i:"📚",t:"Estudios",d:"Nueva herramienta"},{i:"🌐",t:"Sociedad",d:"Más IA"}],fuentes:["OpenAI Official Blog","Reuters, The Verge"]}},
+  {id:3,cat:"Cripto",time:"hace 1h",
+   headline:"Bitcoin rompe récord histórico superando los $120,000 dólares.",
+   memeText:"Los que vendieron a $30K: 🪦\nLos que hodlearon:",
+   img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Bitcoin_paper_wallet_generated_at_bitaddress.jpg/400px-Bitcoin_paper_wallet_generated_at_bitaddress.jpg",
+   r:{h:"31.8K",c:"9.4K",s:"4.4K"},
+   vibes:{ELI5:"Bitcoin es como una moneda mágica de internet y ahora vale más que nunca en la historia.",Quick:"BTC superó los $120K. Nuevo récord impulsado por fondos institucionales.",Real:"BlackRock y Fidelity acumularon $15B en BTC en Q1 2026. El halving redujo oferta un 50%.",Meme:"Tu ex que vendió en el pánico: 🔫\nTú con tus BTCs: 🏖️🍹"},
+   pro:{imgCaption:"Bitcoin — nuevo récord $120K",summary:"Bitcoin alcanzó $120,000 impulsado por ETFs institucionales y la reducción de oferta post-halving.",datos:[{t:"Halving redujo emisión a 3.125 BTC/bloque",e:"⛏️"},{t:"ETFs acumularon $15B en Q1",e:"🏦"},{t:"Oferta en exchanges en mínimos de 5 años",e:"📉"},{t:"S2F proyecta $180K–$250K",e:"📈"}],porQue:"La convergencia del halving con adopción institucional crea presión alcista sin precedentes.",impacto:[{i:"💰",t:"Inversores",d:"Rentabilidades"},{i:"🏪",t:"Comercio",d:"Más adopción"},{i:"🌍",t:"Global",d:"Emergentes"}],fuentes:["Bloomberg Intelligence","CoinDesk, Glassnode"]}},
 ];
-const CAT_COLORS={tech:"#2196f3",economy:"#00b8d4",world:"#1565c0",sports:"#0097a7",science:"#0288d1",business:"#1976d2"};
-const BG={tech:"linear-gradient(135deg,#0d1b2a,#020b18)",economy:"linear-gradient(135deg,#002233,#020b18)",world:"linear-gradient(135deg,#001433,#020b18)",sports:"linear-gradient(135deg,#002233,#020b18)",science:"linear-gradient(135deg,#001a33,#020b18)",business:"linear-gradient(135deg,#0d1b2a,#020b18)"};
 
-let allNews=[],filtered=[],idx=0,liked=[],isPremium=false,filter="all";
-let dragStart=null,dragOffset=0;
+const VIBES=[
+  {k:"ELI5",i:"😊",l:"ELI5",c:"#22c55e",br:"rgba(34,197,94,0.45)"},
+  {k:"Quick",i:"⚡",l:"Quick",c:"#f59e0b",br:"rgba(245,158,11,0.5)"},
+  {k:"Real",i:"🔥",l:"Real",c:"#ef4444",br:"rgba(239,68,68,0.45)"},
+  {k:"Meme",i:"🤣",l:"Meme",c:"#a78bfa",br:"rgba(167,139,250,0.45)"},
+  {k:"Pro",i:"💎",l:"Pro",c:"#60a5fa",br:"rgba(96,165,250,0.45)",lock:true},
+];
 
-const dotsEl=document.getElementById("dots");
-INTERESTS.forEach((cat,i)=>{
-  const d=document.createElement("div");
-  d.style.cssText=`width:9px;height:9px;border-radius:50%;background:${cat.color};animation:pulse 1.6s ${i*0.2}s infinite`;
-  dotsEl.appendChild(d);
-});
+const STARS=[[8,12,1.5,2.1],[15,28,1,3.4],[22,8,1.2,1.8],[35,18,0.8,2.7],[42,35,1.4,1.5],[55,10,1,4],[63,22,1.6,2.2],[70,40,0.9,3.1],[78,15,1.2,1.9],[85,30,1,2.5],[12,55,0.8,3.8],[28,62,1.3,2],[38,75,1,2.9],[50,58,1.5,1.6],[65,70,0.9,3.3],[75,82,1.1,2.4],[88,65,1.4,1.7],[20,90,1,2.8],[45,88,1.2,2.1],[60,92,0.9,3.6]];
 
-function updateClock(){
-  const now=new Date();
-  document.getElementById("timeStr").textContent=now.toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"});
-  document.getElementById("dateStr").textContent=now.toLocaleDateString("es",{weekday:"long",day:"numeric",month:"long"});
-}
-updateClock(); setInterval(updateClock,1000);
-
-async function loadNews(){
-  document.getElementById("loading").style.display="flex";
-  document.getElementById("app").style.display="none";
-  document.getElementById("cards-area").style.display="none";
-  try{
-    const res=await fetch(GAS_URL);
-    allNews=await res.json();
-    if(!Array.isArray(allNews)||allNews.length===0) throw new Error("empty");
-    applyFilter("all");
-    document.getElementById("loading").style.display="none";
-    document.getElementById("app").style.display="block";
-    document.getElementById("cards-area").style.display="block";
-    renderFilters();
-    renderCard();
-  }catch(e){
-    document.getElementById("loading").innerHTML=`
-      <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;margin-bottom:4px;">QuickNews</div>
-      <div style="font-size:11px;color:#FFD94A;letter-spacing:3px;margin-bottom:24px;">by AI</div>
-      <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
-      <div style="font-size:14px;color:rgba(255,255,255,0.4);text-align:center;padding:0 40px;line-height:1.8;">No se pudieron cargar las noticias.</div>
-      <button onclick="loadNews()" style="margin-top:20px;background:linear-gradient(135deg,#FFD94A,#FF9500);border:none;border-radius:100px;padding:14px 32px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:#07070f;cursor:pointer;">↻ Reintentar</button>`;
-  }
-}
-
-function applyFilter(f){filter=f;idx=0;filtered=f==="all"?allNews:allNews.filter(n=>n.category===f);}
-
-function renderFilters(){
-  const el=document.getElementById("filters");
-  el.innerHTML=`<button class="pill ${filter==="all"?"on":""}" onclick="setFilter('all')">⚡ Todo (${allNews.length})</button>`;
-  INTERESTS.forEach(i=>{
-    const cnt=allNews.filter(n=>n.category===i.id).length;
-    if(cnt>0) el.innerHTML+=`<button class="pill ${filter===i.id?"on":""}" onclick="setFilter('${i.id}')" style="${filter===i.id?`border-color:${i.color}55;color:${i.color};background:${i.color}18`:""}">${i.emoji} ${i.label} (${cnt})</button>`;
-  });
-  document.getElementById("countStr").textContent=`⬤ ${allNews.length} artículos`;
-}
-
-function setFilter(f){applyFilter(f);renderFilters();renderCard();}
-
-function renderCard(){
-  const stack=document.getElementById("stack");
-  const current=filtered[idx];
-  if(!current){stack.innerHTML='<div style="text-align:center;padding:80px 0;color:rgba(255,255,255,0.25);">Sin noticias.</div>';return;}
-  const color=CAT_COLORS[current.category]||"#FFD94A";
-  document.body.style.background=`radial-gradient(ellipse at 25% 0%,${color}22 0%,#07070f 58%)`;
-  document.getElementById("btnPremium").style.background=`linear-gradient(135deg,${color},${color}bb)`;
-  document.getElementById("btnLike").textContent=liked.includes(current.id)?"♥":"♡";
-  document.getElementById("btnLike").style.color=liked.includes(current.id)?color:"#f0ede8";
-  document.getElementById("btnPrev").style.opacity=idx>0?1:.2;
-  document.getElementById("btnNext").style.opacity=idx<filtered.length-1?1:.2;
-
-  let ghostHTML="";
-  if(filtered[idx+2]) ghostHTML+=`<div style="position:absolute;top:18px;left:50%;transform:translateX(-50%);width:calc(100% - 44px);height:160px;background:#0c0c18;border-radius:32px;z-index:1;opacity:.3;"></div>`;
-  if(filtered[idx+1]) ghostHTML+=`<div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:calc(100% - 22px);height:180px;background:${BG[filtered[idx+1].category]||BG.world};border-radius:32px;z-index:2;opacity:.5;display:flex;align-items:center;justify-content:center;font-size:60px;">${INTERESTS.find(i=>i.id===filtered[idx+1].category)?.emoji||"📰"}</div>`;
-
-  const emoji=INTERESTS.find(i=>i.id===current.category)?.emoji||"📰";
-  const label=INTERESTS.find(i=>i.id===current.category)?.label||current.category;
-
-  stack.innerHTML=ghostHTML+`
-  <div class="card" id="mainCard" style="position:relative;z-index:10;">
-    <div style="position:relative;height:220px;background:${BG[current.category]||BG.world};overflow:hidden;">
-      ${current.image?`<img src="${current.image}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">`:""}
-      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
-        <div style="position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,${color}30 0%,transparent 70%);top:-70px;right:-70px;"></div>
-        <div style="font-size:76px;position:relative;z-index:1;">${emoji}</div>
-      </div>
-      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.05) 0%,rgba(7,7,15,.96) 100%);"></div>
-      <div style="position:absolute;top:16px;left:16px;z-index:2;">
-        <span style="background:${color}ee;border-radius:100px;padding:5px 13px;font-size:10px;color:#fff;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;">${emoji} ${current.source}</span>
-      </div>
-      <div style="position:absolute;top:16px;right:16px;z-index:2;">
-        <span style="background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);border-radius:100px;padding:5px 11px;font-size:10px;color:rgba(255,255,255,0.7);">${current.time}</span>
+/* ── PAYWALL ── */
+function Paywall({onClose,onBuy}){
+  return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,0.88)",backdropFilter:"blur(18px)",display:"flex",alignItems:"flex-end"}}>
+      <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:400,margin:"0 auto",background:"#0d0d1f",borderRadius:"22px 22px 0 0",border:"1px solid rgba(96,165,250,0.2)",padding:"20px 18px 40px",fontFamily:"'DM Sans',sans-serif",color:"#fff"}}>
+        <div style={{width:32,height:4,background:"rgba(255,255,255,0.12)",borderRadius:2,margin:"0 auto 18px"}}/>
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:34,marginBottom:5}}>⭐</div>
+          <div style={{fontSize:19,fontWeight:900,marginBottom:3}}>QuickNews Pro</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginBottom:8}}>Todo el mundo. Sin límites.</div>
+          <div style={{fontSize:30,fontWeight:900,color:"#60a5fa"}}>$2.99<span style={{fontSize:12,color:"rgba(255,255,255,0.3)",fontWeight:400}}>/mes</span></div>
+        </div>
+        {[["💎","Análisis Pro en cada noticia"],["🎙️","Resumen diario de audio IA"],["🤖","JAIK IA ilimitada"],["🚫","Sin anuncios"],["😂","Meme mode desbloqueado"]].map(([ic,tx])=>(
+          <div key={tx} style={{display:"flex",gap:9,alignItems:"center",marginBottom:8}}><span>{ic}</span><span style={{fontSize:12,color:"rgba(255,255,255,0.6)"}}>{tx}</span></div>
+        ))}
+        <button onClick={onBuy} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#7c3aed,#4f46e5)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginTop:12,marginBottom:7,fontFamily:"'DM Sans',sans-serif"}}>⭐ 7 días gratis</button>
+        <button onClick={onClose} style={{width:"100%",padding:"10px",background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,cursor:"pointer",fontSize:11,color:"rgba(255,255,255,0.25)",fontFamily:"'DM Sans',sans-serif"}}>Continuar gratis</button>
       </div>
     </div>
-    <div style="background:#0c0c18;padding:22px 22px 26px;">
-      ${current.tag?`<div style="display:inline-block;background:${color}22;border:1px solid ${color}44;border-radius:100px;padding:3px 10px;font-size:10px;color:${color};letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;font-weight:600;">${current.tag}</div>`:""}
-      <a href="${current.link&&current.link!="#"?current.link:"#"}" target="_blank" style="text-decoration:none;">
-        <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:900;line-height:1.3;color:#f5f0eb;margin-bottom:16px;letter-spacing:-.3px;">${current.title}</div>
-      </a>
-      <div style="position:relative;margin-bottom:18px;">
-        <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.8;">${(current.summary||"Sin descripción.").slice(0,120)}${!isPremium&&(current.summary||"").length>120?"...":""}</div>
-        ${!isPremium&&(current.summary||"").length>120?`
-        <div style="font-size:14px;color:rgba(255,255,255,0.5);line-height:1.8;filter:blur(5px);user-select:none;margin-top:4px;">${(current.summary||"").slice(120)}</div>
-        <div style="display:flex;justify-content:center;margin-top:12px;">
-          <button onclick="showPaywall()" style="background:linear-gradient(135deg,#1565c0,#0288d1);border:none;border-radius:16px;padding:12px 24px;cursor:pointer;display:flex;align-items:center;gap:9px;box-shadow:0 4px 20px rgba(21,101,192,0.4);">
-            <span style="font-size:17px;">🔓</span>
-            <div style="text-align:left;">
-              <div style="font-size:13px;font-weight:700;color:#fff;line-height:1;">Desbloquear ahora</div>
-              <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:2px;">Empieza gratis 7 días</div>
+  );
+}
+
+/* ── PRO PANEL ── */
+function ProPanel({story,onClose}){
+  const d=story.pro;
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:350,background:"rgba(0,0,0,0.92)",backdropFilter:"blur(16px)",overflowY:"auto",fontFamily:"'DM Sans',sans-serif",color:"#fff"}}>
+      <div style={{maxWidth:400,margin:"0 auto",paddingBottom:32}}>
+        <div style={{padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,background:"rgba(8,8,20,0.97)",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{width:32,height:32,borderRadius:9,background:"linear-gradient(135deg,#4f46e5,#7c3aed)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>💎</div>
+            <div><div style={{fontSize:13,fontWeight:900}}>MODO PRO</div><div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>Análisis profundo</div></div>
+          </div>
+          <button onClick={onClose} style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer"}}>✕</button>
+        </div>
+        <div style={{position:"relative",height:200,overflow:"hidden",background:"#111"}}>
+          <img src={story.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}} onError={e=>e.target.style.display="none"}/>
+          <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 40%,rgba(8,8,20,1) 100%)"}}/>
+          <div style={{position:"absolute",bottom:10,left:14,fontSize:10,color:"rgba(255,255,255,0.45)"}}>📷 {d.imgCaption}</div>
+          <div style={{position:"absolute",top:10,right:10,background:"linear-gradient(135deg,#4f46e5,#7c3aed)",borderRadius:100,padding:"3px 10px",fontSize:9,fontWeight:800}}>💎 PRO</div>
+        </div>
+        <div style={{padding:"14px"}}>
+          {[
+            ["EN RESUMEN",<div style={{background:"linear-gradient(135deg,rgba(79,70,229,0.2),rgba(124,58,237,0.1))",border:"1px solid rgba(99,102,241,0.3)",borderRadius:12,padding:"12px 14px",fontSize:13,color:"rgba(255,255,255,0.85)",lineHeight:1.7}}>{d.summary}</div>],
+            ["DATOS CLAVE",<div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"10px 12px"}}>{d.datos.map((x,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:i<d.datos.length-1?8:0}}><span style={{color:"rgba(255,255,255,0.3)"}}>•</span><span style={{fontSize:12,color:"rgba(255,255,255,0.75)",flex:1}}>{x.t}</span><span style={{fontSize:18}}>{x.e}</span></div>)}</div>],
+            ["¿POR QUÉ IMPORTA?",<div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"12px",fontSize:13,color:"rgba(255,255,255,0.75)",lineHeight:1.7}}>{d.porQue}</div>],
+            ["IMPACTO",<div style={{display:"flex",gap:7}}>{d.impacto.map((x,i)=><div key={i} style={{flex:1,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"10px 7px",textAlign:"center"}}><div style={{fontSize:22}}>{x.i}</div><div style={{fontSize:11,fontWeight:800,marginTop:4}}>{x.t}</div><div style={{fontSize:9,color:"rgba(255,255,255,0.4)",marginTop:2}}>{x.d}</div></div>)}</div>],
+            ["FUENTES",<div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"10px 12px"}}>{d.fuentes.map((f,i)=><div key={i} style={{fontSize:12,color:"rgba(255,255,255,0.65)",marginBottom:i<d.fuentes.length-1?5:0}}>• {f}</div>)}</div>],
+          ].map(([t,c],i)=>(
+            <div key={i} style={{marginBottom:16}}>
+              <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>{i+1}. {t}</div>
+              {c}
             </div>
-          </button>
-        </div>`:""}
+          ))}
+          <button onClick={onClose} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#4f46e5,#7c3aed)",border:"none",borderRadius:14,fontSize:13,fontWeight:800,color:"#fff",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>← Volver</button>
+        </div>
       </div>
-      <div style="height:2px;background:linear-gradient(90deg,${color}77,transparent);border-radius:1px;margin-bottom:14px;"></div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.2);">${emoji} ${label}</div>
     </div>
-  </div>`;
-
-  const card=document.getElementById("mainCard");
-  card.addEventListener("touchstart",e=>{dragStart=e.touches[0].clientX;},{passive:true});
-  card.addEventListener("touchmove",e=>{if(dragStart===null)return;dragOffset=e.touches[0].clientX-dragStart;card.style.transform=`translateX(${dragOffset}px) rotate(${dragOffset*0.018}deg)`;},{passive:true});
-  card.addEventListener("touchend",()=>{if(dragOffset>100&&idx>0)prevCard();else if(dragOffset<-100&&idx<filtered.length-1)nextCard();else{card.style.transform="";}dragStart=null;dragOffset=0;});
-
-  const dotsNav=document.getElementById("dots-nav");
-  dotsNav.innerHTML=filtered.map((_,i)=>`<div class="pdot ${i===idx?"on":""}" onclick="goTo(${i})" style="${i===idx?`background:${color};width:22px;border-radius:3px;`:""}"></div>`).join("");
-  document.getElementById("counter").textContent=`${idx+1} de ${filtered.length} · desliza para navegar`;
+  );
 }
 
-function nextCard(){if(idx<filtered.length-1){idx++;renderCard();}}
-function prevCard(){if(idx>0){idx--;renderCard();}}
-function goTo(i){idx=i;renderCard();}
-function toggleLike(){
-  const id=filtered[idx]?.id;if(!id)return;
-  liked=liked.includes(id)?liked.filter(x=>x!==id):[...liked,id];
-  showToast(liked.includes(id)?"📌 Guardado":"Eliminado");
-  renderCard();
-}
-function showPaywall(){document.getElementById("paywall").style.display="flex";}
-function hidePaywall(){document.getElementById("paywall").style.display="none";}
-function activatePremium(){isPremium=true;hidePaywall();showToast("🎉 ¡7 días Premium activados!");renderCard();}
-function showToast(msg){
-  const t=document.getElementById("toast");
-  t.textContent=msg;t.style.display="block";
-  setTimeout(()=>{t.style.display="none";},2800);
+/* ── BRIEFING PANEL ── */
+function BriefingPanel({onClose,isPro,onUpgrade}){
+  const [hour,setHour]=useState("07:00");
+  const [duration,setDuration]=useState("5");
+  const [format,setFormat]=useState("voz");
+  const [scheduled,setScheduled]=useState(false);
+  const [playing,setPlaying]=useState(false);
+  const [playIdx,setPlayIdx]=useState(0);
+  const [speed,setSpeed]=useState(1);
+  const [generating,setGenerating]=useState(false);
+  const [ready,setReady]=useState(false);
+  const [items,setItems]=useState([]);
+  const HOURS=["06:00","06:30","07:00","07:30","08:00","08:30","09:00","12:00","18:00","21:00","22:00"];
+
+  async function generate(){
+    if(!isPro){onUpgrade();return;}
+    setGenerating(true);setItems([]);
+    try{
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,system:`Eres el locutor de QuickNews. Genera resumen para ${duration} minutos. SOLO JSON sin texto extra ni backticks: {"items":[{"titulo":"...","resumen":"...","dato":"..."}]} con ${duration==="5"?"3":"5"} noticias.`,messages:[{role:"user",content:NEWS.map((n,i)=>`${i+1}. ${n.headline}`).join("\n")}]})});
+      const d=await r.json();
+      const raw=d.content?.find(b=>b.type==="text")?.text||"{}";
+      const p=JSON.parse(raw.replace(/```json|```/g,"").trim());
+      setItems(p.items||[]);
+    }catch{
+      setItems([{titulo:"Casa Blanca vs Elon Musk",resumen:"La administración rechazó la oferta de Musk de pagar salarios del TSA.",dato:"Afecta a 60,000+ trabajadores."},{titulo:"Bitcoin rompe $120K",resumen:"Nuevo récord por ETFs y el halving.",dato:"BlackRock acumuló $15B en BTC."},{titulo:"GPT-5 supera al humano",resumen:"OpenAI lanzó su modelo más avanzado.",dato:"Disponible julio 2026."}]);
+    }
+    setGenerating(false);setReady(true);
+  }
+
+  function speak(i,arr){
+    if(!window.speechSynthesis||!arr[i])return;
+    window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(`${arr[i].titulo}. ${arr[i].resumen} Dato clave: ${arr[i].dato}`);
+    u.lang="es-ES";u.rate=speed;
+    u.onend=()=>{if(i<arr.length-1){setPlayIdx(i+1);speak(i+1,arr);}else{setPlaying(false);setPlayIdx(0);}};
+    window.speechSynthesis.speak(u);
+  }
+
+  function togglePlay(){
+    if(playing){window.speechSynthesis?.cancel();setPlaying(false);}
+    else{setPlaying(true);speak(playIdx,items);}
+  }
+
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:350,background:"rgba(0,0,0,0.92)",backdropFilter:"blur(18px)",overflowY:"auto",fontFamily:"'DM Sans',sans-serif",color:"#fff"}}>
+      <div style={{maxWidth:400,margin:"0 auto",paddingBottom:32}}>
+        <div style={{padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,background:"rgba(6,6,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:9}}>
+            <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#3b82f6,#6366f1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🎙️</div>
+            <div><div style={{fontSize:14,fontWeight:900}}>Resumen Diario</div><div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>Tu briefing · <span style={{color:"#a78bfa"}}>Pro</span></div></div>
+          </div>
+          <button onClick={onClose} style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer"}}>✕</button>
+        </div>
+        <div style={{padding:"16px"}}>
+          {/* NO PRO */}
+          {!isPro&&(
+            <div>
+              <div style={{background:"linear-gradient(135deg,rgba(124,58,237,0.25),rgba(79,70,229,0.15))",border:"1px solid rgba(124,58,237,0.45)",borderRadius:16,padding:"18px 16px",textAlign:"center",marginBottom:12}}>
+                <div style={{fontSize:32,marginBottom:8}}>🎙️</div>
+                <div style={{fontSize:16,fontWeight:900,marginBottom:6}}>Resumen de Audio Diario</div>
+                <div style={{fontSize:12,color:"rgba(255,255,255,0.55)",lineHeight:1.6,marginBottom:14}}>Escucha las noticias más importantes en 5 o 10 minutos, generadas por IA. Programa tu briefing matutino.</div>
+                {[["🎙️","Audio con voz natural"],["⏰","Programa tu hora exacta"],["⚡","5 min o 10 min a tu ritmo"],["🤖","Generado por IA cada mañana"]].map(([ic,tx])=>(
+                  <div key={tx} style={{display:"flex",gap:9,alignItems:"center",marginBottom:7,textAlign:"left"}}><span style={{fontSize:16}}>{ic}</span><span style={{fontSize:12,color:"rgba(255,255,255,0.7)"}}>{tx}</span></div>
+                ))}
+              </div>
+              <button onClick={onUpgrade} style={{width:"100%",padding:"14px",background:"linear-gradient(135deg,#7c3aed,#4f46e5)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>⭐ Activar Pro — 7 días gratis</button>
+              <div style={{textAlign:"center",fontSize:10,color:"rgba(255,255,255,0.25)",marginTop:8}}>$2.99/mes después del período de prueba</div>
+            </div>
+          )}
+          {/* PRO CONFIG */}
+          {isPro&&!ready&&(
+            <>
+              <div style={{textAlign:"center",marginBottom:18}}>
+                <div style={{width:90,height:90,borderRadius:"50%",background:"linear-gradient(135deg,rgba(59,130,246,0.2),rgba(99,102,241,0.1))",border:"2px solid rgba(59,130,246,0.3)",display:"inline-flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:2}}>
+                  <div style={{fontSize:22,fontWeight:900,color:"#60a5fa"}}>{hour}</div>
+                  <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>tu hora</div>
+                </div>
+              </div>
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>⏰ ¿A qué hora quieres tu resumen?</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  {HOURS.map(h=><button key={h} onClick={()=>setHour(h)} style={{padding:"6px 12px",borderRadius:100,border:`1.5px solid ${hour===h?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:hour===h?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.04)",color:hour===h?"#60a5fa":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:700,cursor:"pointer"}}>{h}</button>)}
+                </div>
+              </div>
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>⏱ Duración</div>
+                <div style={{display:"flex",gap:8}}>
+                  {[["5","3 noticias clave"],["10","5 noticias + contexto"]].map(([d,sub])=>(
+                    <button key={d} onClick={()=>setDuration(d)} style={{flex:1,padding:"10px",borderRadius:12,border:`1.5px solid ${duration===d?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:duration===d?"rgba(59,130,246,0.18)":"rgba(255,255,255,0.04)",cursor:"pointer"}}>
+                      <div style={{fontSize:18,fontWeight:900,color:duration===d?"#60a5fa":"rgba(255,255,255,0.6)"}}>{d} min</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:2}}>{sub}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{marginBottom:16}}>
+                <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>🎧 Formato</div>
+                <div style={{display:"flex",gap:7}}>
+                  {[["voz","🎙️","Audio"],["leer","📖","Lectura"],["ambos","✨","Voz+texto"]].map(([k,ic,lb])=>(
+                    <button key={k} onClick={()=>setFormat(k)} style={{flex:1,padding:"8px 6px",borderRadius:11,border:`1.5px solid ${format===k?"#6366f1":"rgba(255,255,255,0.09)"}`,background:format===k?"rgba(99,102,241,0.18)":"rgba(255,255,255,0.03)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                      <span style={{fontSize:18}}>{ic}</span>
+                      <span style={{fontSize:9,fontWeight:700,color:format===k?"#a78bfa":"rgba(255,255,255,0.4)"}}>{lb}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{background:"rgba(59,130,246,0.08)",border:"1px solid rgba(59,130,246,0.2)",borderRadius:12,padding:"10px 12px",marginBottom:14,display:"flex",gap:9}}>
+                <span style={{fontSize:18}}>💡</span>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",lineHeight:1.6}}>Cada día a las <strong style={{color:"#60a5fa"}}>{hour}</strong>, QuickNews preparará tu resumen de <strong style={{color:"#60a5fa"}}>{duration} minutos</strong>.</div>
+              </div>
+              {scheduled
+                ?<div style={{background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:14,padding:"12px",textAlign:"center",marginBottom:10}}><div style={{fontSize:18,marginBottom:4}}>✅</div><div style={{fontSize:13,fontWeight:800,color:"#4ade80"}}>¡Programado para las {hour}!</div></div>
+                :<button onClick={()=>setScheduled(true)} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginBottom:8,fontFamily:"'DM Sans',sans-serif"}}>⏰ Programar para las {hour}</button>
+              }
+              <button onClick={generate} disabled={generating} style={{width:"100%",padding:"13px",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,fontSize:13,fontWeight:700,color:generating?"rgba(255,255,255,0.3)":"rgba(255,255,255,0.7)",cursor:generating?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                {generating?<><span style={{animation:"spin .8s linear infinite",display:"inline-block"}}>⚡</span>Generando...</>:"▶️ Escuchar ahora"}
+              </button>
+            </>
+          )}
+          {/* PLAYER */}
+          {isPro&&ready&&items.length>0&&(
+            <>
+              <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end",gap:3,height:36,marginBottom:14}}>
+                {Array(18).fill(0).map((_,i)=><div key={i} style={{width:3,background:playing?"#3b82f6":"rgba(255,255,255,0.15)",borderRadius:2,height:playing?undefined:4,animation:playing?`wave ${0.45+i*0.06}s ${i*0.04}s infinite ease-in-out`:"none",minHeight:4}}/>)}
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>
+                {items.map((item,i)=>(
+                  <div key={i} onClick={()=>{setPlayIdx(i);if(playing)speak(i,items);}} style={{display:"flex",gap:10,alignItems:"flex-start",padding:"10px 12px",borderRadius:13,background:playIdx===i?"rgba(59,130,246,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${playIdx===i?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.07)"}`,cursor:"pointer"}}>
+                    <div style={{width:24,height:24,borderRadius:"50%",background:playIdx===i?"#3b82f6":"rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:playIdx===i?"#fff":"rgba(255,255,255,0.3)",flexShrink:0}}>{i+1}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:800,color:playIdx===i?"#fff":"rgba(255,255,255,0.7)",marginBottom:3}}>{item.titulo}</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",lineHeight:1.5}}>{item.resumen}</div>
+                      <div style={{fontSize:10,color:"#60a5fa",marginTop:4}}>💡 {item.dato}</div>
+                    </div>
+                    {playing&&playIdx===i&&<span>🔊</span>}
+                  </div>
+                ))}
+              </div>
+              <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:12}}>
+                {[0.75,1,1.25,1.5,2].map(sp=><button key={sp} onClick={()=>setSpeed(sp)} style={{padding:"4px 10px",borderRadius:100,border:`1px solid ${speed===sp?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:speed===sp?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.04)",color:speed===sp?"#60a5fa":"rgba(255,255,255,0.35)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{sp}x</button>)}
+              </div>
+              <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:16,marginBottom:14}}>
+                <button onClick={()=>setPlayIdx(p=>Math.max(0,p-1))} style={{width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",fontSize:17,cursor:"pointer"}}>⏮</button>
+                <button onClick={togglePlay} style={{width:60,height:60,borderRadius:"50%",background:"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",color:"#fff",fontSize:24,cursor:"pointer",boxShadow:"0 6px 20px rgba(59,130,246,0.4)"}}>{playing?"⏸":"▶️"}</button>
+                <button onClick={()=>setPlayIdx(p=>Math.min(items.length-1,p+1))} style={{width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",fontSize:17,cursor:"pointer"}}>⏭</button>
+              </div>
+              <button onClick={()=>{setReady(false);setItems([]);setPlaying(false);}} style={{width:"100%",padding:"11px",background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,cursor:"pointer",fontSize:12,color:"rgba(255,255,255,0.35)"}}>← Cambiar horario</button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
-loadNews();
+/* ── MAIN APP ── */
+function App(){
+  const [si,setSi]=useState(0);
+  const [vibe,setVibe]=useState("Quick");
+  const [liked,setLiked]=useState({});
+  const [showPay,setShowPay]=useState(false);
+  const [showPro,setShowPro]=useState(false);
+  const [isPro,setIsPro]=useState(false);
+  const [showBriefing,setShowBriefing]=useState(false);
+  const [showAI,setShowAI]=useState(false);
+  const [aiAns,setAiAns]=useState("");
+  const [aiLoad,setAiLoad]=useState(false);
+  const [aiN,setAiN]=useState(0);
+  const ty=useRef(null);
+  const s=NEWS[si];
+  const vd=VIBES.find(v=>v.k===vibe)||VIBES[1];
+
+  function swipe(d){setAiAns("");setShowAI(false);setShowPro(false);if(d===1&&si<NEWS.length-1)setSi(i=>i+1);if(d===-1&&si>0)setSi(i=>i-1);}
+  function pickVibe(v){if(v==="Pro"&&!isPro){setShowPay(true);return;}setVibe(v);if(v==="Pro"&&isPro)setShowPro(true);}
+
+  async function askAI(q){
+    if(!q)return;
+    if(!isPro&&aiN>=3){setShowPay(true);return;}
+    setAiN(n=>n+1);setAiLoad(true);setAiAns("");
+    try{
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:150,system:`Eres JAIK de QuickNews. Noticia: "${s.headline}". Responde en español, máx 2 oraciones. Sin bullets.`,messages:[{role:"user",content:q}]})});
+      const d=await r.json();
+      setAiAns(d.content?.find(b=>b.type==="text")?.text||"Error.");
+    }catch{setAiAns("Error de conexión.");}
+    setAiLoad(false);
+  }
+
+  return(
+    <div
+      onTouchStart={e=>ty.current=e.touches[0].clientY}
+      onTouchEnd={e=>{const dy=ty.current-e.changedTouches[0].clientY;if(dy>65)swipe(1);if(dy<-65)swipe(-1);ty.current=null;}}
+      style={{width:"100%",maxWidth:400,margin:"0 auto",height:"100vh",background:"#05050f",fontFamily:"'DM Sans',sans-serif",color:"#fff",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}
+    >
+      {/* SPACE BG */}
+      <div style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none",overflow:"hidden"}}>
+        <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 20% 20%,#0d0a2e 0%,#05050f 50%,#080818 100%)"}}/>
+        <div style={{position:"absolute",top:"-10%",left:"-10%",width:"60%",height:"60%",background:"radial-gradient(ellipse,rgba(88,28,220,0.18) 0%,transparent 70%)",borderRadius:"50%"}}/>
+        <div style={{position:"absolute",bottom:"5%",right:"-5%",width:"55%",height:"55%",background:"radial-gradient(ellipse,rgba(37,99,235,0.14) 0%,transparent 70%)",borderRadius:"50%"}}/>
+        {STARS.map(([x,y,r,d],i)=><div key={i} style={{position:"absolute",left:`${x}%`,top:`${y}%`,width:r*2,height:r*2,borderRadius:"50%",background:"#fff",animation:`twinkle ${d}s ${i*0.3}s ease-in-out infinite`}}/>)}
+      </div>
+
+      {showPro&&<ProPanel story={s} onClose={()=>setShowPro(false)}/>}
+      {showPay&&<Paywall onClose={()=>setShowPay(false)} onBuy={()=>{setIsPro(true);setShowPay(false);}}/>}
+      {showBriefing&&<BriefingPanel onClose={()=>setShowBriefing(false)} isPro={isPro} onUpgrade={()=>{setShowBriefing(false);setShowPay(true);}}/>}
+
+      {/* HEADER */}
+      <div style={{padding:"10px 14px 7px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,background:"rgba(9,9,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.05)",position:"relative",zIndex:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:7}}>
+          <svg width="26" height="26" viewBox="0 0 80 80" fill="none">
+            <defs><linearGradient id="pg" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#a78bfa"/><stop offset="50%" stopColor="#6366f1"/><stop offset="100%" stopColor="#3b82f6"/></linearGradient></defs>
+            {[[48,52,3],[54,58,2.5],[60,62,2],[52,64,2],[58,68,1.5]].map(([x,y,r],i)=><circle key={i} cx={x} cy={y} r={r} fill="#60a5fa" opacity={0.8-i*0.12}/>)}
+            <path d="M8 40 L68 14 L50 66 L38 48 Z" fill="url(#pg)"/>
+            <path d="M38 48 L50 66 L44 50 Z" fill="rgba(0,0,0,0.25)"/>
+          </svg>
+          <div>
+            <div style={{fontSize:16,fontWeight:900,letterSpacing:-.5,lineHeight:1}}>QuickNews</div>
+            <div style={{fontSize:8,color:"rgba(255,255,255,0.35)",letterSpacing:2,textTransform:"uppercase"}}>AI·Powered</div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:7,alignItems:"center"}}>
+          <button onClick={()=>setShowBriefing(true)} style={{display:"flex",alignItems:"center",gap:4,background:isPro?"rgba(59,130,246,0.12)":"rgba(124,58,237,0.15)",border:`1px solid ${isPro?"rgba(59,130,246,0.3)":"rgba(124,58,237,0.4)"}`,borderRadius:100,padding:"5px 10px",color:isPro?"#60a5fa":"#c4b5fd",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+            <span style={{fontSize:14}}>🎙️</span><span>{isPro?"5 min":"Briefing"}</span>{!isPro&&<span style={{fontSize:9}}>🔒</span>}
+          </button>
+          <button style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:14,cursor:"pointer"}}>🔔</button>
+        </div>
+      </div>
+
+      {/* BODY */}
+      <div style={{flex:1,display:"flex",flexDirection:"column",padding:"6px 12px",overflow:"hidden",gap:6,position:"relative",zIndex:1}}>
+
+        {/* STORY CARD */}
+        <div className="neon-b" style={{borderRadius:14,background:"rgba(10,12,30,0.75)",backdropFilter:"blur(12px)",padding:"9px 10px",display:"flex",gap:9,alignItems:"flex-start",animation:"fadeUp .3s ease",flexShrink:0}}>
+          <div style={{flex:1}}>
+            <div style={{display:"flex",gap:5,marginBottom:6}}>
+              <span style={{fontSize:8,fontWeight:800,padding:"2px 8px",borderRadius:100,background:"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.4)",color:"#f87171",textTransform:"uppercase",display:"flex",alignItems:"center",gap:3}}>
+                <span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>AHORA
+              </span>
+              <span style={{fontSize:8,fontWeight:700,padding:"2px 8px",borderRadius:100,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)"}}>{s.cat}</span>
+            </div>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:900,lineHeight:1.2,marginBottom:3}}>{s.headline}</div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>{s.time}</div>
+          </div>
+          <div style={{width:58,height:58,borderRadius:10,overflow:"hidden",flexShrink:0}}>
+            <img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}} onError={e=>e.target.parentNode.style.background="#1a1a2e"}/>
+          </div>
+        </div>
+
+        {/* MEME CARD */}
+        <div className="neon" style={{borderRadius:14,overflow:"hidden",background:"rgba(10,8,28,0.8)",flexShrink:0,animation:"fadeUp .35s ease"}}>
+          <div style={{padding:"6px 10px 4px",display:"inline-flex",alignItems:"center",gap:4,background:"rgba(139,92,246,0.2)",borderRadius:"0 0 10px 0",border:"1px solid rgba(139,92,246,0.35)"}}>
+            <span style={{fontSize:11}}>🤣</span><span style={{fontSize:9,fontWeight:800,color:"#c4b5fd"}}>Meme take</span>
+          </div>
+          <div style={{margin:"4px 10px 0",borderRadius:12,overflow:"hidden",position:"relative",height:120,background:"#111"}}>
+            <img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.5)"}} onError={e=>e.target.style.display="none"}/>
+            <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.2)"}}/>
+            <div style={{position:"absolute",top:10,left:12,right:12,fontSize:15,fontWeight:900,lineHeight:1.2,textShadow:"0 2px 8px rgba(0,0,0,0.9)"}}>
+              {s.memeText.split("\n").map((l,i)=><div key={i}>{l}</div>)}
+            </div>
+          </div>
+          <div style={{padding:"7px 12px 8px",display:"flex",alignItems:"center",gap:12}}>
+            <button onClick={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))} style={{display:"flex",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",color:liked[s.id]?"#ef4444":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700}}>
+              <span style={{fontSize:15}}>{liked[s.id]?"❤️":"🤍"}</span>{s.r.h}
+            </button>
+            <button onClick={()=>setShowAI(a=>!a)} style={{display:"flex",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",color:showAI?"#a78bfa":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700}}>
+              <span style={{fontSize:15}}>💬</span>{s.r.c}
+            </button>
+            <button style={{display:"flex",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700}}>
+              <span style={{fontSize:15}}>🔗</span>{s.r.s}
+            </button>
+            <button style={{marginLeft:"auto",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,padding:"5px 10px",color:"rgba(255,255,255,0.6)",fontSize:10,fontWeight:700,cursor:"pointer"}}>↗️ Share</button>
+          </div>
+        </div>
+
+        {/* VIBE SELECTOR */}
+        <div style={{flexShrink:0}}>
+          <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.35)",marginBottom:5}}>Choose how to get it 👇</div>
+          <div style={{display:"flex",gap:5,overflowX:"auto",scrollbarWidth:"none"}}>
+            {VIBES.map(v=>(
+              <button key={v.k} onClick={()=>pickVibe(v.k)} style={{display:"flex",alignItems:"center",gap:4,padding:"6px 11px",borderRadius:100,border:`1.5px solid ${vibe===v.k?v.c:"rgba(255,255,255,0.12)"}`,background:vibe===v.k?`rgba(255,255,255,0.06)`:"rgba(255,255,255,0.03)",boxShadow:vibe===v.k?`0 0 8px ${v.c}55`:"none",cursor:"pointer",flexShrink:0}}>
+                <span style={{fontSize:14}}>{v.i}</span>
+                <span style={{fontSize:11,fontWeight:800,color:vibe===v.k?v.c:"rgba(255,255,255,0.5)"}}>{v.l}</span>
+                {v.lock&&!isPro&&<span style={{fontSize:9,opacity:.6}}>🔒</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* VIBE CONTENT */}
+        {!showAI&&(
+          <div style={{borderRadius:13,background:"rgba(10,8,28,0.75)",border:`1px solid ${vd.br}`,padding:"10px 12px",animation:"fadeUp .25s ease",flexShrink:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
+              <span style={{fontSize:14}}>{vd.i}</span>
+              <span style={{fontSize:12,fontWeight:800,color:vd.c}}>{vd.l}:</span>
+            </div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.8)",lineHeight:1.6}}>{s.vibes[vibe]||s.vibes.Quick}</div>
+          </div>
+        )}
+
+        {/* AI PANEL */}
+        {showAI&&(
+          <div style={{borderRadius:13,background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.07))",border:"1px solid rgba(139,92,246,0.3)",padding:"10px",animation:"fadeUp .25s ease",flexShrink:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:8}}>
+              <div style={{width:26,height:26,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>🤖</div>
+              <div style={{flex:1,fontSize:11,fontWeight:800}}>JAIK {!isPro&&<span style={{color:"rgba(255,255,255,0.3)",fontWeight:400}}>· {Math.max(0,3-aiN)} gratis</span>}</div>
+              <button onClick={()=>setShowAI(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:15,cursor:"pointer"}}>✕</button>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:7}}>
+              {["¿Por qué pasó esto?","¿Cómo me afecta?","Dame el contexto"].map((q,i)=>(
+                <button key={i} onClick={()=>askAI(q)} style={{padding:"5px 9px",background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.18)",borderRadius:8,color:"rgba(255,255,255,0.65)",fontSize:10,cursor:"pointer",textAlign:"left"}}>→ {q}</button>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:5}}>
+              <input id="aiQ" placeholder="Pregúntale a JAIK..." onKeyDown={e=>e.key==="Enter"&&askAI(e.target.value)}
+                style={{flex:1,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 9px",color:"#fff",fontSize:10,outline:"none"}}/>
+              <button onClick={()=>askAI(document.getElementById("aiQ")?.value)} style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"#fff",fontSize:13,cursor:"pointer"}}>↑</button>
+            </div>
+            {(aiLoad||aiAns)&&<div style={{marginTop:7,background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.15)",borderRadius:8,padding:"8px 10px",fontSize:11,color:"#e8f0fe",lineHeight:1.6}}>{aiLoad?"⚡ Pensando...":aiAns}</div>}
+          </div>
+        )}
+
+        {/* FOOTER */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+          <div style={{fontSize:9,color:"rgba(255,255,255,0.15)"}}>↑ desliza · {si+1}/{NEWS.length}</div>
+          <button onClick={()=>pickVibe(VIBES[(VIBES.findIndex(v=>v.k===vibe)+1)%VIBES.length].k)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:100,padding:"5px 12px",color:"rgba(255,255,255,0.5)",fontSize:10,fontWeight:700,cursor:"pointer"}}>🔄 Change vibe</button>
+        </div>
+      </div>
+
+      {/* BOTTOM NAV */}
+      <div style={{background:"rgba(5,5,15,0.95)",backdropFilter:"blur(20px)",borderTop:"1px solid rgba(139,92,246,0.25)",display:"flex",zIndex:20,flexShrink:0}}>
+        {[["🏠","Feed"],["🔥","Hot"],["🤖","AI"],["🔍","Search"],["⭐","Pro"]].map(([e,l])=>(
+          <button key={l} onClick={()=>{if(l==="AI"){setShowAI(a=>!a);}else if(l==="Pro"){setShowPay(true);}}}
+            style={{flex:1,padding:"9px 0 11px",background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+            <span style={{fontSize:18}}>{e}</span>
+            <span style={{fontSize:8,fontWeight:700,color:l==="Pro"?"#7c3aed":"rgba(255,255,255,0.3)"}}>{isPro&&l==="Pro"?"✓ Pro":l}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
