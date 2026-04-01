@@ -3,21 +3,25 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET");
 
   const key = process.env.GNEWS_API_KEY;
-  const url = `https://gnews.io/api/v4/top-headlines?lang=es&max=10&apikey=${key}`;
+  const { q, page = 1 } = req.query;
+
+  // Búsqueda por keyword o top headlines
+  const url = q
+    ? `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=es&max=10&page=${page}&apikey=${key}`
+    : `https://gnews.io/api/v4/top-headlines?lang=es&country=any&max=10&page=${page}&apikey=${key}`;
 
   try {
     const r = await fetch(url);
     const data = await r.json();
 
     if (!data.articles || data.articles.length === 0) {
-  return res.status(500).json({ error: "Sin artículos", debug: data });
-}
+      return res.status(200).json([]);
+    }
 
     const news = data.articles
       .filter(a => a.title && a.description)
-      .slice(0, 6)
       .map((a, i) => ({
-        id: i + 1,
+        id: `${page}-${i}`,
         cat: a.source?.name || "Mundial",
         time: timeAgo(a.publishedAt),
         headline: a.title,
