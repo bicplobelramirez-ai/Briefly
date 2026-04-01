@@ -10,8 +10,8 @@ export default async function handler(req, res) {
     const data = await r.json();
 
     if (!data.articles || data.articles.length === 0) {
-      return res.status(500).json({ error: "Sin artículos" });
-    }
+  return res.status(500).json({ error: "Sin artículos", debug: data });
+}
 
     const news = data.articles
       .filter(a => a.title && a.description)
