@@ -2,14 +2,14 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
 
-  const key = process.env.CLAVE_API_DE_NOTICIAS
-  const url = 'https://newsapi.org/v2/top-headlines?language=es&pageSize=10&apiKey=${key}`;
+  const key = process.env.GNEWS_API_KEY;
+  const url = `https://gnews.io/api/v4/top-headlines?lang=es&max=10&apikey=${key}`;
 
   try {
     const r = await fetch(url);
     const data = await r.json();
 
-    if (!data.articles) {
+    if (!data.articles || data.articles.length === 0) {
       return res.status(500).json({ error: "Sin artículos" });
     }
 
@@ -22,17 +22,17 @@ export default async function handler(req, res) {
         time: timeAgo(a.publishedAt),
         headline: a.title,
         description: a.description,
-        img: a.urlToImage || "",
+        img: a.image || "",
         url: a.url,
         memeText: a.title.length > 60
           ? a.title.substring(0, 55) + "... 👀"
           : a.title + " 👀",
-        r: { h: rnd(5, 50) + "K", c: rnd(1, 15) + "K", s: rnd(1, 8) + "K" },
+        r: { h: rnd(5,50)+"K", c: rnd(1,15)+"K", s: rnd(1,8)+"K" },
         vibes: {
           ELI5: `En palabras simples: ${a.description}`,
           Quick: a.description,
           Real: `Sin filtro: ${a.title}. ${a.description}`,
-          Meme: `Cuando ves que ${a.title.substring(0, 60)}... 💀`,
+          Meme: `Cuando ves que ${a.title.substring(0,60)}... 💀`,
         }
       }));
 
@@ -45,8 +45,8 @@ export default async function handler(req, res) {
 function timeAgo(dateStr) {
   const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
   if (diff < 60) return `hace ${diff} min`;
-  if (diff < 1440) return `hace ${Math.floor(diff / 60)}h`;
-  return `hace ${Math.floor(diff / 1440)}d`;
+  if (diff < 1440) return `hace ${Math.floor(diff/60)}h`;
+  return `hace ${Math.floor(diff/1440)}d`;
 }
 
 function rnd(min, max) {
