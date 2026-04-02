@@ -26,7 +26,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const {useState,useRef,useEffect,useCallback}=React;
+const {useState,useRef,useEffect}=React;
 
 const STARS=[[8,12,1.5,2.1],[15,28,1,3.4],[22,8,1.2,1.8],[35,18,0.8,2.7],[42,35,1.4,1.5],[55,10,1,4],[63,22,1.6,2.2],[70,40,0.9,3.1],[78,15,1.2,1.9],[85,30,1,2.5],[12,55,0.8,3.8],[28,62,1.3,2],[38,75,1,2.9],[50,58,1.5,1.6],[65,70,0.9,3.3],[75,82,1.1,2.4],[88,65,1.4,1.7],[20,90,1,2.8],[45,88,1.2,2.1],[60,92,0.9,3.6]];
 
@@ -38,6 +38,17 @@ const VIBES=[
   {k:"Pro",i:"💎",l:"Pro",c:"#60a5fa",br:"rgba(96,165,250,0.45)",lock:true},
 ];
 
+const CATS=[
+  {k:"",      i:"🌍",l:"Todo",       color:"#60a5fa"},
+  {k:"politica",i:"🏛️",l:"Política", color:"#ef4444"},
+  {k:"tech",    i:"🤖",l:"Tech",      color:"#3b82f6"},
+  {k:"deportes",i:"⚽",l:"Deportes",  color:"#22c55e"},
+  {k:"economia",i:"💰",l:"Economía",  color:"#f59e0b"},
+  {k:"entretenimiento",i:"🎬",l:"Entretenimiento",color:"#a78bfa"},
+  {k:"ciencia", i:"🔬",l:"Ciencia",   color:"#06b6d4"},
+  {k:"mundial", i:"🌎",l:"Mundial",   color:"#f97316"},
+];
+
 /* ── SEARCH SCREEN ── */
 function SearchScreen({onClose,onSelectArticle}){
   const [q,setQ]=useState("");
@@ -45,11 +56,12 @@ function SearchScreen({onClose,onSelectArticle}){
   const [loading,setLoading]=useState(false);
   const [searched,setSearched]=useState(false);
 
-  async function search(){
-    if(!q.trim())return;
-    setLoading(true);setSearched(true);
+  async function search(term){
+    const query=term||q;
+    if(!query.trim())return;
+    setQ(query);setLoading(true);setSearched(true);
     try{
-      const r=await fetch(`/api/news?q=${encodeURIComponent(q)}`);
+      const r=await fetch(`/api/news?q=${encodeURIComponent(query)}`);
       const data=await r.json();
       setResults(Array.isArray(data)?data:[]);
     }catch{setResults([]);}
@@ -58,24 +70,21 @@ function SearchScreen({onClose,onSelectArticle}){
 
   return(
     <div style={{position:"fixed",inset:0,zIndex:200,background:"#05050f",fontFamily:"'DM Sans',sans-serif",color:"#fff",display:"flex",flexDirection:"column"}}>
-      {/* Header */}
       <div style={{padding:"12px 14px",background:"rgba(9,9,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",gap:10}}>
         <button onClick={onClose} style={{width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:14,cursor:"pointer"}}>←</button>
         <div style={{flex:1,display:"flex",gap:8}}>
           <input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&search()}
             placeholder="Buscar noticias..." autoFocus
-            style={{flex:1,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:100,padding:"8px 14px",color:"#fff",fontSize:13,outline:"none",fontFamily:"'DM Sans',sans-serif"}}/>
-          <button onClick={search} style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"#fff",fontSize:16,cursor:"pointer"}}>🔍</button>
+            style={{flex:1,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:100,padding:"8px 14px",color:"#fff",fontSize:13,outline:"none"}}/>
+          <button onClick={()=>search()} style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"#fff",fontSize:16,cursor:"pointer"}}>🔍</button>
         </div>
       </div>
-
-      {/* Topics rápidos */}
       {!searched&&(
         <div style={{padding:"14px"}}>
           <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:10}}>🔥 Temas populares</div>
           <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-            {["Bitcoin","IA","Trump","Argentina","Fútbol","Economía","Tesla","Colombia","México","Tecnología"].map(t=>(
-              <button key={t} onClick={()=>{setQ(t);setTimeout(()=>search(),100);}}
+            {["Bitcoin","Inteligencia Artificial","Trump","Argentina","Fútbol","Economía","Tesla","Colombia","México","Elecciones","Clima","Guerra"].map(t=>(
+              <button key={t} onClick={()=>search(t)}
                 style={{padding:"6px 13px",borderRadius:100,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.65)",fontSize:11,fontWeight:700,cursor:"pointer"}}>
                 {t}
               </button>
@@ -83,16 +92,12 @@ function SearchScreen({onClose,onSelectArticle}){
           </div>
         </div>
       )}
-
-      {/* Loading */}
       {loading&&(
         <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12}}>
           <div style={{fontSize:28,animation:"spin 1s linear infinite",display:"inline-block"}}>⚡</div>
           <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>Buscando "{q}"...</div>
         </div>
       )}
-
-      {/* Results */}
       {!loading&&searched&&(
         <div style={{flex:1,overflowY:"auto",padding:"10px 12px"}}>
           {results.length===0?(
@@ -102,489 +107,9 @@ function SearchScreen({onClose,onSelectArticle}){
             </div>
           ):results.map((item,i)=>(
             <div key={i} onClick={()=>onSelectArticle(item)}
-              style={{display:"flex",gap:10,alignItems:"flex-start",padding:"10px",marginBottom:8,borderRadius:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",cursor:"pointer",animation:`fadeUp ${0.05*i}s ease`}}>
+              style={{display:"flex",gap:10,alignItems:"flex-start",padding:"10px",marginBottom:8,borderRadius:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",cursor:"pointer"}}>
               <div style={{width:52,height:52,borderRadius:10,overflow:"hidden",flexShrink:0,background:"#1a1a2e"}}>
                 {item.img&&<img src={item.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>}
               </div>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:9,fontWeight:700,color:"rgba(255,255,255,0.35)",marginBottom:3,textTransform:"uppercase"}}>{item.cat} · {item.time}</div>
-                <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.85)",lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{item.headline}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ── PAYWALL ── */
-function Paywall({onClose,onBuy}){
-  return(
-    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,0.88)",backdropFilter:"blur(18px)",display:"flex",alignItems:"flex-end"}}>
-      <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:400,margin:"0 auto",background:"#0d0d1f",borderRadius:"22px 22px 0 0",border:"1px solid rgba(96,165,250,0.2)",padding:"20px 18px 40px",fontFamily:"'DM Sans',sans-serif",color:"#fff"}}>
-        <div style={{width:32,height:4,background:"rgba(255,255,255,0.12)",borderRadius:2,margin:"0 auto 18px"}}/>
-        <div style={{textAlign:"center",marginBottom:16}}>
-          <div style={{fontSize:34,marginBottom:5}}>⭐</div>
-          <div style={{fontSize:19,fontWeight:900,marginBottom:3}}>QuickNews Pro</div>
-          <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginBottom:8}}>Todo el mundo. Sin límites.</div>
-          <div style={{fontSize:30,fontWeight:900,color:"#60a5fa"}}>$2.99<span style={{fontSize:12,color:"rgba(255,255,255,0.3)",fontWeight:400}}>/mes</span></div>
-        </div>
-        {[["💎","Análisis Pro en cada noticia"],["🎙️","Resumen diario de audio IA"],["🤖","JAIK IA ilimitada"],["🚫","Sin anuncios"],["😂","Meme mode desbloqueado"]].map(([ic,tx])=>(
-          <div key={tx} style={{display:"flex",gap:9,alignItems:"center",marginBottom:8}}><span>{ic}</span><span style={{fontSize:12,color:"rgba(255,255,255,0.6)"}}>{tx}</span></div>
-        ))}
-        <button onClick={onBuy} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#7c3aed,#4f46e5)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginTop:12,marginBottom:7,fontFamily:"'DM Sans',sans-serif"}}>⭐ 7 días gratis</button>
-        <button onClick={onClose} style={{width:"100%",padding:"10px",background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,cursor:"pointer",fontSize:11,color:"rgba(255,255,255,0.25)",fontFamily:"'DM Sans',sans-serif"}}>Continuar gratis</button>
-      </div>
-    </div>
-  );
-}
-
-/* ── PRO PANEL ── */
-function ProPanel({story,onClose}){
-  const d=story.pro||{summary:story.description,datos:[],porQue:story.description,impacto:[],fuentes:[story.cat],imgCaption:story.cat};
-  return(
-    <div style={{position:"fixed",inset:0,zIndex:350,background:"rgba(0,0,0,0.92)",backdropFilter:"blur(16px)",overflowY:"auto",fontFamily:"'DM Sans',sans-serif",color:"#fff"}}>
-      <div style={{maxWidth:400,margin:"0 auto",paddingBottom:32}}>
-        <div style={{padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,background:"rgba(8,8,20,0.97)",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <div style={{width:32,height:32,borderRadius:9,background:"linear-gradient(135deg,#4f46e5,#7c3aed)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>💎</div>
-            <div><div style={{fontSize:13,fontWeight:900}}>MODO PRO</div><div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>Análisis profundo</div></div>
-          </div>
-          <button onClick={onClose} style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer"}}>✕</button>
-        </div>
-        {story.img&&(
-          <div style={{position:"relative",height:200,overflow:"hidden",background:"#111"}}>
-            <img src={story.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}} onError={e=>e.target.style.display="none"}/>
-            <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 40%,rgba(8,8,20,1) 100%)"}}/>
-            <div style={{position:"absolute",top:10,right:10,background:"linear-gradient(135deg,#4f46e5,#7c3aed)",borderRadius:100,padding:"3px 10px",fontSize:9,fontWeight:800}}>💎 PRO</div>
-          </div>
-        )}
-        <div style={{padding:"14px"}}>
-          <div style={{marginBottom:16}}>
-            <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>EN RESUMEN</div>
-            <div style={{background:"linear-gradient(135deg,rgba(79,70,229,0.2),rgba(124,58,237,0.1))",border:"1px solid rgba(99,102,241,0.3)",borderRadius:12,padding:"12px 14px",fontSize:13,color:"rgba(255,255,255,0.85)",lineHeight:1.7}}>{story.description}</div>
-          </div>
-          <div style={{marginBottom:16}}>
-            <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>TITULAR COMPLETO</div>
-            <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"12px",fontSize:13,color:"rgba(255,255,255,0.75)",lineHeight:1.7,fontStyle:"italic"}}>"{story.headline}"</div>
-          </div>
-          <div style={{marginBottom:16}}>
-            <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>FUENTE</div>
-            <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"10px 12px",fontSize:12,color:"rgba(255,255,255,0.65)"}}>• {story.cat}</div>
-          </div>
-          {story.url&&(
-            <a href={story.url} target="_blank" rel="noopener noreferrer"
-              style={{display:"block",width:"100%",padding:"13px",background:"linear-gradient(135deg,#4f46e5,#7c3aed)",border:"none",borderRadius:14,fontSize:13,fontWeight:800,color:"#fff",cursor:"pointer",textAlign:"center",textDecoration:"none",marginBottom:8}}>
-              ↗️ Leer nota completa
-            </a>
-          )}
-          <button onClick={onClose} style={{width:"100%",padding:"11px",background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,cursor:"pointer",fontSize:12,color:"rgba(255,255,255,0.35)"}}>← Volver</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── BRIEFING PANEL ── */
-function BriefingPanel({onClose,isPro,onUpgrade,articles}){
-  const [hour,setHour]=useState("07:00");
-  const [duration,setDuration]=useState("5");
-  const [format,setFormat]=useState("voz");
-  const [scheduled,setScheduled]=useState(false);
-  const [playing,setPlaying]=useState(false);
-  const [playIdx,setPlayIdx]=useState(0);
-  const [speed,setSpeed]=useState(1);
-  const [generating,setGenerating]=useState(false);
-  const [ready,setReady]=useState(false);
-  const [items,setItems]=useState([]);
-  const HOURS=["06:00","06:30","07:00","07:30","08:00","08:30","09:00","12:00","18:00","21:00","22:00"];
-
-  async function generate(){
-    if(!isPro){onUpgrade();return;}
-    setGenerating(true);setItems([]);
-    try{
-      const headlines=articles.slice(0,5).map((n,i)=>`${i+1}. ${n.headline}`).join("\n");
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,system:`Eres el locutor de QuickNews. Genera resumen para ${duration} minutos. SOLO JSON sin texto extra ni backticks: {"items":[{"titulo":"...","resumen":"...","dato":"..."}]} con ${duration==="5"?"3":"5"} noticias.`,messages:[{role:"user",content:headlines}]})});
-      const d=await r.json();
-      const raw=d.content?.find(b=>b.type==="text")?.text||"{}";
-      const p=JSON.parse(raw.replace(/```json|```/g,"").trim());
-      setItems(p.items||[]);
-    }catch{
-      setItems(articles.slice(0,3).map(a=>({titulo:a.cat,resumen:a.description||a.headline,dato:`Fuente: ${a.cat}`})));
-    }
-    setGenerating(false);setReady(true);
-  }
-
-  function speak(i,arr){
-    if(!window.speechSynthesis||!arr[i])return;
-    window.speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(`${arr[i].titulo}. ${arr[i].resumen} Dato clave: ${arr[i].dato}`);
-    u.lang="es-ES";u.rate=speed;
-    u.onend=()=>{if(i<arr.length-1){setPlayIdx(i+1);speak(i+1,arr);}else{setPlaying(false);setPlayIdx(0);}};
-    window.speechSynthesis.speak(u);
-  }
-
-  function togglePlay(){
-    if(playing){window.speechSynthesis?.cancel();setPlaying(false);}
-    else{setPlaying(true);speak(playIdx,items);}
-  }
-
-  return(
-    <div style={{position:"fixed",inset:0,zIndex:350,background:"rgba(0,0,0,0.92)",backdropFilter:"blur(18px)",overflowY:"auto",fontFamily:"'DM Sans',sans-serif",color:"#fff"}}>
-      <div style={{maxWidth:400,margin:"0 auto",paddingBottom:32}}>
-        <div style={{padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,background:"rgba(6,6,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
-          <div style={{display:"flex",alignItems:"center",gap:9}}>
-            <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#3b82f6,#6366f1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🎙️</div>
-            <div><div style={{fontSize:14,fontWeight:900}}>Resumen Diario</div><div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>Tu briefing · <span style={{color:"#a78bfa"}}>Pro</span></div></div>
-          </div>
-          <button onClick={onClose} style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer"}}>✕</button>
-        </div>
-        <div style={{padding:"16px"}}>
-          {!isPro&&(
-            <div>
-              <div style={{background:"linear-gradient(135deg,rgba(124,58,237,0.25),rgba(79,70,229,0.15))",border:"1px solid rgba(124,58,237,0.45)",borderRadius:16,padding:"18px 16px",textAlign:"center",marginBottom:12}}>
-                <div style={{fontSize:32,marginBottom:8}}>🎙️</div>
-                <div style={{fontSize:16,fontWeight:900,marginBottom:6}}>Resumen de Audio Diario</div>
-                <div style={{fontSize:12,color:"rgba(255,255,255,0.55)",lineHeight:1.6,marginBottom:14}}>Escucha las noticias más importantes en 5 o 10 minutos, generadas por IA.</div>
-                {[["🎙️","Audio con voz natural"],["⏰","Programa tu hora exacta"],["⚡","5 min o 10 min"],["🤖","Generado por IA"]].map(([ic,tx])=>(
-                  <div key={tx} style={{display:"flex",gap:9,alignItems:"center",marginBottom:7,textAlign:"left"}}><span style={{fontSize:16}}>{ic}</span><span style={{fontSize:12,color:"rgba(255,255,255,0.7)"}}>{tx}</span></div>
-                ))}
-              </div>
-              <button onClick={onUpgrade} style={{width:"100%",padding:"14px",background:"linear-gradient(135deg,#7c3aed,#4f46e5)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>⭐ Activar Pro — 7 días gratis</button>
-            </div>
-          )}
-          {isPro&&!ready&&(
-            <>
-              <div style={{textAlign:"center",marginBottom:18}}>
-                <div style={{width:90,height:90,borderRadius:"50%",background:"linear-gradient(135deg,rgba(59,130,246,0.2),rgba(99,102,241,0.1))",border:"2px solid rgba(59,130,246,0.3)",display:"inline-flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:2}}>
-                  <div style={{fontSize:22,fontWeight:900,color:"#60a5fa"}}>{hour}</div>
-                  <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>tu hora</div>
-                </div>
-              </div>
-              <div style={{marginBottom:14}}>
-                <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>⏰ ¿A qué hora?</div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                  {HOURS.map(h=><button key={h} onClick={()=>setHour(h)} style={{padding:"6px 12px",borderRadius:100,border:`1.5px solid ${hour===h?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:hour===h?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.04)",color:hour===h?"#60a5fa":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:700,cursor:"pointer"}}>{h}</button>)}
-                </div>
-              </div>
-              <div style={{marginBottom:14}}>
-                <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>⏱ Duración</div>
-                <div style={{display:"flex",gap:8}}>
-                  {[["5","3 noticias"],["10","5 noticias"]].map(([d,sub])=>(
-                    <button key={d} onClick={()=>setDuration(d)} style={{flex:1,padding:"10px",borderRadius:12,border:`1.5px solid ${duration===d?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:duration===d?"rgba(59,130,246,0.18)":"rgba(255,255,255,0.04)",cursor:"pointer"}}>
-                      <div style={{fontSize:18,fontWeight:900,color:duration===d?"#60a5fa":"rgba(255,255,255,0.6)"}}>{d} min</div>
-                      <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:2}}>{sub}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {scheduled
-                ?<div style={{background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:14,padding:"12px",textAlign:"center",marginBottom:10}}><div style={{fontSize:18,marginBottom:4}}>✅</div><div style={{fontSize:13,fontWeight:800,color:"#4ade80"}}>¡Programado para las {hour}!</div></div>
-                :<button onClick={()=>setScheduled(true)} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginBottom:8,fontFamily:"'DM Sans',sans-serif"}}>⏰ Programar para las {hour}</button>
-              }
-              <button onClick={generate} disabled={generating} style={{width:"100%",padding:"13px",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,fontSize:13,fontWeight:700,color:generating?"rgba(255,255,255,0.3)":"rgba(255,255,255,0.7)",cursor:generating?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-                {generating?<><span style={{animation:"spin .8s linear infinite",display:"inline-block"}}>⚡</span>Generando...</>:"▶️ Escuchar ahora"}
-              </button>
-            </>
-          )}
-          {isPro&&ready&&items.length>0&&(
-            <>
-              <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end",gap:3,height:36,marginBottom:14}}>
-                {Array(18).fill(0).map((_,i)=><div key={i} style={{width:3,background:playing?"#3b82f6":"rgba(255,255,255,0.15)",borderRadius:2,height:playing?undefined:4,animation:playing?`wave ${0.45+i*0.06}s ${i*0.04}s infinite ease-in-out`:"none",minHeight:4}}/>)}
-              </div>
-              <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>
-                {items.map((item,i)=>(
-                  <div key={i} onClick={()=>{setPlayIdx(i);if(playing)speak(i,items);}} style={{display:"flex",gap:10,alignItems:"flex-start",padding:"10px 12px",borderRadius:13,background:playIdx===i?"rgba(59,130,246,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${playIdx===i?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.07)"}`,cursor:"pointer"}}>
-                    <div style={{width:24,height:24,borderRadius:"50%",background:playIdx===i?"#3b82f6":"rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:playIdx===i?"#fff":"rgba(255,255,255,0.3)",flexShrink:0}}>{i+1}</div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:12,fontWeight:800,color:playIdx===i?"#fff":"rgba(255,255,255,0.7)",marginBottom:3}}>{item.titulo}</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",lineHeight:1.5}}>{item.resumen}</div>
-                      <div style={{fontSize:10,color:"#60a5fa",marginTop:4}}>💡 {item.dato}</div>
-                    </div>
-                    {playing&&playIdx===i&&<span>🔊</span>}
-                  </div>
-                ))}
-              </div>
-              <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:12}}>
-                {[0.75,1,1.25,1.5,2].map(sp=><button key={sp} onClick={()=>setSpeed(sp)} style={{padding:"4px 10px",borderRadius:100,border:`1px solid ${speed===sp?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:speed===sp?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.04)",color:speed===sp?"#60a5fa":"rgba(255,255,255,0.35)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{sp}x</button>)}
-              </div>
-              <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:16,marginBottom:14}}>
-                <button onClick={()=>setPlayIdx(p=>Math.max(0,p-1))} style={{width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",fontSize:17,cursor:"pointer"}}>⏮</button>
-                <button onClick={togglePlay} style={{width:60,height:60,borderRadius:"50%",background:"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",color:"#fff",fontSize:24,cursor:"pointer",boxShadow:"0 6px 20px rgba(59,130,246,0.4)"}}>{playing?"⏸":"▶️"}</button>
-                <button onClick={()=>setPlayIdx(p=>Math.min(items.length-1,p+1))} style={{width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",fontSize:17,cursor:"pointer"}}>⏭</button>
-              </div>
-              <button onClick={()=>{setReady(false);setItems([]);setPlaying(false);}} style={{width:"100%",padding:"11px",background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,cursor:"pointer",fontSize:12,color:"rgba(255,255,255,0.35)"}}>← Cambiar horario</button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── MAIN APP ── */
-function App(){
-  const [articles,setArticles]=useState([]);
-  const [si,setSi]=useState(0);
-  const [vibe,setVibe]=useState("Quick");
-  const [liked,setLiked]=useState({});
-  const [showPay,setShowPay]=useState(false);
-  const [showPro,setShowPro]=useState(false);
-  const [isPro,setIsPro]=useState(false);
-  const [showBriefing,setShowBriefing]=useState(false);
-  const [showSearch,setShowSearch]=useState(false);
-  const [showAI,setShowAI]=useState(false);
-  const [aiAns,setAiAns]=useState("");
-  const [aiLoad,setAiLoad]=useState(false);
-  const [aiN,setAiN]=useState(0);
-  const [loading,setLoading]=useState(true);
-  const [loadingMore,setLoadingMore]=useState(false);
-  const [page,setPage]=useState(1);
-  const [lastRefresh,setLastRefresh]=useState(Date.now());
-  const ty=useRef(null);
-  const refreshTimer=useRef(null);
-
-  // Carga inicial
-  useEffect(()=>{
-    loadNews(1,true);
-    // Refresh automático cada 5 minutos
-    refreshTimer.current=setInterval(()=>{
-      loadNews(1,true);
-      setLastRefresh(Date.now());
-    },5*60*1000);
-    return()=>clearInterval(refreshTimer.current);
-  },[]);
-
-  async function loadNews(p,replace=false){
-    if(p===1)setLoading(true); else setLoadingMore(true);
-    try{
-      const r=await fetch(`/api/news?page=${p}`);
-      const data=await r.json();
-      if(Array.isArray(data)&&data.length>0){
-        setArticles(prev=>replace?data:[...prev,...data]);
-        setPage(p);
-        if(replace)setSi(0);
-      }
-    }catch{}
-    setLoading(false);setLoadingMore(false);
-  }
-
-  // Scroll infinito — al llegar al último artículo carga más
-  function swipe(d){
-    setAiAns("");setShowAI(false);setShowPro(false);
-    const next=si+d;
-    if(next>=0&&next<articles.length){
-      setSi(next);
-      // Carga más cuando quedan 2 noticias
-      if(d===1&&next>=articles.length-2&&!loadingMore){
-        loadNews(page+1);
-      }
-    }
-  }
-
-  function pickVibe(v){if(v==="Pro"&&!isPro){setShowPay(true);return;}setVibe(v);if(v==="Pro"&&isPro)setShowPro(true);}
-
-  async function askAI(q){
-    if(!q)return;
-    if(!isPro&&aiN>=3){setShowPay(true);return;}
-    setAiN(n=>n+1);setAiLoad(true);setAiAns("");
-    try{
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:150,system:`Eres JAIK de QuickNews. Noticia: "${s?.headline}". Responde en español, máx 2 oraciones. Sin bullets.`,messages:[{role:"user",content:q}]})});
-      const d=await r.json();
-      setAiAns(d.content?.find(b=>b.type==="text")?.text||"Error.");
-    }catch{setAiAns("Error de conexión.");}
-    setAiLoad(false);
-  }
-
-  const s=articles[si];
-  const vd=VIBES.find(v=>v.k===vibe)||VIBES[1];
-
-  // Tiempo desde último refresh
-  const minsAgo=Math.floor((Date.now()-lastRefresh)/60000);
-  const refreshLabel=minsAgo===0?"Ahora mismo":`Hace ${minsAgo} min`;
-
-  return(
-    <div
-      onTouchStart={e=>ty.current=e.touches[0].clientY}
-      onTouchEnd={e=>{const dy=ty.current-e.changedTouches[0].clientY;if(dy>65)swipe(1);if(dy<-65)swipe(-1);ty.current=null;}}
-      style={{width:"100%",maxWidth:400,margin:"0 auto",height:"100vh",background:"#05050f",fontFamily:"'DM Sans',sans-serif",color:"#fff",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}
-    >
-      {/* SPACE BG */}
-      <div style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none",overflow:"hidden"}}>
-        <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 20% 20%,#0d0a2e 0%,#05050f 50%,#080818 100%)"}}/>
-        <div style={{position:"absolute",top:"-10%",left:"-10%",width:"60%",height:"60%",background:"radial-gradient(ellipse,rgba(88,28,220,0.18) 0%,transparent 70%)",borderRadius:"50%"}}/>
-        <div style={{position:"absolute",bottom:"5%",right:"-5%",width:"55%",height:"55%",background:"radial-gradient(ellipse,rgba(37,99,235,0.14) 0%,transparent 70%)",borderRadius:"50%"}}/>
-        {STARS.map(([x,y,r,d],i)=><div key={i} style={{position:"absolute",left:`${x}%`,top:`${y}%`,width:r*2,height:r*2,borderRadius:"50%",background:"#fff",animation:`twinkle ${d}s ${i*0.3}s ease-in-out infinite`}}/>)}
-      </div>
-
-      {/* LOADING */}
-      {loading&&(
-        <div style={{position:"fixed",inset:0,zIndex:500,background:"#05050f",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
-          <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
-            <defs><linearGradient id="pg" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#a78bfa"/><stop offset="100%" stopColor="#3b82f6"/></linearGradient></defs>
-            <path d="M8 40 L68 14 L50 66 L38 48 Z" fill="url(#pg)"/>
-          </svg>
-          <div style={{fontSize:14,fontWeight:700,color:"rgba(255,255,255,0.6)"}}>Cargando noticias...</div>
-          <div style={{display:"flex",gap:6}}>
-            {[0,1,2].map(i=><div key={i} style={{width:6,height:6,borderRadius:"50%",background:"#6366f1",animation:`blink 1s ${i*0.3}s infinite`}}/>)}
-          </div>
-        </div>
-      )}
-
-      {showSearch&&<SearchScreen onClose={()=>setShowSearch(false)} onSelectArticle={a=>{setArticles(prev=>[a,...prev]);setSi(0);setShowSearch(false);}}/>}
-      {showPro&&s&&<ProPanel story={s} onClose={()=>setShowPro(false)}/>}
-      {showPay&&<Paywall onClose={()=>setShowPay(false)} onBuy={()=>{setIsPro(true);setShowPay(false);}}/>}
-      {showBriefing&&<BriefingPanel onClose={()=>setShowBriefing(false)} isPro={isPro} onUpgrade={()=>{setShowBriefing(false);setShowPay(true);}} articles={articles}/>}
-
-      {/* HEADER */}
-      <div style={{padding:"10px 14px 7px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,background:"rgba(9,9,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.05)",position:"relative",zIndex:10}}>
-        <div style={{display:"flex",alignItems:"center",gap:7}}>
-          <svg width="26" height="26" viewBox="0 0 80 80" fill="none">
-            <defs><linearGradient id="pg2" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#a78bfa"/><stop offset="50%" stopColor="#6366f1"/><stop offset="100%" stopColor="#3b82f6"/></linearGradient></defs>
-            {[[48,52,3],[54,58,2.5],[60,62,2]].map(([x,y,r],i)=><circle key={i} cx={x} cy={y} r={r} fill="#60a5fa" opacity={0.8-i*0.15}/>)}
-            <path d="M8 40 L68 14 L50 66 L38 48 Z" fill="url(#pg2)"/>
-            <path d="M38 48 L50 66 L44 50 Z" fill="rgba(0,0,0,0.25)"/>
-          </svg>
-          <div>
-            <div style={{fontSize:16,fontWeight:900,letterSpacing:-.5,lineHeight:1}}>QuickNews</div>
-            <div style={{fontSize:8,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,textTransform:"uppercase"}}>{refreshLabel} · {articles.length} noticias</div>
-          </div>
-        </div>
-        <div style={{display:"flex",gap:7,alignItems:"center"}}>
-          <button onClick={()=>loadNews(1,true)} style={{display:"flex",alignItems:"center",gap:4,background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.25)",borderRadius:100,padding:"5px 10px",color:"#4ade80",fontSize:10,fontWeight:700,cursor:"pointer"}}>
-            <span style={{fontSize:12,display:"inline-block",animation:loading?"spin 1s linear infinite":"none"}}>🔄</span>
-            <span>Actualizar</span>
-          </button>
-          <button onClick={()=>setShowBriefing(true)} style={{display:"flex",alignItems:"center",gap:4,background:isPro?"rgba(59,130,246,0.12)":"rgba(124,58,237,0.15)",border:`1px solid ${isPro?"rgba(59,130,246,0.3)":"rgba(124,58,237,0.4)"}`,borderRadius:100,padding:"5px 10px",color:isPro?"#60a5fa":"#c4b5fd",fontSize:10,fontWeight:700,cursor:"pointer"}}>
-            <span style={{fontSize:14}}>🎙️</span>{!isPro&&<span style={{fontSize:9}}>🔒</span>}
-          </button>
-        </div>
-      </div>
-
-      {/* BODY */}
-      {s&&(
-        <div style={{flex:1,display:"flex",flexDirection:"column",padding:"6px 12px",overflow:"hidden",gap:6,position:"relative",zIndex:1}}>
-
-          {/* STORY CARD */}
-          <div className="neon-b" style={{borderRadius:14,background:"rgba(10,12,30,0.75)",backdropFilter:"blur(12px)",padding:"9px 10px",display:"flex",gap:9,alignItems:"flex-start",animation:"fadeUp .3s ease",flexShrink:0}}>
-            <div style={{flex:1}}>
-              <div style={{display:"flex",gap:5,marginBottom:6}}>
-                <span style={{fontSize:8,fontWeight:800,padding:"2px 8px",borderRadius:100,background:"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.4)",color:"#f87171",textTransform:"uppercase",display:"flex",alignItems:"center",gap:3}}>
-                  <span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>AHORA
-                </span>
-                <span style={{fontSize:8,fontWeight:700,padding:"2px 8px",borderRadius:100,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)"}}>{s.cat}</span>
-              </div>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:900,lineHeight:1.2,marginBottom:3}}>{s.headline}</div>
-              <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>{s.time}</div>
-            </div>
-            {s.img&&(
-              <div style={{width:58,height:58,borderRadius:10,overflow:"hidden",flexShrink:0}}>
-                <img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}} onError={e=>e.target.parentNode.style.display="none"}/>
-              </div>
-            )}
-          </div>
-
-          {/* MEME CARD */}
-          <div className="neon" style={{borderRadius:14,overflow:"hidden",background:"rgba(10,8,28,0.8)",flexShrink:0,animation:"fadeUp .35s ease"}}>
-            <div style={{padding:"6px 10px 4px",display:"inline-flex",alignItems:"center",gap:4,background:"rgba(139,92,246,0.2)",borderRadius:"0 0 10px 0",border:"1px solid rgba(139,92,246,0.35)"}}>
-              <span style={{fontSize:11}}>🤣</span><span style={{fontSize:9,fontWeight:800,color:"#c4b5fd"}}>Meme take</span>
-            </div>
-            <div style={{margin:"4px 10px 0",borderRadius:12,overflow:"hidden",position:"relative",height:110,background:"linear-gradient(135deg,#1a1a2e,#0d0d1f)"}}>
-              {s.img&&<img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.45)"}} onError={e=>e.target.style.display="none"}/>}
-              <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.15)"}}/>
-              <div style={{position:"absolute",top:10,left:12,right:12,fontSize:14,fontWeight:900,lineHeight:1.3,textShadow:"0 2px 8px rgba(0,0,0,0.9)"}}>
-                {s.memeText.split("\n").map((l,i)=><div key={i}>{l}</div>)}
-              </div>
-            </div>
-            <div style={{padding:"7px 12px 8px",display:"flex",alignItems:"center",gap:12}}>
-              <button onClick={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))} style={{display:"flex",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",color:liked[s.id]?"#ef4444":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700}}>
-                <span style={{fontSize:15}}>{liked[s.id]?"❤️":"🤍"}</span>{s.r.h}
-              </button>
-              <button onClick={()=>setShowAI(a=>!a)} style={{display:"flex",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",color:showAI?"#a78bfa":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700}}>
-                <span style={{fontSize:15}}>💬</span>{s.r.c}
-              </button>
-              {s.url&&<a href={s.url} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:4,color:"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700,textDecoration:"none"}}><span style={{fontSize:15}}>🔗</span>{s.r.s}</a>}
-              <button style={{marginLeft:"auto",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,padding:"5px 10px",color:"rgba(255,255,255,0.6)",fontSize:10,fontWeight:700,cursor:"pointer"}}>↗️ Share</button>
-            </div>
-          </div>
-
-          {/* VIBE SELECTOR */}
-          <div style={{flexShrink:0}}>
-            <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.35)",marginBottom:5}}>Choose how to get it 👇</div>
-            <div style={{display:"flex",gap:5,overflowX:"auto",scrollbarWidth:"none"}}>
-              {VIBES.map(v=>(
-                <button key={v.k} onClick={()=>pickVibe(v.k)} style={{display:"flex",alignItems:"center",gap:4,padding:"6px 11px",borderRadius:100,border:`1.5px solid ${vibe===v.k?v.c:"rgba(255,255,255,0.12)"}`,background:vibe===v.k?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.03)",boxShadow:vibe===v.k?`0 0 8px ${v.c}55`:"none",cursor:"pointer",flexShrink:0}}>
-                  <span style={{fontSize:14}}>{v.i}</span>
-                  <span style={{fontSize:11,fontWeight:800,color:vibe===v.k?v.c:"rgba(255,255,255,0.5)"}}>{v.l}</span>
-                  {v.lock&&!isPro&&<span style={{fontSize:9,opacity:.6}}>🔒</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* VIBE CONTENT */}
-          {!showAI&&(
-            <div style={{borderRadius:13,background:"rgba(10,8,28,0.75)",border:`1px solid ${vd.br}`,padding:"10px 12px",animation:"fadeUp .25s ease",flexShrink:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
-                <span style={{fontSize:14}}>{vd.i}</span>
-                <span style={{fontSize:12,fontWeight:800,color:vd.c}}>{vd.l}:</span>
-              </div>
-              <div style={{fontSize:13,color:"rgba(255,255,255,0.8)",lineHeight:1.6}}>{s.vibes[vibe]||s.vibes.Quick}</div>
-            </div>
-          )}
-
-          {/* AI PANEL */}
-          {showAI&&(
-            <div style={{borderRadius:13,background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.07))",border:"1px solid rgba(139,92,246,0.3)",padding:"10px",animation:"fadeUp .25s ease",flexShrink:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:8}}>
-                <div style={{width:26,height:26,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>🤖</div>
-                <div style={{flex:1,fontSize:11,fontWeight:800}}>JAIK {!isPro&&<span style={{color:"rgba(255,255,255,0.3)",fontWeight:400}}>· {Math.max(0,3-aiN)} gratis</span>}</div>
-                <button onClick={()=>setShowAI(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:15,cursor:"pointer"}}>✕</button>
-              </div>
-              <div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:7}}>
-                {["¿Por qué pasó esto?","¿Cómo me afecta?","Dame el contexto"].map((q,i)=>(
-                  <button key={i} onClick={()=>askAI(q)} style={{padding:"5px 9px",background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.18)",borderRadius:8,color:"rgba(255,255,255,0.65)",fontSize:10,cursor:"pointer",textAlign:"left"}}>→ {q}</button>
-                ))}
-              </div>
-              <div style={{display:"flex",gap:5}}>
-                <input id="aiQ" placeholder="Pregúntale a JAIK..." onKeyDown={e=>e.key==="Enter"&&askAI(e.target.value)}
-                  style={{flex:1,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 9px",color:"#fff",fontSize:10,outline:"none"}}/>
-                <button onClick={()=>askAI(document.getElementById("aiQ")?.value)} style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"#fff",fontSize:13,cursor:"pointer"}}>↑</button>
-              </div>
-              {(aiLoad||aiAns)&&<div style={{marginTop:7,background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.15)",borderRadius:8,padding:"8px 10px",fontSize:11,color:"#e8f0fe",lineHeight:1.6}}>{aiLoad?"⚡ Pensando...":aiAns}</div>}
-            </div>
-          )}
-
-          {/* FOOTER */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
-            <div style={{fontSize:9,color:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",gap:5}}>
-              {loadingMore?<span style={{animation:"pulse 1s infinite"}}>⚡ Cargando más...</span>:<span>↑ desliza · {si+1}/{articles.length}</span>}
-            </div>
-            <button onClick={()=>pickVibe(VIBES[(VIBES.findIndex(v=>v.k===vibe)+1)%VIBES.length].k)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:100,padding:"5px 12px",color:"rgba(255,255,255,0.5)",fontSize:10,fontWeight:700,cursor:"pointer"}}>🔄 Change vibe</button>
-          </div>
-        </div>
-      )}
-
-      {/* BOTTOM NAV */}
-      <div style={{background:"rgba(5,5,15,0.95)",backdropFilter:"blur(20px)",borderTop:"1px solid rgba(139,92,246,0.25)",display:"flex",zIndex:20,flexShrink:0}}>
-        {[["🏠","Feed"],["🔥","Hot"],["🤖","AI"],["🔍","Search"],["⭐","Pro"]].map(([e,l])=>(
-          <button key={l} onClick={()=>{
-            if(l==="AI"){setShowAI(a=>!a);}
-            else if(l==="Pro"){setShowPay(true);}
-            else if(l==="Search"){setShowSearch(true);}
-          }}
-            style={{flex:1,padding:"9px 0 11px",background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-            <span style={{fontSize:18}}>{e}</span>
-            <span style={{fontSize:8,fontWeight:700,color:l==="Pro"?"#7c3aed":"rgba(255,255,255,0.3)"}}>{isPro&&l==="Pro"?"✓ Pro":l}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-</script>
-</body>
-</html>
+                <div style={{fontSize:9,fontWeight:700,color:"rgba(255,255,255,0.35)",marginBottom:3,textTransform:"uppercase"
