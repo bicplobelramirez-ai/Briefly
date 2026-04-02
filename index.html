@@ -4,11 +4,11 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
   <title>QuickNews</title>
+  <link rel="manifest" href="/manifest.json"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <link rel="manifest" href="/manifest.json"/>
-  <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
@@ -18,11 +18,13 @@
     @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
     @keyframes twinkle{0%,100%{opacity:0.2;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
     @keyframes neonglow{0%,100%{box-shadow:0 0 6px rgba(139,92,246,0.4)}50%{box-shadow:0 0 18px rgba(139,92,246,0.7)}}
+    @keyframes breakingglow{0%,100%{box-shadow:0 0 8px rgba(239,68,68,0.5)}50%{box-shadow:0 0 24px rgba(239,68,68,0.9)}}
     @keyframes wave{0%,100%{height:4px}50%{height:26px}}
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
     .neon{border:1px solid rgba(139,92,246,0.35)!important;animation:neonglow 3s ease-in-out infinite;}
     .neon-b{border:1px solid rgba(59,130,246,0.4)!important;box-shadow:0 0 8px rgba(59,130,246,0.2);}
+    .breaking-card{border:1px solid rgba(239,68,68,0.6)!important;animation:breakingglow 2s ease-in-out infinite;}
   </style>
 </head>
 <body>
@@ -51,21 +53,123 @@ const CATS=[
   {k:"mundial",i:"🌎",l:"Mundial",color:"#f97316"},
 ];
 
-function QNLogo(){
+/* ── ADMIN PANEL ── */
+function AdminPanel({onClose}){
+  const [pass,setPass]=useState("");
+  const [headline,setHeadline]=useState("");
+  const [desc,setDesc]=useState("");
+  const [cat,setCat]=useState("🔴 URGENTE");
+  const [status,setStatus]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [hasBreaking,setHasBreaking]=useState(false);
+
+  useEffect(()=>{
+    fetch("/api/get-breaking").then(r=>r.json()).then(d=>{
+      if(d)setHasBreaking(true);
+    }).catch(()=>{});
+  },[]);
+
+  async function publish(){
+    if(!pass||!headline){setStatus("⚠️ Completa todos los campos");return;}
+    setLoading(true);setStatus("");
+    try{
+      const r=await fetch("/api/breaking",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass,headline,description:desc,cat})});
+      const d=await r.json();
+      if(d.ok){setStatus("✅ ¡Noticia publicada!");setHasBreaking(true);setHeadline("");setDesc("");}
+      else setStatus("❌ "+d.error);
+    }catch{setStatus("❌ Error de conexión");}
+    setLoading(false);
+  }
+
+  async function remove(){
+    if(!pass){setStatus("⚠️ Ingresa la contraseña");return;}
+    setLoading(true);
+    try{
+      const r=await fetch("/api/breaking",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass})});
+      const d=await r.json();
+      if(d.ok){setStatus("✅ Noticia eliminada");setHasBreaking(false);}
+      else setStatus("❌ "+d.error);
+    }catch{setStatus("❌ Error");}
+    setLoading(false);
+  }
+
   return(
-    <svg width="24" height="24" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="qngrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#a78bfa"/>
-          <stop offset="100%" stopColor="#3b82f6"/>
-        </linearGradient>
-      </defs>
-      <path d="M8 40 L68 14 L50 66 L38 48 Z" fill="url(#qngrad)"/>
-      <path d="M38 48 L50 66 L44 50 Z" fill="rgba(0,0,0,0.25)"/>
-    </svg>
+    <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.95)",backdropFilter:"blur(20px)",overflowY:"auto",fontFamily:"'DM Sans',sans-serif",color:"#fff"}}>
+      <div style={{maxWidth:400,margin:"0 auto",padding:"16px 16px 40px"}}>
+        {/* Header */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:38,height:38,borderRadius:11,background:"linear-gradient(135deg,#ef4444,#dc2626)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>🔴</div>
+            <div>
+              <div style={{fontSize:15,fontWeight:900}}>Panel Admin</div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>Publicar noticia urgente</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer"}}>✕</button>
+        </div>
+
+        {/* Status breaking actual */}
+        {hasBreaking&&(
+          <div style={{background:"rgba(239,68,68,0.12)",border:"1px solid rgba(239,68,68,0.35)",borderRadius:13,padding:"10px 13px",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:16}}>🔴</span>
+            <div style={{flex:1,fontSize:12,color:"#fca5a5"}}>Hay una noticia urgente activa en el feed</div>
+            <button onClick={remove} disabled={loading} style={{padding:"4px 10px",background:"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.4)",borderRadius:100,color:"#f87171",fontSize:10,fontWeight:700,cursor:"pointer"}}>Eliminar</button>
+          </div>
+        )}
+
+        {/* Password */}
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>🔑 Contraseña admin</div>
+          <input type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="Tu contraseña secreta"
+            style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none"}}/>
+        </div>
+
+        {/* Categoría */}
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>📌 Etiqueta</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            {["🔴 URGENTE","⚡ BREAKING","🚨 ALERTA","📢 ANUNCIO","🏆 EXCLUSIVO"].map(c=>(
+              <button key={c} onClick={()=>setCat(c)} style={{padding:"5px 11px",borderRadius:100,border:"1.5px solid "+(cat===c?"#ef4444":"rgba(255,255,255,0.1)"),background:cat===c?"rgba(239,68,68,0.2)":"rgba(255,255,255,0.04)",color:cat===c?"#f87171":"rgba(255,255,255,0.5)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{c}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Titular */}
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>📰 Titular</div>
+          <textarea value={headline} onChange={e=>setHeadline(e.target.value)} placeholder="Escribe el titular de tu noticia urgente..."
+            style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none",resize:"none",height:80,fontFamily:"'DM Sans',sans-serif"}}/>
+        </div>
+
+        {/* Descripción */}
+        <div style={{marginBottom:18}}>
+          <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>📝 Descripción (opcional)</div>
+          <textarea value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Más detalles sobre la noticia..."
+            style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none",resize:"none",height:70,fontFamily:"'DM Sans',sans-serif"}}/>
+        </div>
+
+        {/* Status */}
+        {status&&(
+          <div style={{background:status.includes("✅")?"rgba(34,197,94,0.1)":"rgba(239,68,68,0.1)",border:"1px solid "+(status.includes("✅")?"rgba(34,197,94,0.3)":"rgba(239,68,68,0.3)"),borderRadius:10,padding:"9px 12px",marginBottom:12,fontSize:12,color:status.includes("✅")?"#4ade80":"#f87171"}}>
+            {status}
+          </div>
+        )}
+
+        {/* Botón publicar */}
+        <button onClick={publish} disabled={loading}
+          style={{width:"100%",padding:"14px",background:loading?"rgba(255,255,255,0.05)":"linear-gradient(135deg,#ef4444,#dc2626)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:loading?"rgba(255,255,255,0.3)":"#fff",cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7,marginBottom:8}}>
+          {loading?<><span style={{animation:"spin .8s linear infinite",display:"inline-block"}}>⚡</span>Publicando...</>:"🔴 Publicar ahora en el feed"}
+        </button>
+
+        <div style={{textAlign:"center",fontSize:10,color:"rgba(255,255,255,0.2)"}}>
+          La noticia aparecerá inmediatamente en la pantalla principal
+        </div>
+      </div>
+    </div>
   );
 }
 
+/* ── SEARCH SCREEN ── */
 function SearchScreen({onClose,onSelectArticle}){
   const [q,setQ]=useState("");
   const [results,setResults]=useState([]);
@@ -126,6 +230,7 @@ function SearchScreen({onClose,onSelectArticle}){
   );
 }
 
+/* ── PAYWALL ── */
 function Paywall({onClose,onBuy}){
   return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,0.88)",backdropFilter:"blur(18px)",display:"flex",alignItems:"flex-end"}}>
@@ -147,6 +252,7 @@ function Paywall({onClose,onBuy}){
   );
 }
 
+/* ── PRO PANEL ── */
 function ProPanel({story,onClose}){
   return(
     <div style={{position:"fixed",inset:0,zIndex:350,background:"rgba(0,0,0,0.92)",backdropFilter:"blur(16px)",overflowY:"auto",color:"#fff"}}>
@@ -180,6 +286,7 @@ function ProPanel({story,onClose}){
   );
 }
 
+/* ── BRIEFING PANEL ── */
 function BriefingPanel({onClose,isPro,onUpgrade,articles}){
   const [hour,setHour]=useState("07:00");
   const [duration,setDuration]=useState("5");
@@ -312,6 +419,7 @@ function BriefingPanel({onClose,isPro,onUpgrade,articles}){
   );
 }
 
+/* ── MAIN APP ── */
 function App(){
   const [articles,setArticles]=useState([]);
   const [si,setSi]=useState(0);
@@ -322,6 +430,7 @@ function App(){
   const [isPro,setIsPro]=useState(false);
   const [showBriefing,setShowBriefing]=useState(false);
   const [showSearch,setShowSearch]=useState(false);
+  const [showAdmin,setShowAdmin]=useState(false);
   const [showAI,setShowAI]=useState(false);
   const [aiAns,setAiAns]=useState("");
   const [aiLoad,setAiLoad]=useState(false);
@@ -330,8 +439,10 @@ function App(){
   const [loadingMore,setLoadingMore]=useState(false);
   const [page,setPage]=useState(1);
   const [activeCat,setActiveCat]=useState("");
+  const [tapCount,setTapCount]=useState(0);
   const ty=useRef(null);
   const timer=useRef(null);
+  const tapTimer=useRef(null);
 
   useEffect(()=>{
     loadNews(1,true,activeCat);
@@ -342,12 +453,23 @@ function App(){
   async function loadNews(p,replace,cat){
     if(p===1)setLoading(true); else setLoadingMore(true);
     try{
+      // Cargar breaking news primero
+      let breaking=null;
+      if(p===1){
+        try{
+          const rb=await fetch("/api/get-breaking");
+          breaking=await rb.json();
+        }catch{}
+      }
+
       let url="/api/news?page="+p;
       if(cat)url+="&cat="+cat;
       const r=await fetch(url);
       const data=await r.json();
-      if(Array.isArray(data)&&data.length>0){
-        setArticles(prev=>replace?data:[...prev,...data]);
+
+      if(Array.isArray(data)){
+        const combined=breaking&&p===1?[breaking,...data]:data;
+        setArticles(prev=>replace?combined:[...prev,...data]);
         setPage(p);
         if(replace)setSi(0);
       }
@@ -361,6 +483,19 @@ function App(){
     if(next>=0&&next<articles.length){
       setSi(next);
       if(d===1&&next>=articles.length-2&&!loadingMore)loadNews(page+1,false,activeCat);
+    }
+  }
+
+  // Triple tap en logo para abrir admin
+  function handleLogoTap(){
+    const newCount=tapCount+1;
+    setTapCount(newCount);
+    clearTimeout(tapTimer.current);
+    if(newCount>=3){
+      setShowAdmin(true);
+      setTapCount(0);
+    } else {
+      tapTimer.current=setTimeout(()=>setTapCount(0),1000);
     }
   }
 
@@ -380,6 +515,7 @@ function App(){
 
   const s=articles[si];
   const vd=VIBES.find(v=>v.k===vibe)||VIBES[1];
+  const isBreaking=s&&s.breaking;
 
   return(
     <div
@@ -395,19 +531,18 @@ function App(){
         {STARS.map(([x,y,r,d],i)=><div key={i} style={{position:"absolute",left:x+"%",top:y+"%",width:r*2,height:r*2,borderRadius:"50%",background:"#fff",animation:"twinkle "+d+"s "+(i*0.3)+"s ease-in-out infinite"}}/>)}
       </div>
 
-      {/* LOADING SCREEN */}
+      {/* LOADING */}
       {loading&&(
         <div style={{position:"fixed",inset:0,zIndex:500,background:"#05050f",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}>
           <div style={{fontSize:40,animation:"spin 1s linear infinite",display:"inline-block"}}>✈️</div>
-          <div style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.5)"}}>
-            {activeCat?("Cargando "+CATS.find(c=>c.k===activeCat)?.l+"..."):"Cargando noticias..."}
-          </div>
+          <div style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.5)"}}>Cargando noticias...</div>
           <div style={{display:"flex",gap:6}}>
             {[0,1,2].map(i=><div key={i} style={{width:6,height:6,borderRadius:"50%",background:"#6366f1",animation:"blink 1s "+(i*0.3)+"s infinite"}}/>)}
           </div>
         </div>
       )}
 
+      {showAdmin&&<AdminPanel onClose={()=>{setShowAdmin(false);loadNews(1,true,activeCat);}}/>}
       {showSearch&&<SearchScreen onClose={()=>setShowSearch(false)} onSelectArticle={a=>{setArticles(p=>[a,...p]);setSi(0);setShowSearch(false);}}/>}
       {showPro&&s&&<ProPanel story={s} onClose={()=>setShowPro(false)}/>}
       {showPay&&<Paywall onClose={()=>setShowPay(false)} onBuy={()=>{setIsPro(true);setShowPay(false);}}/>}
@@ -415,8 +550,12 @@ function App(){
 
       {/* HEADER */}
       <div style={{padding:"8px 12px 6px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,background:"rgba(9,9,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.05)",position:"relative",zIndex:10}}>
-        <div style={{display:"flex",alignItems:"center",gap:7}}>
-          <QNLogo/>
+        <div style={{display:"flex",alignItems:"center",gap:7}} onClick={handleLogoTap}>
+          <svg width="24" height="24" viewBox="0 0 80 80" fill="none">
+            <defs><linearGradient id="qngrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#a78bfa"/><stop offset="100%" stopColor="#3b82f6"/></linearGradient></defs>
+            <path d="M8 40 L68 14 L50 66 L38 48 Z" fill="url(#qngrad)"/>
+            <path d="M38 48 L50 66 L44 50 Z" fill="rgba(0,0,0,0.25)"/>
+          </svg>
           <div>
             <div style={{fontSize:15,fontWeight:900,letterSpacing:-.5,lineHeight:1}}>QuickNews</div>
             <div style={{fontSize:8,color:"rgba(255,255,255,0.3)"}}>
@@ -432,8 +571,16 @@ function App(){
         </div>
       </div>
 
+      {/* BREAKING BANNER */}
+      {isBreaking&&(
+        <div style={{padding:"5px 12px",background:"rgba(239,68,68,0.15)",borderBottom:"1px solid rgba(239,68,68,0.3)",flexShrink:0,display:"flex",alignItems:"center",gap:7,position:"relative",zIndex:9}}>
+          <span style={{width:7,height:7,borderRadius:"50%",background:"#ef4444",flexShrink:0,animation:"blink .7s infinite"}}/>
+          <span style={{fontSize:10,fontWeight:800,color:"#f87171",letterSpacing:1,textTransform:"uppercase"}}>🔴 Noticia urgente activa</span>
+        </div>
+      )}
+
       {/* CATEGORY PILLS */}
-      <div style={{padding:"5px 10px",background:"rgba(9,9,18,0.95)",borderBottom:"1px solid rgba(255,255,255,0.04)",flexShrink:0,display:"flex",gap:5,overflowX:"auto",scrollbarWidth:"none",position:"relative",zIndex:9}}>
+      <div style={{padding:"5px 10px",background:"rgba(9,9,18,0.95)",borderBottom:"1px solid rgba(255,255,255,0.04)",flexShrink:0,display:"flex",gap:5,overflowX:"auto",scrollbarWidth:"none",position:"relative",zIndex:8}}>
         {CATS.map(c=>(
           <button key={c.k} onClick={()=>setActiveCat(c.k)}
             style={{display:"flex",alignItems:"center",gap:3,padding:"4px 10px",borderRadius:100,border:"1.5px solid "+(activeCat===c.k?c.color:"rgba(255,255,255,0.08)"),background:activeCat===c.k?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.03)",color:activeCat===c.k?c.color:"rgba(255,255,255,0.45)",fontSize:10,fontWeight:700,cursor:"pointer",flexShrink:0,boxShadow:activeCat===c.k?"0 0 8px "+c.color+"44":"none"}}>
@@ -447,15 +594,16 @@ function App(){
         <div style={{flex:1,display:"flex",flexDirection:"column",padding:"5px 11px",overflow:"hidden",gap:5,position:"relative",zIndex:1}}>
 
           {/* STORY */}
-          <div className="neon-b" style={{borderRadius:13,background:"rgba(10,12,30,0.75)",backdropFilter:"blur(12px)",padding:"8px 10px",display:"flex",gap:8,alignItems:"flex-start",animation:"fadeUp .3s ease",flexShrink:0}}>
+          <div className={isBreaking?"breaking-card":"neon-b"} style={{borderRadius:13,background:isBreaking?"rgba(30,5,5,0.85)":"rgba(10,12,30,0.75)",backdropFilter:"blur(12px)",padding:"8px 10px",display:"flex",gap:8,alignItems:"flex-start",animation:"fadeUp .3s ease",flexShrink:0}}>
             <div style={{flex:1}}>
-              <div style={{display:"flex",gap:5,marginBottom:5}}>
-                <span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.4)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}>
-                  <span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>AHORA
+              <div style={{display:"flex",gap:5,marginBottom:5,flexWrap:"wrap"}}>
+                <span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:isBreaking?"rgba(239,68,68,0.3)":"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.5)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}>
+                  <span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>
+                  {isBreaking?"🔴 URGENTE":"AHORA"}
                 </span>
                 <span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)"}}>{s.cat}</span>
               </div>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,marginBottom:2}}>{s.headline}</div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,marginBottom:2,color:isBreaking?"#fca5a5":"#fff"}}>{s.headline}</div>
               <div style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>{s.time}</div>
             </div>
             {s.img&&<div style={{width:52,height:52,borderRadius:9,overflow:"hidden",flexShrink:0}}><img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}} onError={e=>e.target.parentNode.style.display="none"}/></div>}
