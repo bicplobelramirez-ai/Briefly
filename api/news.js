@@ -3,12 +3,27 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET");
 
   const key = process.env.GNEWS_API_KEY;
-  const { q, page = 1 } = req.query;
+  const { q, page = 1, cat } = req.query;
 
-  // Búsqueda por keyword o top headlines
-  const url = q
-    ? `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=es&max=10&page=${page}&apikey=${key}`
-    : `https://gnews.io/api/v4/top-headlines?lang=es&country=any&max=10&page=${page}&apikey=${key}`;
+  // Mapeo de categorías a topics de GNews
+  const catMap = {
+    "politica":       "nation",
+    "tech":           "technology",
+    "deportes":       "sports",
+    "economia":       "business",
+    "entretenimiento":"entertainment",
+    "ciencia":        "science",
+    "mundial":        "world",
+  };
+
+  let url;
+  if (q) {
+    url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=es&country=any&max=10&page=${page}&apikey=${key}`;
+  } else if (cat && catMap[cat]) {
+    url = `https://gnews.io/api/v4/top-headlines?topic=${catMap[cat]}&lang=es&country=any&max=10&page=${page}&apikey=${key}`;
+  } else {
+    url = `https://gnews.io/api/v4/top-headlines?lang=es&country=any&max=10&page=${page}&apikey=${key}`;
+  }
 
   try {
     const r = await fetch(url);
@@ -21,7 +36,7 @@ export default async function handler(req, res) {
     const news = data.articles
       .filter(a => a.title && a.description)
       .map((a, i) => ({
-        id: `${page}-${i}`,
+        id: `${cat||"all"}-${page}-${i}`,
         cat: a.source?.name || "Mundial",
         time: timeAgo(a.publishedAt),
         headline: a.title,
