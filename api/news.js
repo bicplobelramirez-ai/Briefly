@@ -3,26 +3,35 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET");
 
   const key = process.env.GNEWS_API_KEY;
-  const { q, page = 1, cat } = req.query;
+  const { q, page = 1, cat, country } = req.query;
 
-  // Mapeo de categorías a topics de GNews
-  const catMap = {
-    "politica":       "nation",
-    "tech":           "technology",
-    "deportes":       "sports",
-    "economia":       "business",
-    "entretenimiento":"entertainment",
-    "ciencia":        "science",
-    "mundial":        "world",
-  };
+  // Países soportados por GNews
+  const validCountries = ["ar","mx","co","cl","pe","ve","ec","bo","py","uy","cu","do","es","br","us","gt","hn","sv","ni","cr","pa"];
+
+  // Detectar país por IP si no se especifica
+  let detectedCountry = country || "any";
+  if (!country) {
+    const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket?.remoteAddress;
+    try {
+      const geoRes = await fetch(`https://ipapi.co/${ip}/country_code/`);
+      const code = (await geoRes.text()).toLowerCase().trim();
+      if (validCountries.includes(code)) detectedCountry = code;
+    } catch {}
+  }
 
   let url;
   if (q) {
-    url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=es&country=any&max=10&page=${page}&apikey=${key}`;
-  } else if (cat && catMap[cat]) {
-    url = `https://gnews.io/api/v4/top-headlines?topic=${catMap[cat]}&lang=es&country=any&max=10&page=${page}&apikey=${key}`;
+    url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=es&country=${detectedCountry}&max=10&page=${page}&apikey=${key}`;
+  } else if (cat) {
+    const catMap = {
+      politica:"nation", tech:"technology", deportes:"sports",
+      economia:"business", entretenimiento:"entertainment",
+      ciencia:"science", mundial:"world",
+    };
+    const topic = catMap[cat] || "general";
+    url = `https://gnews.io/api/v4/top-headlines?topic=${topic}&lang=es&country=${detectedCountry}&max=10&page=${page}&apikey=${key}`;
   } else {
-    url = `https://gnews.io/api/v4/top-headlines?lang=es&country=any&max=10&page=${page}&apikey=${key}`;
+    url = `https://gnews.io/api/v4/top-headlines?lang=es&country=${detectedCountry}&max=10&page=${page}&apikey=${key}`;
   }
 
   try {
@@ -30,35 +39,51 @@ export default async function handler(req, res) {
     const data = await r.json();
 
     if (!data.articles || data.articles.length === 0) {
-      return res.status(200).json([]);
+      // Fallback a "any" si no hay noticias para ese país
+      if (detectedCountry !== "any") {
+        const fallbackUrl = url.replace(`country=${detectedCountry}`, "country=any");
+        const r2 = await fetch(fallbackUrl);
+        const data2 = await r2.json();
+        if (data2.articles?.length > 0) {
+          return res.status(200).json({
+            country: detectedCountry,
+            fallback: true,
+            articles: mapArticles(data2.articles, page)
+          });
+        }
+      }
+      return res.status(200).json({ country: detectedCountry, articles: [] });
     }
 
-    const news = data.articles
-      .filter(a => a.title && a.description)
-      .map((a, i) => ({
-        id: `${cat||"all"}-${page}-${i}`,
-        cat: a.source?.name || "Mundial",
-        time: timeAgo(a.publishedAt),
-        headline: a.title,
-        description: a.description,
-        img: a.image || "",
-        url: a.url,
-        memeText: a.title.length > 60
-          ? a.title.substring(0, 55) + "... 👀"
-          : a.title + " 👀",
-        r: { h: rnd(5,50)+"K", c: rnd(1,15)+"K", s: rnd(1,8)+"K" },
-        vibes: {
-          ELI5: `En palabras simples: ${a.description}`,
-          Quick: a.description,
-          Real: `Sin filtro: ${a.title}. ${a.description}`,
-          Meme: `Cuando ves que ${a.title.substring(0,60)}... 💀`,
-        }
-      }));
-
-    res.status(200).json(news);
+    res.status(200).json({
+      country: detectedCountry,
+      articles: mapArticles(data.articles, page)
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+}
+
+function mapArticles(articles, page) {
+  return articles
+    .filter(a => a.title && a.description)
+    .map((a, i) => ({
+      id: `${page}-${i}`,
+      cat: a.source?.name || "Local",
+      time: timeAgo(a.publishedAt),
+      headline: a.title,
+      description: a.description,
+      img: a.image || "",
+      url: a.url,
+      memeText: a.title.length > 60 ? a.title.substring(0, 55) + "... 👀" : a.title + " 👀",
+      r: { h: rnd(5,50)+"K", c: rnd(1,15)+"K", s: rnd(1,8)+"K" },
+      vibes: {
+        ELI5: `En palabras simples: ${a.description}`,
+        Quick: a.description,
+        Real: `Sin filtro: ${a.title}. ${a.description}`,
+        Meme: `Cuando ves que ${a.title.substring(0,60)}... 💀`,
+      }
+    }));
 }
 
 function timeAgo(dateStr) {
