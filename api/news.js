@@ -1,11 +1,12 @@
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Cache-Control", "s-maxage=300");
 
-  const key = process.env.GNEWS_API_KEY;
+  const key = process.env.NEWSDATA_API_KEY;
+  const gnewsKey = process.env.GNEWS_API_KEY;
   const { q, page = 1, cat, country } = req.query;
 
-  // Detectar país por IP si no se especifica
+  // Detectar país por IP
   const validCountries = ["ar","mx","co","cl","pe","ve","ec","bo","py","uy","cu","do","es","br","us","gt","hn","sv","ni","cr","pa"];
   let detectedCountry = country || "any";
 
@@ -18,96 +19,136 @@ export default async function handler(req, res) {
     } catch {}
   }
 
-  // 🇩🇴 Si es República Dominicana, usar fuentes locales via RSS
+  // 🇩🇴 República Dominicana — usar NewsData.io directo
   if (detectedCountry === "do") {
-    try {
-      const host = req.headers.host;
-      const proto = req.headers["x-forwarded-proto"] || "https";
-      const rdUrl = `${proto}://${host}/api/rd-news?page=${page}${cat?"&cat="+cat:""}${q?"&q="+encodeURIComponent(q):""}`;
-      const rdRes = await fetch(rdUrl);
-      const rdData = await rdRes.json();
-      if(rdData.articles?.length > 0) return res.status(200).json(rdData);
-    } catch {}
+    return handleNewsData(req, res, key, "do", cat, q, page);
   }
-  // Para otros países, usar GNews
+
+  // Mapeo categorías NewsData
   const catMap = {
-    politica:"nation", tech:"technology", deportes:"sports",
+    politica:"politics", tech:"technology", deportes:"sports",
     economia:"business", entretenimiento:"entertainment",
     ciencia:"science", mundial:"world",
   };
 
-  let url;
-  if (q) {
-    url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=es&country=${detectedCountry}&max=10&page=${page}&apikey=${key}`;
-  } else if (cat && catMap[cat]) {
-    url = `https://gnews.io/api/v4/top-headlines?topic=${catMap[cat]}&lang=es&country=${detectedCountry}&max=10&page=${page}&apikey=${key}`;
-  } else {
-    url = `https://gnews.io/api/v4/top-headlines?lang=es&country=${detectedCountry}&max=10&page=${page}&apikey=${key}`;
+  // Intentar NewsData.io primero (más confiable por país)
+  if (key && detectedCountry !== "any") {
+    try {
+      let url = `https://newsdata.io/api/1/news?apikey=${key}&language=es&size=10`;
+      url += `&country=${detectedCountry}`;
+      if (cat && catMap[cat]) url += `&category=${catMap[cat]}`;
+      if (q) url += `&q=${encodeURIComponent(q)}`;
+
+      const r = await fetch(url);
+      const data = await r.json();
+
+      if (data.status === "success" && data.results?.length > 0) {
+        return res.status(200).json({
+          country: detectedCountry,
+          articles: mapNewsData(data.results, page)
+        });
+      }
+    } catch {}
   }
 
+  // Fallback: GNews sin país específico
   try {
+    let gnewsUrl = `https://gnews.io/api/v4/top-headlines?lang=es&country=any&max=10&apikey=${gnewsKey}`;
+    if (cat && catMap[cat]) gnewsUrl = `https://gnews.io/api/v4/top-headlines?topic=${catMap[cat]}&lang=es&country=any&max=10&apikey=${gnewsKey}`;
+    if (q) gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=es&max=10&apikey=${gnewsKey}`;
+
+    const r = await fetch(gnewsUrl);
+    const data = await r.json();
+
+    if (data.articles?.length > 0) {
+      return res.status(200).json({
+        country: detectedCountry,
+        articles: mapGNews(data.articles, page)
+      });
+    }
+  } catch {}
+
+  res.status(200).json({ country: detectedCountry, articles: [] });
+}
+
+async function handleNewsData(req, res, key, country, cat, q, page) {
+  const catMap = {
+    politica:"politics", tech:"technology", deportes:"sports",
+    economia:"business", entretenimiento:"entertainment",
+    ciencia:"science", mundial:"world",
+  };
+  try {
+    let url = `https://newsdata.io/api/1/news?apikey=${key}&language=es&country=${country}&size=10`;
+    if (cat && catMap[cat]) url += `&category=${catMap[cat]}`;
+    if (q) url += `&q=${encodeURIComponent(q)}`;
+
     const r = await fetch(url);
     const data = await r.json();
 
-    if (!data.articles || data.articles.length === 0) {
-      // Fallback a "any"
-      if (detectedCountry !== "any") {
-        const fallbackUrl = url.replace(`country=${detectedCountry}`, "country=any");
-        const r2 = await fetch(fallbackUrl);
-        const data2 = await r2.json();
-        if (data2.articles?.length > 0) {
-          return res.status(200).json({
-            country: detectedCountry,
-            fallback: true,
-            articles: mapArticles(data2.articles, page)
-          });
-        }
-      }
-      return res.status(200).json({ country: detectedCountry, articles: [] });
+    if (data.status === "success" && data.results?.length > 0) {
+      return res.status(200).json({
+        country,
+        articles: mapNewsData(data.results, page)
+      });
     }
-
-    res.status(200).json({
-      country: detectedCountry,
-      articles: mapArticles(data.articles, page)
-    });
+    return res.status(200).json({ country, articles: [] });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.message });
   }
 }
 
-function getBaseUrl(req) {
-  const proto = req.headers["x-forwarded-proto"] || "https";
-  const host = req.headers.host;
-  return `${proto}://${host}`;
+function mapNewsData(results, page) {
+  return results
+    .filter(a => a.title)
+    .map((a, i) => ({
+      id: `nd-${page}-${i}`,
+      cat: a.source_id || a.source_name || "Local",
+      time: timeAgo(a.pubDate),
+      headline: a.title,
+      description: a.description || a.title,
+      img: a.image_url || "",
+      url: a.link || "",
+      memeText: a.title.substring(0, 55) + "... 👀",
+      r: { h: rnd(1,30)+"K", c: rnd(1,10)+"K", s: rnd(1,6)+"K" },
+      vibes: {
+        ELI5: "En palabras simples: " + (a.description || a.title),
+        Quick: a.description || a.title,
+        Real: "Sin filtro: " + a.title,
+        Meme: "Cuando ves que " + a.title.substring(0, 50) + "... 💀",
+      }
+    }));
 }
 
-function mapArticles(articles, page) {
+function mapGNews(articles, page) {
   return articles
     .filter(a => a.title && a.description)
     .map((a, i) => ({
-      id: `${page}-${i}`,
-      cat: a.source?.name || "Local",
+      id: `gn-${page}-${i}`,
+      cat: a.source?.name || "Mundial",
       time: timeAgo(a.publishedAt),
       headline: a.title,
       description: a.description,
       img: a.image || "",
       url: a.url,
-      memeText: a.title.length > 60 ? a.title.substring(0, 55) + "... 👀" : a.title + " 👀",
+      memeText: a.title.substring(0, 55) + "... 👀",
       r: { h: rnd(5,50)+"K", c: rnd(1,15)+"K", s: rnd(1,8)+"K" },
       vibes: {
-        ELI5: `En palabras simples: ${a.description}`,
+        ELI5: "En palabras simples: " + a.description,
         Quick: a.description,
-        Real: `Sin filtro: ${a.title}. ${a.description}`,
-        Meme: `Cuando ves que ${a.title.substring(0,60)}... 💀`,
+        Real: "Sin filtro: " + a.title + ". " + a.description,
+        Meme: "Cuando ves que " + a.title.substring(0, 60) + "... 💀",
       }
     }));
 }
 
 function timeAgo(dateStr) {
-  const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
-  if (diff < 60) return `hace ${diff} min`;
-  if (diff < 1440) return `hace ${Math.floor(diff/60)}h`;
-  return `hace ${Math.floor(diff/1440)}d`;
+  if (!dateStr) return "reciente";
+  try {
+    const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
+    if (diff < 60) return `hace ${diff} min`;
+    if (diff < 1440) return `hace ${Math.floor(diff/60)}h`;
+    return `hace ${Math.floor(diff/1440)}d`;
+  } catch { return "reciente"; }
 }
 
 function rnd(min, max) {
