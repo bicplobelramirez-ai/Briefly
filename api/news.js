@@ -21,14 +21,14 @@ export default async function handler(req, res) {
   // 🇩🇴 Si es República Dominicana, usar fuentes locales via RSS
   if (detectedCountry === "do") {
     try {
-      const rdRes = await fetch(`${getBaseUrl(req)}/api/rd-news?page=${page}${q ? "&q="+encodeURIComponent(q) : ""}`);
+      const host = req.headers.host;
+      const proto = req.headers["x-forwarded-proto"] || "https";
+      const rdUrl = `${proto}://${host}/api/rd-news?page=${page}${cat?"&cat="+cat:""}${q?"&q="+encodeURIComponent(q):""}`;
+      const rdRes = await fetch(rdUrl);
       const rdData = await rdRes.json();
-      return res.status(200).json(rdData);
-    } catch (e) {
-      // Si falla RD, continuar con GNews
-    }
+      if(rdData.articles?.length > 0) return res.status(200).json(rdData);
+    } catch {}
   }
-
   // Para otros países, usar GNews
   const catMap = {
     politica:"nation", tech:"technology", deportes:"sports",
