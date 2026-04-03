@@ -3,14 +3,15 @@ const RSS_FEEDS = [
   { name: "Diario Libre",   url: "https://www.diariolibre.com/rss/noticias.xml",    cats: ["politica","economia"] },
   { name: "El Caribe",      url: "https://www.elcaribe.com.do/feed/",               cats: ["politica","mundial"] },
   { name: "Acento",         url: "https://acento.com.do/feed/",                     cats: ["politica","economia"] },
-  { name: "El Día",         url: "https://eldia.com.do/feed/",                      cats: ["politica"] },
+  { name: "El Día", url: "https://www.eldia.do/feed/",                      cats: ["politica"] },
   { name: "Listín Deportes",url: "https://listindiario.com/deportes/rss",           cats: ["deportes"] },
   { name: "Diario Libre Dep",url:"https://www.diariolibre.com/rss/deportes.xml",    cats: ["deportes"] },
   { name: "Listín Entretenimiento", url:"https://listindiario.com/la-vida/rss",     cats: ["entretenimiento"] },
   { name: "Listín Economía",url: "https://listindiario.com/economia/rss",           cats: ["economia"] },
   { name: "Listín Ciencia", url: "https://listindiario.com/tecnologia/rss",         cats: ["ciencia","tech"] },
 ];
-
+{ name: "N Digital", url: "https://ndigital.do/feed/", cats: ["politica","economia"] },
+{ name: "CDN", url: "https://cdn.com.do/feed/", cats: ["politica","mundial"] },
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=300");
