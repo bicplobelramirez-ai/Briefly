@@ -340,17 +340,7 @@ function BriefingPanel({onClose,isPro,onUpgrade,articles}){
           <button onClick={onClose} style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer"}}>✕</button>
         </div>
         <div style={{padding:"16px"}}>
-          {!isPro&&(
-            <div>
-              <div style={{background:"linear-gradient(135deg,rgba(124,58,237,0.25),rgba(79,70,229,0.15))",border:"1px solid rgba(124,58,237,0.45)",borderRadius:16,padding:"18px",textAlign:"center",marginBottom:12}}>
-                <div style={{fontSize:32,marginBottom:8}}>🎙️</div>
-                <div style={{fontSize:16,fontWeight:900,marginBottom:6}}>Resumen de Audio Diario</div>
-                <div style={{fontSize:12,color:"rgba(255,255,255,0.55)",lineHeight:1.6,marginBottom:12}}>Noticias importantes en 5 o 10 minutos, generadas por IA con voz.</div>
-              </div>
-              <button onClick={onUpgrade} style={{width:"100%",padding:"14px",background:"linear-gradient(135deg,#7c3aed,#4f46e5)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer"}}>⭐ Activar Pro — 7 días gratis</button>
-            </div>
-          )}
-          {isPro&&!ready&&(
+          {!ready&&(
             <>
               <div style={{textAlign:"center",marginBottom:16}}>
                 <div style={{width:86,height:86,borderRadius:"50%",background:"linear-gradient(135deg,rgba(59,130,246,0.2),rgba(99,102,241,0.1))",border:"2px solid rgba(59,130,246,0.3)",display:"inline-flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}>
@@ -379,9 +369,11 @@ function BriefingPanel({onClose,isPro,onUpgrade,articles}){
                 ?<div style={{background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:14,padding:"12px",textAlign:"center",marginBottom:10}}><div style={{fontSize:18,marginBottom:4}}>✅</div><div style={{fontSize:13,fontWeight:800,color:"#4ade80"}}>¡Programado para las {hour}!</div></div>
                 :<button onClick={()=>setScheduled(true)} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginBottom:8}}>⏰ Programar para las {hour}</button>
               }
-              <button onClick={generate} disabled={generating} style={{width:"100%",padding:"13px",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,fontSize:13,fontWeight:700,color:generating?"rgba(255,255,255,0.3)":"rgba(255,255,255,0.7)",cursor:generating?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-                {generating?<><span style={{animation:"spin .8s linear infinite",display:"inline-block"}}>⚡</span>Generando...</>:"▶️ Escuchar ahora"}
+              <button onClick={generate} disabled={generating}
+                style={{width:"100%",padding:"13px",background:generating?"rgba(255,255,255,0.05)":"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",borderRadius:14,fontSize:13,fontWeight:700,color:generating?"rgba(255,255,255,0.3)":"#fff",cursor:generating?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7,boxShadow:generating?"none":"0 4px 15px rgba(59,130,246,0.35)"}}>
+                {generating?<><span style={{animation:"spin .8s linear infinite",display:"inline-block"}}>⚡</span>Generando...</>:<>▶️ Escuchar ahora {!isPro&&<span style={{fontSize:10,opacity:.8}}>· Pro</span>}</>}
               </button>
+              {!isPro&&<div style={{textAlign:"center",fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6}}>Activa Pro para escuchar tu resumen diario</div>}
             </>
           )}
           {isPro&&ready&&items.length>0&&(
@@ -707,4 +699,4 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
-</html> 
+</html>
