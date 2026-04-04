@@ -23,9 +23,15 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
     @keyframes slideUp{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
+    @keyframes slideInUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes slideInDown{from{opacity:0;transform:translateY(-40px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes slideOutUp{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-40px)}}
+    @keyframes slideOutDown{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(40px)}}
     .neon{border:1px solid rgba(139,92,246,0.35)!important;animation:neonglow 3s ease-in-out infinite;}
     .neon-b{border:1px solid rgba(59,130,246,0.4)!important;box-shadow:0 0 8px rgba(59,130,246,0.2);}
     .breaking-card{border:1px solid rgba(239,68,68,0.6)!important;animation:breakingglow 2s ease-in-out infinite;}
+    .slide-in-up{animation:slideInUp 0.35s cubic-bezier(0.22,1,0.36,1);}
+    .slide-in-down{animation:slideInDown 0.35s cubic-bezier(0.22,1,0.36,1);}
   </style>
 </head>
 <body>
@@ -453,6 +459,8 @@ function BriefingPanel({onClose,isPro,onUpgrade,articles}){
 function App(){
   const [articles,setArticles]=useState([]);
   const [si,setSi]=useState(0);
+  const [slideDir,setSlideDir]=useState("up");
+  const [animKey,setAnimKey]=useState(0);
   const [vibe,setVibe]=useState("Quick");
   const [liked,setLiked]=useState({});
   const [showPay,setShowPay]=useState(false);
@@ -515,6 +523,8 @@ function App(){
     setAiAns("");setShowAI(false);setShowPro(false);
     const next=si+d;
     if(next>=0&&next<articles.length){
+      setSlideDir(d===1?"up":"down");
+      setAnimKey(k=>k+1);
       setSi(next);
       if(d===1&&next>=articles.length-2&&!loadingMore)loadNews(page+1,false,activeCat,country);
     }
@@ -622,21 +632,40 @@ function App(){
 
       {/* BODY */}
       {s&&(
-        <div style={{flex:1,display:"flex",flexDirection:"column",padding:"5px 11px",overflow:"hidden",gap:5,position:"relative",zIndex:1}}>
+        <div key={animKey} className={slideDir==="up"?"slide-in-up":"slide-in-down"} style={{flex:1,display:"flex",flexDirection:"column",padding:"5px 11px",overflow:"hidden",gap:5,position:"relative",zIndex:1}}>
 
-          {/* STORY */}
-          <div className={isBreaking?"breaking-card":"neon-b"} style={{borderRadius:13,background:isBreaking?"rgba(30,5,5,0.85)":"rgba(10,12,30,0.75)",backdropFilter:"blur(12px)",padding:"8px 10px",display:"flex",gap:8,alignItems:"flex-start",animation:"fadeUp .3s ease",flexShrink:0}}>
-            <div style={{flex:1}}>
-              <div style={{display:"flex",gap:5,marginBottom:5,flexWrap:"wrap"}}>
-                <span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:isBreaking?"rgba(239,68,68,0.3)":"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.5)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}>
-                  <span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?"🔴 URGENTE":"AHORA"}
-                </span>
-                <span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)"}}>{s.cat}</span>
+          {/* STORY — imagen hero grande */}
+          <div className={isBreaking?"breaking-card":"neon-b"} style={{borderRadius:13,overflow:"hidden",background:isBreaking?"rgba(30,5,5,0.85)":"rgba(10,12,30,0.75)",backdropFilter:"blur(12px)",flexShrink:0}}>
+            {/* Hero image */}
+            {s.img&&(
+              <div style={{position:"relative",height:140,overflow:"hidden",background:"#111"}}>
+                <img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.7)"}} onError={e=>e.target.parentNode.style.display="none"}/>
+                <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 30%,rgba(10,12,30,0.95) 100%)"}}/>
+                <div style={{position:"absolute",bottom:8,left:10,right:10}}>
+                  <div style={{display:"flex",gap:5,marginBottom:4,flexWrap:"wrap"}}>
+                    <span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:isBreaking?"rgba(239,68,68,0.5)":"rgba(239,68,68,0.35)",border:"1px solid rgba(239,68,68,0.6)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}>
+                      <span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?"🔴 URGENTE":"AHORA"}
+                    </span>
+                    <span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.2)",color:"rgba(255,255,255,0.8)"}}>{s.cat}</span>
+                  </div>
+                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,color:isBreaking?"#fca5a5":"#fff",textShadow:"0 1px 4px rgba(0,0,0,0.8)"}}>{s.headline}</div>
+                  <div style={{fontSize:9,color:"rgba(255,255,255,0.5)",marginTop:2}}>{s.time}</div>
+                </div>
               </div>
-              <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,marginBottom:2,color:isBreaking?"#fca5a5":"#fff"}}>{s.headline}</div>
-              <div style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>{s.time}</div>
-            </div>
-            {s.img&&<div style={{width:52,height:52,borderRadius:9,overflow:"hidden",flexShrink:0}}><img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}} onError={e=>e.target.parentNode.style.display="none"}/></div>}
+            )}
+            {/* Sin imagen */}
+            {!s.img&&(
+              <div style={{padding:"8px 10px"}}>
+                <div style={{display:"flex",gap:5,marginBottom:5,flexWrap:"wrap"}}>
+                  <span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:isBreaking?"rgba(239,68,68,0.3)":"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.5)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}>
+                    <span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?"🔴 URGENTE":"AHORA"}
+                  </span>
+                  <span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)"}}>{s.cat}</span>
+                </div>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,marginBottom:2,color:isBreaking?"#fca5a5":"#fff"}}>{s.headline}</div>
+                <div style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>{s.time}</div>
+              </div>
+            )}
           </div>
 
           {/* MEME */}
