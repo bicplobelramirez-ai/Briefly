@@ -20,8 +20,16 @@ export default async function handler(req, res) {
   }
 
   // 🇩🇴 República Dominicana — usar NewsData.io directo
-  if (detectedCountry === "do") {
-    return handleNewsData(req, res, key, "do", cat, q, page);
+    if (detectedCountry === "us") {
+    try {
+      const host = req.headers.host;
+      const proto = req.headers["x-forwarded-proto"] || "https";
+      const usUrl = `${proto}://${host}/api/us-news?page=${page}${cat?"&cat="+cat:""}${q?"&q="+encodeURIComponent(q):""}`;
+      const usRes = await fetch(usUrl);
+      const usData = await usRes.json();
+      if(usData.articles?.length > 0) return res.status(200).json(usData);
+    } catch {}
+  }  return handleNewsData(req, res, key, "do", cat, q, page);
   }
 
   // Mapeo categorías NewsData
