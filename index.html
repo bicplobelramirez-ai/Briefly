@@ -15,21 +15,19 @@
 body{background:#05050f;font-family:'DM Sans',sans-serif;color:#fff;overflow:hidden;}
 ::-webkit-scrollbar{display:none;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes twinkle{0%,100%{opacity:0.2}50%{opacity:1;transform:scale(1.4)}}
 @keyframes neonglow{0%,100%{box-shadow:0 0 6px rgba(139,92,246,0.4)}50%{box-shadow:0 0 18px rgba(139,92,246,0.7)}}
 @keyframes breakingglow{0%,100%{box-shadow:0 0 8px rgba(239,68,68,0.5)}50%{box-shadow:0 0 24px rgba(239,68,68,0.9)}}
+@keyframes viralPulse{0%,100%{box-shadow:0 0 6px rgba(34,197,94,0.3)}50%{box-shadow:0 0 16px rgba(34,197,94,0.7)}}
 @keyframes wave{0%,100%{height:4px}50%{height:26px}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 @keyframes slideUp{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideInUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideInDown{from{opacity:0;transform:translateY(-40px)}to{opacity:1;transform:translateY(0)}}
-@keyframes memePop{0%{transform:scale(0.95)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
-.neon{border:1px solid rgba(139,92,246,0.35)!important;animation:neonglow 3s ease-in-out infinite;}
+@keyframes fireShake{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
 .neon-b{border:1px solid rgba(59,130,246,0.4)!important;box-shadow:0 0 8px rgba(59,130,246,0.2);}
 .breaking-card{border:1px solid rgba(239,68,68,0.6)!important;animation:breakingglow 2s ease-in-out infinite;}
-.meme-card{border:1px solid rgba(167,139,250,0.5)!important;animation:neonglow 2.5s ease-in-out infinite;}
 .slide-in-up{animation:slideInUp 0.35s cubic-bezier(0.22,1,0.36,1);}
 .slide-in-down{animation:slideInDown 0.35s cubic-bezier(0.22,1,0.36,1);}
 </style>
@@ -39,23 +37,18 @@ body{background:#05050f;font-family:'DM Sans',sans-serif;color:#fff;overflow:hid
 <script type="text/babel">
 const {useState,useRef,useEffect}=React;
 const T={
-es:{tagline:"noticias · live",now:"AHORA",urgent:"🔴 URGENTE",changeVibe:"🔄 Cambiar vibe",swipe:"↑ desliza",next:"↑ Siguiente",share:"↗️ Share",loading:"Cargando noticias...",noResults:"Sin resultados para",searchPlaceholder:"Buscar noticias...",hotTopics:"🔥 Temas populares",chooseRegion:"🌍 Elige tu región",regionSub:"Las noticias se filtrarán para tu país",thinking:"⚡ Pensando...",askJaik:"Pregúntale a JAIK...",proMode:"MODO PRO",proSub:"Análisis profundo",source:"FUENTE",summary:"EN RESUMEN",headline:"TITULAR",readFull:"↗️ Leer nota completa",back:"← Volver",memeMode:"Meme 🤣",seriousMode:"Serio 📰",eli5:"En palabras simples: ",real:"Sin filtro: ",memeText:"Cuando ves que ",free:"gratis",loadingMore:"Cargando más..."},
-en:{tagline:"news · live",now:"NOW",urgent:"🔴 URGENT",changeVibe:"🔄 Change vibe",swipe:"↑ swipe",next:"↑ Next",share:"↗️ Share",loading:"Loading news...",noResults:"No results for",searchPlaceholder:"Search news...",hotTopics:"🔥 Hot topics",chooseRegion:"🌍 Choose your region",regionSub:"News will be filtered for your country",thinking:"⚡ Thinking...",askJaik:"Ask JAIK...",proMode:"PRO MODE",proSub:"Deep analysis",source:"SOURCE",summary:"SUMMARY",headline:"HEADLINE",readFull:"↗️ Read full article",back:"← Back",memeMode:"Meme 🤣",seriousMode:"Serious 📰",eli5:"In simple words: ",real:"No filter: ",memeText:"When you see that ",free:"free",loadingMore:"Loading more..."}
+es:{tagline:"noticias · live",now:"AHORA",urgent:"🔴 URGENTE",changeVibe:"🔄 Cambiar vibe",swipe:"↑ desliza",next:"↑ Siguiente",share:"↗️ Share",loading:"Cargando noticias...",noResults:"Sin resultados para",searchPlaceholder:"Buscar noticias...",hotTopics:"🔥 Temas populares",chooseRegion:"🌍 Elige tu región",regionSub:"Las noticias se filtrarán para tu país",thinking:"⚡ Pensando...",askJaik:"Pregúntale a JAIK...",proMode:"MODO PRO",proSub:"Análisis profundo",back:"← Volver",memeMode:"Meme 🤣",seriousMode:"Serio 📰",eli5:"En palabras simples: ",real:"Sin filtro: ",free:"gratis",loadingMore:"Cargando más..."},
+en:{tagline:"news · live",now:"NOW",urgent:"🔴 URGENT",changeVibe:"🔄 Change vibe",swipe:"↑ swipe",next:"↑ Next",share:"↗️ Share",loading:"Loading news...",noResults:"No results for",searchPlaceholder:"Search news...",hotTopics:"🔥 Hot topics",chooseRegion:"🌍 Choose your region",regionSub:"News will be filtered for your country",thinking:"⚡ Thinking...",askJaik:"Ask JAIK...",proMode:"PRO MODE",proSub:"Deep analysis",back:"← Back",memeMode:"Meme 🤣",seriousMode:"Serious 📰",eli5:"In simple words: ",real:"No filter: ",free:"free",loadingMore:"Loading more..."}
 };
 const VIBES=[{k:"ELI5",i:"😊",l:"ELI5",c:"#22c55e",br:"rgba(34,197,94,0.45)"},{k:"Quick",i:"⚡",l:"Quick",c:"#f59e0b",br:"rgba(245,158,11,0.5)"},{k:"Real",i:"🔥",l:"Real",c:"#ef4444",br:"rgba(239,68,68,0.45)"},{k:"Meme",i:"🤣",l:"Meme",c:"#a78bfa",br:"rgba(167,139,250,0.45)"},{k:"Pro",i:"💎",l:"Pro",c:"#60a5fa",br:"rgba(96,165,250,0.45)",lock:true}];
 const CATS=[{k:"",i:"🌍",l:"Todo",le:"All",color:"#60a5fa"},{k:"politica",i:"🏛️",l:"Política",le:"Politics",color:"#ef4444"},{k:"tech",i:"🤖",l:"Tech",le:"Tech",color:"#3b82f6"},{k:"deportes",i:"⚽",l:"Deportes",le:"Sports",color:"#22c55e"},{k:"economia",i:"💰",l:"Economía",le:"Economy",color:"#f59e0b"},{k:"entretenimiento",i:"🎬",l:"Entrete.",le:"Entertain.",color:"#a78bfa"},{k:"ciencia",i:"🔬",l:"Ciencia",le:"Science",color:"#06b6d4"},{k:"mundial",i:"🌎",l:"Mundial",le:"World",color:"#f97316"}];
+const MEME_CATS=[{k:"trending",i:"🔥",l:"Trending"},{k:"deep",i:"🧠",l:"Deep Memes"},{k:"pop",i:"🎬",l:"Pop Culture"},{k:"dark",i:"💀",l:"Dark Humor"},{k:"politica",i:"🏛️",l:"Política"}];
 const COUNTRIES=[{code:"any",flag:"🌍",name:"Todo",nameEn:"World"},{code:"ar",flag:"🇦🇷",name:"Argentina",nameEn:"Argentina"},{code:"mx",flag:"🇲🇽",name:"México",nameEn:"Mexico"},{code:"co",flag:"🇨🇴",name:"Colombia",nameEn:"Colombia"},{code:"do",flag:"🇩🇴",name:"Rep. Dom.",nameEn:"Dominican Rep."},{code:"cl",flag:"🇨🇱",name:"Chile",nameEn:"Chile"},{code:"pe",flag:"🇵🇪",name:"Perú",nameEn:"Peru"},{code:"ve",flag:"🇻🇪",name:"Venezuela",nameEn:"Venezuela"},{code:"ec",flag:"🇪🇨",name:"Ecuador",nameEn:"Ecuador"},{code:"es",flag:"🇪🇸",name:"España",nameEn:"Spain"},{code:"br",flag:"🇧🇷",name:"Brasil",nameEn:"Brazil"},{code:"us",flag:"🇺🇸",name:"EE.UU.",nameEn:"USA"},{code:"gt",flag:"🇬🇹",name:"Guatemala",nameEn:"Guatemala"},{code:"cr",flag:"🇨🇷",name:"Costa Rica",nameEn:"Costa Rica"},{code:"pa",flag:"🇵🇦",name:"Panamá",nameEn:"Panama"},{code:"cu",flag:"🇨🇺",name:"Cuba",nameEn:"Cuba"},{code:"uy",flag:"🇺🇾",name:"Uruguay",nameEn:"Uruguay"},{code:"bo",flag:"🇧🇴",name:"Bolivia",nameEn:"Bolivia"},{code:"py",flag:"🇵🇾",name:"Paraguay",nameEn:"Paraguay"}];
 const STARS=[[8,12,1.5,2.1],[15,28,1,3.4],[22,8,1.2,1.8],[35,18,0.8,2.7],[42,35,1.4,1.5],[55,10,1,4],[63,22,1.6,2.2],[70,40,0.9,3.1],[78,15,1.2,1.9],[85,30,1,2.5],[12,55,0.8,3.8],[28,62,1.3,2],[38,75,1,2.9],[50,58,1.5,1.6],[65,70,0.9,3.3]];
+const TRENDING_TOPICS=[{n:1,text:"Trump aranceles",count:"84K",hot:true},{n:2,text:"Bitcoin precio",count:"52K",hot:false},{n:3,text:"Champions League",count:"41K",hot:false}];
 const MEME_REACTIONS=["💀","😭","🤡","💅","🫠","🤯","😤","👀","🫡","🤌"];
-function getMemeReaction(headline){
-const h=headline.toLowerCase();
-if(h.includes("muert")||h.includes("crash")||h.includes("caída"))return"💀";
-if(h.includes("trump")||h.includes("político"))return"🤡";
-if(h.includes("bitcoin")||h.includes("crypto")||h.includes("precio"))return"💸";
-if(h.includes("fútbol")||h.includes("soccer")||h.includes("gol"))return"⚽😱";
-if(h.includes("ia")||h.includes("ai")||h.includes("robot"))return"🤖💀";
-return MEME_REACTIONS[Math.floor(Math.random()*MEME_REACTIONS.length)];
-}
+function getMemeReaction(h){const hl=(h||"").toLowerCase();if(hl.includes("muert")||hl.includes("crash"))return"💀";if(hl.includes("trump")||hl.includes("polít"))return"🤡";if(hl.includes("bitcoin")||hl.includes("precio"))return"💸";if(hl.includes("fútbol")||hl.includes("gol"))return"⚽😱";if(hl.includes("ia")||hl.includes("ai")||hl.includes("robot"))return"🤖💀";return MEME_REACTIONS[Math.floor(Math.random()*MEME_REACTIONS.length)];}
+function getViralPct(h){let n=42;for(let i=0;i<(h||"").length;i++)n=(n*31+h.charCodeAt(i))%100;return Math.max(45,Math.min(95,n+40));}
 function CountrySelector({current,onSelect,onClose,lang}){
 const t=T[lang]||T.es;
 return(
@@ -65,12 +58,7 @@ return(
 <div style={{fontSize:13,fontWeight:900,marginBottom:4}}>{t.chooseRegion}</div>
 <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginBottom:14}}>{t.regionSub}</div>
 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-{COUNTRIES.map(c=>(
-<button key={c.code} onClick={()=>{onSelect(c.code);onClose();}} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:12,border:`1.5px solid ${current===c.code?"#6366f1":"rgba(255,255,255,0.08)"}`,background:current===c.code?"rgba(99,102,241,0.2)":"rgba(255,255,255,0.04)",cursor:"pointer"}}>
-<span style={{fontSize:20}}>{c.flag}</span>
-<div style={{fontSize:11,fontWeight:700,color:current===c.code?"#a78bfa":"#fff"}}>{lang==="en"?c.nameEn:c.name}</div>
-</button>
-))}
+{COUNTRIES.map(c=><button key={c.code} onClick={()=>{onSelect(c.code);onClose();}} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:12,border:`1.5px solid ${current===c.code?"#6366f1":"rgba(255,255,255,0.08)"}`,background:current===c.code?"rgba(99,102,241,0.2)":"rgba(255,255,255,0.04)",cursor:"pointer"}}><span style={{fontSize:20}}>{c.flag}</span><div style={{fontSize:11,fontWeight:700,color:current===c.code?"#a78bfa":"#fff"}}>{lang==="en"?c.nameEn:c.name}</div></button>)}
 </div>
 </div>
 </div>
@@ -78,19 +66,9 @@ return(
 }
 function AdminPanel({onClose}){
 const [pass,setPass]=useState("");const [headline,setHeadline]=useState("");const [desc,setDesc]=useState("");const [cat,setCat]=useState("🔴 URGENTE");const [status,setStatus]=useState("");const [loading,setLoading]=useState(false);const [hasBreaking,setHasBreaking]=useState(false);
-useEffect(()=>{fetch("/api/get-breaking").then(r=>r.json()).then(d=>{if(d)setHasBreaking(true);}).catch(()=>{});}, []);
-async function publish(){
-if(!pass||!headline){setStatus("⚠️ Completa todos los campos");return;}
-setLoading(true);setStatus("");
-try{const r=await fetch("/api/breaking",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass,headline,description:desc,cat})});const d=await r.json();if(d.ok){setStatus("✅ ¡Publicada!");setHasBreaking(true);setHeadline("");setDesc("");}else setStatus("❌ "+(d.error||"Error"));}catch{setStatus("❌ Error");}
-setLoading(false);
-}
-async function remove(){
-if(!pass){setStatus("⚠️ Ingresa la contraseña");return;}
-setLoading(true);
-try{const r=await fetch("/api/breaking",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass})});const d=await r.json();if(d.ok){setStatus("✅ Eliminada");setHasBreaking(false);}else setStatus("❌ "+(d.error||"Error"));}catch{setStatus("❌ Error");}
-setLoading(false);
-}
+useEffect(()=>{fetch("/api/get-breaking").then(r=>r.json()).then(d=>{if(d)setHasBreaking(true);}).catch(()=>{});},[]);
+async function publish(){if(!pass||!headline){setStatus("⚠️ Completa todos los campos");return;}setLoading(true);setStatus("");try{const r=await fetch("/api/breaking",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass,headline,description:desc,cat})});const d=await r.json();if(d.ok){setStatus("✅ ¡Publicada!");setHasBreaking(true);setHeadline("");setDesc("");}else setStatus("❌ "+(d.error||"Error"));}catch{setStatus("❌ Error");}setLoading(false);}
+async function remove(){if(!pass){setStatus("⚠️ Ingresa la contraseña");return;}setLoading(true);try{const r=await fetch("/api/breaking",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass})});const d=await r.json();if(d.ok){setStatus("✅ Eliminada");setHasBreaking(false);}else setStatus("❌ "+(d.error||"Error"));}catch{setStatus("❌ Error");}setLoading(false);}
 return(
 <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.95)",backdropFilter:"blur(20px)",overflowY:"auto",color:"#fff"}}>
 <div style={{maxWidth:400,margin:"0 auto",padding:"16px 16px 40px"}}>
@@ -114,12 +92,7 @@ return(
 function SearchScreen({onClose,onSelectArticle,country,lang}){
 const [q,setQ]=useState("");const [results,setResults]=useState([]);const [loading,setLoading]=useState(false);const [searched,setSearched]=useState(false);
 const t=T[lang]||T.es;
-async function search(term){
-const query=term||q;if(!query.trim())return;
-setQ(query);setLoading(true);setSearched(true);
-try{const r=await fetch("/api/news?q="+encodeURIComponent(query)+"&country="+(country||"any"));const data=await r.json();const arts=data.articles||data;setResults(Array.isArray(arts)?arts:[]);}catch{setResults([]);}
-setLoading(false);
-}
+async function search(term){const query=term||q;if(!query.trim())return;setQ(query);setLoading(true);setSearched(true);try{const r=await fetch("/api/news?q="+encodeURIComponent(query)+"&country="+(country||"any"));const data=await r.json();const arts=data.articles||data;setResults(Array.isArray(arts)?arts:[]);}catch{setResults([]);}setLoading(false);}
 return(
 <div style={{position:"fixed",inset:0,zIndex:200,background:"#05050f",display:"flex",flexDirection:"column"}}>
 <div style={{padding:"12px 14px",background:"rgba(9,9,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",gap:10}}>
@@ -138,11 +111,7 @@ return(
 <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,0.88)",backdropFilter:"blur(18px)",display:"flex",alignItems:"flex-end"}}>
 <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:400,margin:"0 auto",background:"#0d0d1f",borderRadius:"22px 22px 0 0",border:"1px solid rgba(96,165,250,0.2)",padding:"20px 18px 40px",color:"#fff"}}>
 <div style={{width:32,height:4,background:"rgba(255,255,255,0.12)",borderRadius:2,margin:"0 auto 18px"}}/>
-<div style={{textAlign:"center",marginBottom:16}}>
-<div style={{fontSize:34,marginBottom:5}}>⭐</div>
-<div style={{fontSize:19,fontWeight:900,marginBottom:3}}>QuickNews Pro</div>
-<div style={{fontSize:30,fontWeight:900,color:"#60a5fa",marginBottom:8}}>$2.99<span style={{fontSize:12,color:"rgba(255,255,255,0.3)",fontWeight:400}}>/mes</span></div>
-</div>
+<div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:34,marginBottom:5}}>⭐</div><div style={{fontSize:19,fontWeight:900,marginBottom:3}}>QuickNews Pro</div><div style={{fontSize:30,fontWeight:900,color:"#60a5fa",marginBottom:8}}>$2.99<span style={{fontSize:12,color:"rgba(255,255,255,0.3)",fontWeight:400}}>/mes</span></div></div>
 {[["💎",lang==="en"?"Pro analysis":"Análisis Pro"],["🎙️",lang==="en"?"Daily AI briefing":"Resumen diario IA"],["🤖",lang==="en"?"Unlimited JAIK":"JAIK ilimitado"],["🚫",lang==="en"?"No ads":"Sin anuncios"],["🌍",lang==="en"?"Local news":"Noticias locales"]].map(([ic,tx])=><div key={tx} style={{display:"flex",gap:9,alignItems:"center",marginBottom:8}}><span>{ic}</span><span style={{fontSize:12,color:"rgba(255,255,255,0.6)"}}>{tx}</span></div>)}
 <button onClick={onBuy} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#7c3aed,#4f46e5)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginTop:12,marginBottom:7}}>⭐ {lang==="en"?"7 days free":"7 días gratis"}</button>
 <button onClick={onClose} style={{width:"100%",padding:"10px",background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,cursor:"pointer",fontSize:11,color:"rgba(255,255,255,0.25)"}}>{lang==="en"?"Continue free":"Continuar gratis"}</button>
@@ -150,69 +119,98 @@ return(
 </div>
 );
 }
-function ProPanel({story,onClose,lang}){
+function ProPanel({story,onClose,lang,onChangeMode}){
 const t=T[lang]||T.es;
+const [proData,setProData]=useState(null);
+const [loading,setLoading]=useState(true);
+useEffect(()=>{generatePro();},[]);
+async function generatePro(){
+setLoading(true);
+try{
+const sys=lang==="en"
+?`Analyst. Headline given. Return ONLY JSON no markdown: {"resumen":"2 sentence summary","datos":["fact1","fact2","fact3","fact4"],"porque":"1 sentence why it matters","impacto":{"trabajo":"work impact","estudios":"education impact","sociedad":"society impact"},"fuentes":["src1","src2"]}`
+:`Analista. Titular dado. Devuelve SOLO JSON sin markdown: {"resumen":"resumen 2 oraciones","datos":["dato1","dato2","dato3","dato4"],"porque":"1 oración por qué importa","impacto":{"trabajo":"impacto trabajo","estudios":"impacto estudios","sociedad":"impacto sociedad"},"fuentes":["fuente1","fuente2"]}`;
+const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:600,system:sys,messages:[{role:"user",content:story.headline}]})});
+const d=await r.json();
+const raw=d.content?.find(b=>b.type==="text")?.text||"{}";
+const p=JSON.parse(raw.replace(/```json|```/g,"").trim());
+setProData(p);
+}catch{setProData({resumen:story.description||story.headline,datos:["Información no disponible"],porque:"No se pudo generar análisis.",impacto:{trabajo:"—",estudios:"—",sociedad:"—"},fuentes:[story.cat]});}
+setLoading(false);
+}
+const sec={marginBottom:14};
+const lbl={fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:7};
+const box={background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"11px 13px"};
 return(
-<div style={{position:"fixed",inset:0,zIndex:350,background:"rgba(0,0,0,0.92)",backdropFilter:"blur(16px)",overflowY:"auto",color:"#fff"}}>
+<div style={{position:"fixed",inset:0,zIndex:350,background:"rgba(0,0,0,0.94)",backdropFilter:"blur(16px)",overflowY:"auto",color:"#fff"}}>
 <div style={{maxWidth:400,margin:"0 auto",paddingBottom:32}}>
-<div style={{padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,background:"rgba(8,8,20,0.97)",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
+<div style={{padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,background:"rgba(8,8,20,0.97)",borderBottom:"1px solid rgba(255,255,255,0.07)",zIndex:10}}>
 <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:32,height:32,borderRadius:9,background:"linear-gradient(135deg,#4f46e5,#7c3aed)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>💎</div><div><div style={{fontSize:13,fontWeight:900}}>{t.proMode}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>{t.proSub}</div></div></div>
 <button onClick={onClose} style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer"}}>✕</button>
 </div>
-{story.img&&<div style={{position:"relative",height:190,overflow:"hidden",background:"#111"}}><img src={story.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}} onError={e=>e.target.style.display="none"}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 40%,rgba(8,8,20,1) 100%)"}}/><div style={{position:"absolute",top:10,right:10,background:"linear-gradient(135deg,#4f46e5,#7c3aed)",borderRadius:100,padding:"3px 10px",fontSize:9,fontWeight:800}}>💎 PRO</div></div>}
+{story.img&&<div style={{position:"relative",height:170,overflow:"hidden",background:"#111"}}><img src={story.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.5)"}} onError={e=>e.target.style.display="none"}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 30%,rgba(8,8,20,1) 100%)"}}/><div style={{position:"absolute",top:10,right:10,background:"linear-gradient(135deg,#4f46e5,#7c3aed)",borderRadius:100,padding:"3px 10px",fontSize:9,fontWeight:800}}>💎 PRO</div></div>}
 <div style={{padding:"14px"}}>
-{[[t.summary,story.description,false],[t.headline,'"'+story.headline+'"',true],[t.source,"• "+story.cat,false]].map(([label,c,italic],i)=>(
-<div key={i} style={{marginBottom:14}}><div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:7}}>{i+1}. {label}</div><div style={{background:i===0?"linear-gradient(135deg,rgba(79,70,229,0.2),rgba(124,58,237,0.1))":"rgba(255,255,255,0.04)",border:`1px solid ${i===0?"rgba(99,102,241,0.3)":"rgba(255,255,255,0.08)"}`,borderRadius:12,padding:"12px",fontSize:13,color:"rgba(255,255,255,0.8)",lineHeight:1.7,fontStyle:italic?"italic":"normal"}}>{c}</div></div>
-))}
-{story.url&&<a href={story.url} target="_blank" rel="noopener noreferrer" style={{display:"block",width:"100%",padding:"13px",background:"linear-gradient(135deg,#4f46e5,#7c3aed)",borderRadius:14,fontSize:13,fontWeight:800,color:"#fff",textAlign:"center",textDecoration:"none",marginBottom:8}}>{t.readFull}</a>}
+{loading?(
+<div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 0",gap:12}}>
+<span style={{fontSize:32,animation:"spin .8s linear infinite",display:"inline-block"}}>⚡</span>
+<div style={{fontSize:13,color:"rgba(255,255,255,0.4)"}}>Analizando con IA...</div>
+</div>
+):(
+<>
+<div style={sec}><div style={lbl}>1. {lang==="en"?"PROFESSIONAL SUMMARY":"EN RESUMEN PROFESIONAL"}</div><div style={{...box,background:"linear-gradient(135deg,rgba(79,70,229,0.2),rgba(124,58,237,0.1))",border:"1px solid rgba(99,102,241,0.3)",fontSize:13,color:"rgba(255,255,255,0.85)",lineHeight:1.7}}>{proData?.resumen}</div></div>
+<div style={sec}><div style={lbl}>2. {lang==="en"?"KEY DATA":"DATOS CLAVE"}</div><div style={box}>{(proData?.datos||[]).map((d,i)=><div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:i<(proData.datos.length-1)?9:0}}><span style={{fontSize:16,flexShrink:0}}>{"🧠📊⚡🌍"[i]||"•"}</span><div style={{fontSize:12,color:"rgba(255,255,255,0.75)",lineHeight:1.5}}>{d}</div></div>)}</div></div>
+<div style={sec}><div style={lbl}>3. {lang==="en"?"WHY IT MATTERS":"¿POR QUÉ IMPORTA?"}</div><div style={{...box,fontSize:13,color:"rgba(255,255,255,0.8)",lineHeight:1.7,display:"flex",gap:10,alignItems:"flex-start"}}><span style={{fontSize:18}}>💡</span><span>{proData?.porque}</span></div></div>
+<div style={sec}><div style={lbl}>4. {lang==="en"?"IMPACT ON YOUR LIFE":"IMPACTO EN TU VIDA"}</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:7}}>{[["💼",lang==="en"?"Work":"Trabajo",proData?.impacto?.trabajo],["📚",lang==="en"?"Studies":"Estudios",proData?.impacto?.estudios],["🌍",lang==="en"?"Society":"Sociedad",proData?.impacto?.sociedad]].map(([ic,lb,tx])=><div key={lb} style={{background:"rgba(79,70,229,0.12)",border:"1px solid rgba(79,70,229,0.25)",borderRadius:12,padding:"10px 8px",textAlign:"center"}}><div style={{fontSize:22,marginBottom:4}}>{ic}</div><div style={{fontSize:10,fontWeight:800,marginBottom:4}}>{lb}</div><div style={{fontSize:9,color:"rgba(255,255,255,0.5)",lineHeight:1.4}}>{tx}</div></div>)}</div></div>
+<div style={sec}><div style={lbl}>5. {lang==="en"?"SOURCES":"FUENTES"}</div><div style={box}>{(proData?.fuentes||[story.cat]).map((f,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:i<((proData?.fuentes||[]).length-1)?7:0}}><span style={{fontSize:11,color:"rgba(255,255,255,0.3)"}}>•</span><span style={{fontSize:12,color:"rgba(255,255,255,0.65)"}}>{f}</span></div>)}{story.url&&<a href={story.url} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:5,marginTop:8,fontSize:11,color:"#60a5fa",textDecoration:"none"}}>↗️ Leer nota completa</a>}</div></div>
+<button onClick={onChangeMode} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,rgba(99,102,241,0.3),rgba(139,92,246,0.2))",border:"1px solid rgba(99,102,241,0.4)",borderRadius:14,fontSize:13,fontWeight:800,color:"#c4b5fd",cursor:"pointer",marginBottom:8}}>🔄 {lang==="en"?"Change mode":"Cambiar a otro modo"}</button>
 <button onClick={onClose} style={{width:"100%",padding:"11px",background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,cursor:"pointer",fontSize:12,color:"rgba(255,255,255,0.35)"}}>{t.back}</button>
+</>
+)}
 </div>
 </div>
 </div>
 );
 }
 function BriefingPanel({onClose,isPro,onUpgrade,articles,lang}){
-const [hour,setHour]=useState("07:00");const [duration,setDuration]=useState("5");const [scheduled,setScheduled]=useState(false);const [playing,setPlaying]=useState(false);const [playIdx,setPlayIdx]=useState(0);const [speed,setSpeed]=useState(1);const [generating,setGenerating]=useState(false);const [ready,setReady]=useState(false);const [items,setItems]=useState([]);
-const HOURS=["06:00","06:30","07:00","07:30","08:00","09:00","12:00","18:00","21:00","22:00"];
+const [hour,setHour]=useState("07:00");const [duration,setDuration]=useState("5");const [format,setFormat]=useState("audio");const [scheduled,setScheduled]=useState(false);const [playing,setPlaying]=useState(false);const [playIdx,setPlayIdx]=useState(0);const [speed,setSpeed]=useState(1);const [generating,setGenerating]=useState(false);const [ready,setReady]=useState(false);const [items,setItems]=useState([]);
+const HOURS=["06:00","06:30","07:00","07:30","08:00","08:30","09:00","12:00","18:00","21:00","22:00"];
+const FORMATS=[{k:"audio",i:"🎙️",l:lang==="en"?"Audio voice":"Audio con voz"},{k:"read",i:"📖",l:lang==="en"?"Quick read":"Lectura rápida"},{k:"both",i:"✨",l:lang==="en"?"Voice + text":"Voz + texto"}];
 async function generate(){
 if(!isPro){onUpgrade();return;}
 setGenerating(true);setItems([]);
 try{
 const headlines=articles.slice(0,5).map((n,i)=>i+1+". "+n.headline).join("\n");
-const sys=lang==="en"?`You are the QuickNews host. Generate a ${duration}-minute summary. ONLY JSON: {"items":[{"titulo":"...","resumen":"...","dato":"..."}]} with ${duration==="5"?"3":"5"} items.`:`Eres el locutor de QuickNews. Genera resumen para ${duration} minutos. SOLO JSON: {"items":[{"titulo":"...","resumen":"...","dato":"..."}]} con ${duration==="5"?"3":"5"} noticias.`;
+const sys=lang==="en"?`QuickNews host. ${duration}-min summary. ONLY JSON: {"items":[{"titulo":"...","resumen":"...","dato":"..."}]} with ${duration==="5"?"3":"5"} items.`:`Locutor QuickNews. Resumen ${duration} min. SOLO JSON: {"items":[{"titulo":"...","resumen":"...","dato":"..."}]} con ${duration==="5"?"3":"5"} noticias.`;
 const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,system:sys,messages:[{role:"user",content:headlines}]})});
 const d=await r.json();
 const raw=d.content?.find(b=>b.type==="text")?.text||"{}";
 const p=JSON.parse(raw.replace(/```json|```/g,"").trim());
 setItems(p.items||[]);
-}catch{setItems(articles.slice(0,3).map(a=>({titulo:a.cat,resumen:a.description||a.headline,dato:"Source: "+a.cat})));}
+}catch{setItems(articles.slice(0,3).map(a=>({titulo:a.cat,resumen:a.description||a.headline,dato:"Fuente: "+a.cat})));}
 setGenerating(false);setReady(true);
 }
-function speak(i,arr){
-if(!window.speechSynthesis||!arr[i])return;
-window.speechSynthesis.cancel();
-const u=new SpeechSynthesisUtterance(arr[i].titulo+". "+arr[i].resumen+" "+(lang==="en"?"Key fact:":"Dato clave:")+" "+arr[i].dato);
-u.lang=lang==="en"?"en-US":"es-ES";u.rate=speed;
-u.onend=()=>{if(i<arr.length-1){setPlayIdx(i+1);speak(i+1,arr);}else{setPlaying(false);setPlayIdx(0);}};
-window.speechSynthesis.speak(u);
-}
-function togglePlay(){
-if(playing){window.speechSynthesis?.cancel();setPlaying(false);}
-else{setPlaying(true);speak(playIdx,items);}
-}
+function speak(i,arr){if(!window.speechSynthesis||!arr[i])return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(arr[i].titulo+". "+arr[i].resumen+" "+(lang==="en"?"Key fact:":"Dato clave:")+" "+arr[i].dato);u.lang=lang==="en"?"en-US":"es-ES";u.rate=speed;u.onend=()=>{if(i<arr.length-1){setPlayIdx(i+1);speak(i+1,arr);}else{setPlaying(false);setPlayIdx(0);}};window.speechSynthesis.speak(u);}
+function togglePlay(){if(playing){window.speechSynthesis?.cancel();setPlaying(false);}else{setPlaying(true);speak(playIdx,items);}}
 return(
 <div style={{position:"fixed",inset:0,zIndex:350,background:"rgba(0,0,0,0.92)",backdropFilter:"blur(18px)",overflowY:"auto",color:"#fff"}}>
 <div style={{maxWidth:400,margin:"0 auto",paddingBottom:32}}>
 <div style={{padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,background:"rgba(6,6,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
-<div style={{display:"flex",alignItems:"center",gap:9}}><div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#3b82f6,#6366f1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🎙️</div><div><div style={{fontSize:14,fontWeight:900}}>{lang==="en"?"Daily Briefing":"Resumen Diario"}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>Pro</div></div></div>
+<div style={{display:"flex",alignItems:"center",gap:9}}><div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#3b82f6,#6366f1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🎙️</div><div><div style={{fontSize:14,fontWeight:900}}>{lang==="en"?"Daily Briefing":"Resumen Diario"}</div><div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>{lang==="en"?"Your 5-10 min briefing":"Tu briefing de 5-10 minutos"}</div></div></div>
 <button onClick={onClose} style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer"}}>✕</button>
 </div>
 <div style={{padding:"16px"}}>
 {!ready&&(<>
 <div style={{textAlign:"center",marginBottom:16}}><div style={{width:86,height:86,borderRadius:"50%",background:"linear-gradient(135deg,rgba(59,130,246,0.2),rgba(99,102,241,0.1))",border:"2px solid rgba(59,130,246,0.3)",display:"inline-flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}><div style={{fontSize:22,fontWeight:900,color:"#60a5fa"}}>{hour}</div><div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{lang==="en"?"your time":"tu hora"}</div></div></div>
 <div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>⏰ {lang==="en"?"What time?":"¿A qué hora?"}</div><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{HOURS.map(h=><button key={h} onClick={()=>setHour(h)} style={{padding:"6px 12px",borderRadius:100,border:`1.5px solid ${hour===h?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:hour===h?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.04)",color:hour===h?"#60a5fa":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:700,cursor:"pointer"}}>{h}</button>)}</div></div>
-<div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>⏱ {lang==="en"?"Duration":"Duración"}</div><div style={{display:"flex",gap:8}}>{[["5",lang==="en"?"3 key news":"3 noticias"],["10",lang==="en"?"5 news":"5 noticias"]].map(([d,sub])=><button key={d} onClick={()=>setDuration(d)} style={{flex:1,padding:"10px",borderRadius:12,border:`1.5px solid ${duration===d?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:duration===d?"rgba(59,130,246,0.18)":"rgba(255,255,255,0.04)",cursor:"pointer"}}><div style={{fontSize:18,fontWeight:900,color:duration===d?"#60a5fa":"rgba(255,255,255,0.6)"}}>{d} min</div><div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:2}}>{sub}</div></button>)}</div></div>
-{scheduled?<div style={{background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:14,padding:"12px",textAlign:"center",marginBottom:10}}><div style={{fontSize:18,marginBottom:4}}>✅</div><div style={{fontSize:13,fontWeight:800,color:"#4ade80"}}>{lang==="en"?`Scheduled for ${hour}!`:`¡Programado para las ${hour}!`}</div></div>:<button onClick={()=>setScheduled(true)} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginBottom:8}}>⏰ {lang==="en"?`Schedule for ${hour}`:`Programar para las ${hour}`}</button>}
+<div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>⏱ {lang==="en"?"Duration":"Duración"}</div><div style={{display:"flex",gap:8}}>{[["5",lang==="en"?"3 key news":"3 noticias clave"],["10",lang==="en"?"5 news + context":"5 noticias + contexto"]].map(([d,sub])=><button key={d} onClick={()=>setDuration(d)} style={{flex:1,padding:"10px",borderRadius:12,border:`1.5px solid ${duration===d?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:duration===d?"rgba(59,130,246,0.18)":"rgba(255,255,255,0.04)",cursor:"pointer"}}><div style={{fontSize:18,fontWeight:900,color:duration===d?"#60a5fa":"rgba(255,255,255,0.6)"}}>{d} min</div><div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:2}}>{sub}</div></button>)}</div></div>
+<div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>🎧 {lang==="en"?"Preferred format":"Formato preferido"}</div><div style={{display:"flex",gap:7}}>{FORMATS.map(f=><button key={f.k} onClick={()=>setFormat(f.k)} style={{flex:1,padding:"10px 6px",borderRadius:12,border:`1.5px solid ${format===f.k?"#6366f1":"rgba(255,255,255,0.1)"}`,background:format===f.k?"rgba(99,102,241,0.18)":"rgba(255,255,255,0.04)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}><span style={{fontSize:20}}>{f.i}</span><span style={{fontSize:9,fontWeight:700,color:format===f.k?"#a78bfa":"rgba(255,255,255,0.45)",textAlign:"center",lineHeight:1.3}}>{f.l}</span></button>)}</div></div>
+<div style={{background:"rgba(59,130,246,0.08)",border:"1px solid rgba(59,130,246,0.2)",borderRadius:12,padding:"10px 12px",marginBottom:12,display:"flex",gap:8,alignItems:"flex-start"}}>
+<span style={{fontSize:16}}>💡</span>
+<div style={{fontSize:11,color:"rgba(255,255,255,0.65)",lineHeight:1.6}}>
+{lang==="en"?<>Every day at <b style={{color:"#60a5fa"}}>{hour}</b>, QuickNews will prepare your <b style={{color:"#60a5fa"}}>{duration}-min</b> briefing. {format==="audio"?"Read aloud.":format==="read"?"Quick read format.":"Voice and text."}</>:<>Cada día a las <b style={{color:"#60a5fa"}}>{hour}</b>, QuickNews preparará tu resumen de <b style={{color:"#60a5fa"}}>{duration} minutos</b>. {format==="audio"?"Te lo leerá en voz alta.":format==="read"?"Formato lectura rápida.":"Con voz y texto."}</>}
+</div>
+</div>
+{scheduled?<div style={{background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:14,padding:"12px",textAlign:"center",marginBottom:10}}><div style={{fontSize:18,marginBottom:4}}>✅</div><div style={{fontSize:13,fontWeight:800,color:"#4ade80"}}>{lang==="en"?`Scheduled for ${hour}!`:`¡Programado para las ${hour}!`}</div></div>:<button onClick={()=>setScheduled(true)} style={{width:"100%",padding:"14px",background:"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginBottom:8}}>⏰ {lang==="en"?`Schedule for ${hour}`:`Programar para las ${hour}`}</button>}
 <button onClick={generate} disabled={generating} style={{width:"100%",padding:"13px",background:generating?"rgba(255,255,255,0.05)":"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",borderRadius:14,fontSize:13,fontWeight:700,color:generating?"rgba(255,255,255,0.3)":"#fff",cursor:generating?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7,boxShadow:generating?"none":"0 4px 15px rgba(59,130,246,0.35)"}}>
 {generating?<><span style={{animation:"spin .8s linear infinite",display:"inline-block"}}>⚡</span>{lang==="en"?"Generating...":"Generando..."}</>:<>▶️ {lang==="en"?"Listen now":"Escuchar ahora"} {!isPro&&<span style={{fontSize:10,opacity:.8}}>· Pro</span>}</>}
 </button>
@@ -235,7 +233,7 @@ return(
 );
 }
 function App(){
-const [lang,setLang]=useState(localStorage.getItem("qn_lang")||(navigator.language?.startsWith("en")?"en":"es"));
+const [lang]=useState(localStorage.getItem("qn_lang")||(navigator.language?.startsWith("en")?"en":"es"));
 const [appMode,setAppMode]=useState(localStorage.getItem("qn_mode")||"serious");
 const [articles,setArticles]=useState([]);
 const [si,setSi]=useState(0);
@@ -258,22 +256,29 @@ const [loading,setLoading]=useState(true);
 const [loadingMore,setLoadingMore]=useState(false);
 const [page,setPage]=useState(1);
 const [activeCat,setActiveCat]=useState("");
+const [activeMemecat,setActiveMemecat]=useState("trending");
 const [country,setCountry]=useState("any");
 const [tapCount,setTapCount]=useState(0);
-const ty=useRef(null);
-const timer=useRef(null);
-const tapTimer=useRef(null);
+const [memeJaik,setMemeJaik]=useState({});
+const ty=useRef(null);const timer=useRef(null);const tapTimer=useRef(null);
 const t=T[lang]||T.es;
 const isMemeMode=appMode==="meme";
 const s=articles[si];
 const vd=VIBES.find(v=>v.k===vibe)||VIBES[1];
 const isBreaking=s&&s.breaking;
 const activeCountryObj=COUNTRIES.find(c=>c.code===country)||COUNTRIES[0];
-useEffect(()=>{
-loadNews(1,true,activeCat,country);
-timer.current=setInterval(()=>loadNews(1,true,activeCat,country),5*60*1000);
-return()=>clearInterval(timer.current);
-},[activeCat,country]);
+useEffect(()=>{loadNews(1,true,activeCat,country);timer.current=setInterval(()=>loadNews(1,true,activeCat,country),5*60*1000);return()=>clearInterval(timer.current);},[activeCat,country]);
+useEffect(()=>{if(isMemeMode&&s){const key=s.id||s.headline;if(!memeJaik[key])generateMemeJaik(s);}},[isMemeMode,si]);
+async function generateMemeJaik(story){
+const key=story.id||story.headline;
+try{
+const sys=lang==="en"?"Sarcastic Gen-Z AI. ONE funny comment max 20 words, 1-2 emojis.":"IA sarcástica Gen-Z. UN comentario gracioso máx 20 palabras, 1-2 emojis.";
+const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:80,system:sys,messages:[{role:"user",content:story.headline}]})});
+const d=await r.json();
+const txt=d.content?.find(b=>b.type==="text")?.text||"El internet en llamas 🔥";
+setMemeJaik(prev=>({...prev,[key]:txt}));
+}catch{setMemeJaik(prev=>({...prev,[key]:"Sin palabras 💀"}));}
+}
 async function loadNews(p,replace,cat,ctry){
 if(p===1)setLoading(true);else setLoadingMore(true);
 try{
@@ -282,101 +287,17 @@ if(p===1){try{const rb=await fetch("/api/get-breaking");breaking=await rb.json()
 let url="/api/news?page="+p;
 if(cat)url+="&cat="+cat;
 if(ctry&&ctry!=="any")url+="&country="+ctry;
-const r=await fetch(url);
-const data=await r.json();
-const arts=data.articles||data;
-if(Array.isArray(arts)&&arts.length>0){
-const combined=breaking&&p===1?[breaking,...arts]:arts;
-setArticles(prev=>replace?combined:[...prev,...arts]);
-setPage(p);
-if(replace)setSi(0);
-}
+const r=await fetch(url);const data=await r.json();const arts=data.articles||data;
+if(Array.isArray(arts)&&arts.length>0){const combined=breaking&&p===1?[breaking,...arts]:arts;setArticles(prev=>replace?combined:[...prev,...arts]);setPage(p);if(replace)setSi(0);}
 }catch{}
 setLoading(false);setLoadingMore(false);
 }
-function swipe(d){
-setAiAns("");setShowAI(false);setShowPro(false);
-const next=si+d;
-if(next>=0&&next<articles.length){
-setSlideDir(d===1?"up":"down");
-setAnimKey(k=>k+1);
-setSi(next);
-if(d===1&&next>=articles.length-2&&!loadingMore)loadNews(page+1,false,activeCat,country);
-}
-}
-function handleLogoTap(){
-const n=tapCount+1;setTapCount(n);
-clearTimeout(tapTimer.current);
-if(n>=3){setShowAdmin(true);setTapCount(0);}
-else tapTimer.current=setTimeout(()=>setTapCount(0),1000);
-}
+function swipe(d){setAiAns("");setShowAI(false);setShowPro(false);const next=si+d;if(next>=0&&next<articles.length){setSlideDir(d===1?"up":"down");setAnimKey(k=>k+1);setSi(next);if(d===1&&next>=articles.length-2&&!loadingMore)loadNews(page+1,false,activeCat,country);}}
+function handleLogoTap(){const n=tapCount+1;setTapCount(n);clearTimeout(tapTimer.current);if(n>=3){setShowAdmin(true);setTapCount(0);}else tapTimer.current=setTimeout(()=>setTapCount(0),1000);}
 function pickVibe(v){if(v==="Pro"&&!isPro){setShowPay(true);return;}setVibe(v);if(v==="Pro"&&isPro)setShowPro(true);}
-async function askAI(q){
-if(!q||!s)return;
-if(!isPro&&aiN>=3){setShowPay(true);return;}
-setAiN(n=>n+1);setAiLoad(true);setAiAns("");
-try{
-const sys=lang==="en"?`You are JAIK from QuickNews. News: "${s.headline}". Answer in English, max 2 sentences.`:`Eres JAIK de QuickNews. Noticia: "${s.headline}". Responde en español, máx 2 oraciones. Sin bullets.`;
-const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:150,system:sys,messages:[{role:"user",content:q}]})});
-const d=await r.json();
-setAiAns(d.content?.find(b=>b.type==="text")?.text||"Error.");
-}catch{setAiAns(lang==="en"?"Connection error.":"Error de conexión.");}
-setAiLoad(false);
-}
-function getVibes(a){
-const desc=a.description||a.headline;
-return{ELI5:t.eli5+desc,Quick:desc,Real:t.real+a.headline+". "+desc,Meme:t.memeText+a.headline.substring(0,50)+"... 💀"};
-}
+async function askAI(q){if(!q||!s)return;if(!isPro&&aiN>=3){setShowPay(true);return;}setAiN(n=>n+1);setAiLoad(true);setAiAns("");try{const sys=lang==="en"?`JAIK from QuickNews. News: "${s.headline}". Answer English, max 2 sentences.`:`JAIK de QuickNews. Noticia: "${s.headline}". Español, máx 2 oraciones.`;const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:150,system:sys,messages:[{role:"user",content:q}]})});const d=await r.json();setAiAns(d.content?.find(b=>b.type==="text")?.text||"Error.");}catch{setAiAns(lang==="en"?"Connection error.":"Error de conexión.");}setAiLoad(false);}
+function getVibes(a){const desc=a.description||a.headline;return{ELI5:t.eli5+desc,Quick:desc,Real:t.real+a.headline+". "+desc,Meme:(lang==="en"?"When you see that ":"Cuando ves que ")+a.headline.substring(0,50)+"... 💀"};}
 const vibes=s?getVibes(s):{};
-function NewsCard({story,isBreaking,isMemeMode,t,onLike,liked,onAI,showAI}){
-const reaction=getMemeReaction(story.headline);
-if(isMemeMode){return(
-<div className="meme-card" style={{borderRadius:16,overflow:"hidden",background:"linear-gradient(135deg,#0d0820 0%,#1a0a2e 50%,#0a1628 100%)",flexShrink:0,position:"relative"}}>
-{story.img&&<div style={{position:"absolute",inset:0,overflow:"hidden"}}><img src={story.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",filter:"blur(12px) brightness(0.25) saturate(1.8)"}} onError={e=>e.target.style.display="none"}/></div>}
-<div style={{position:"relative",zIndex:1,padding:"10px 12px 6px",display:"flex",alignItems:"center",gap:6}}>
-<span style={{fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:100,background:"rgba(167,139,250,0.25)",border:"1px solid rgba(167,139,250,0.5)",color:"#c4b5fd",letterSpacing:1,textTransform:"uppercase"}}>🤣 Meme take</span>
-<span style={{fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:100,background:"rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.5)"}}>{story.cat}</span>
-</div>
-<div style={{position:"relative",zIndex:1,textAlign:"center",fontSize:52,lineHeight:1,padding:"6px 0 4px"}}>{reaction}</div>
-<div style={{position:"relative",zIndex:1,padding:"4px 14px 10px",textAlign:"center"}}>
-<div style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:900,lineHeight:1.3,color:"#fff",textShadow:"0 2px 12px rgba(0,0,0,0.8)",marginBottom:6}}>{story.headline}</div>
-<div style={{fontSize:11,color:"rgba(167,139,250,0.8)",fontStyle:"italic"}}>{lang==="en"?"The internet right now 👇":"El internet ahorita mismo 👇"}</div>
-</div>
-<div style={{position:"relative",zIndex:1,padding:"6px 12px 10px",display:"flex",alignItems:"center",gap:10,borderTop:"1px solid rgba(255,255,255,0.07)"}}>
-<button onClick={onLike} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:liked?"#ef4444":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700}}><span style={{fontSize:13}}>{liked?"❤️":"🤍"}</span>{story.r?.h||"0"}</button>
-<button onClick={onAI} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:showAI?"#a78bfa":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700}}><span style={{fontSize:13}}>💬</span>{story.r?.c||"0"}</button>
-{story.url&&<a href={story.url} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:3,color:"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700,textDecoration:"none"}}><span style={{fontSize:13}}>🔗</span></a>}
-<span style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginLeft:"auto"}}>{story.time}</span>
-<button style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,padding:"3px 8px",color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,cursor:"pointer"}}>{t.share}</button>
-</div>
-</div>
-);}
-return(
-<div className={isBreaking?"breaking-card":"neon-b"} style={{borderRadius:13,overflow:"hidden",background:isBreaking?"rgba(30,5,5,0.85)":"rgba(10,12,30,0.75)",backdropFilter:"blur(12px)",flexShrink:0}}>
-{story.img?(<div style={{position:"relative",height:140,overflow:"hidden",background:"#111"}}>
-<img src={story.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.65)"}} onError={e=>e.target.parentNode.style.minHeight="60px"}/>
-<div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 20%,rgba(10,12,30,0.97) 100%)"}}/>
-<div style={{position:"absolute",bottom:8,left:10,right:10}}>
-<div style={{display:"flex",gap:5,marginBottom:4,flexWrap:"wrap"}}>
-<span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:isBreaking?"rgba(239,68,68,0.5)":"rgba(239,68,68,0.35)",border:"1px solid rgba(239,68,68,0.6)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span>
-<span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.2)",color:"rgba(255,255,255,0.85)"}}>{story.cat}</span>
-</div>
-<div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,color:isBreaking?"#fca5a5":"#fff",textShadow:"0 1px 4px rgba(0,0,0,0.8)"}}>{story.headline}</div>
-<div style={{fontSize:9,color:"rgba(255,255,255,0.5)",marginTop:2}}>{story.time}</div>
-</div>
-</div>):(<div style={{padding:"8px 10px"}}>
-<div style={{display:"flex",gap:5,marginBottom:5}}><span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.5)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span><span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)"}}>{story.cat}</span></div>
-<div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,color:isBreaking?"#fca5a5":"#fff"}}>{story.headline}</div>
-<div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:2}}>{story.time}</div>
-</div>)}
-<div style={{display:"flex",gap:10,alignItems:"center",padding:"6px 10px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
-<button onClick={onLike} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:liked?"#ef4444":"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700}}><span style={{fontSize:14}}>{liked?"❤️":"🤍"}</span>{story.r?.h||"0"}</button>
-<button onClick={onAI} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:showAI?"#a78bfa":"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700}}><span style={{fontSize:14}}>💬</span>{story.r?.c||"0"}</button>
-{story.url&&<a href={story.url} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:3,color:"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700,textDecoration:"none"}}><span style={{fontSize:14}}>🔗</span></a>}
-<button style={{marginLeft:"auto",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,padding:"4px 10px",color:"rgba(255,255,255,0.5)",fontSize:9,fontWeight:700,cursor:"pointer"}}>{t.share}</button>
-</div>
-</div>
-);}
 return(
 <div onTouchStart={e=>{ty.current=e.touches[0].clientY;}} onTouchEnd={e=>{if(!ty.current)return;const dy=ty.current-e.changedTouches[0].clientY;if(dy>65)swipe(1);if(dy<-65)swipe(-1);ty.current=null;}} style={{width:"100%",maxWidth:400,margin:"0 auto",height:"100vh",background:"#05050f",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
 <div style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none",overflow:"hidden"}}>
@@ -389,55 +310,113 @@ return(
 {showCountry&&<CountrySelector current={country} onSelect={c=>setCountry(c)} onClose={()=>setShowCountry(false)} lang={lang}/>}
 {showAdmin&&<AdminPanel onClose={()=>{setShowAdmin(false);loadNews(1,true,activeCat,country);}}/>}
 {showSearch&&<SearchScreen onClose={()=>setShowSearch(false)} onSelectArticle={a=>{setArticles(p=>[a,...p]);setSi(0);setShowSearch(false);}} country={country} lang={lang}/>}
-{showPro&&s&&<ProPanel story={s} onClose={()=>setShowPro(false)} lang={lang}/>}
+{showPro&&s&&<ProPanel story={s} onClose={()=>setShowPro(false)} lang={lang} onChangeMode={()=>{setShowPro(false);pickVibe("Quick");}}/>}
 {showPay&&<Paywall onClose={()=>setShowPay(false)} onBuy={()=>{setIsPro(true);setShowPay(false);}} lang={lang}/>}
 {showBriefing&&<BriefingPanel onClose={()=>setShowBriefing(false)} isPro={isPro} onUpgrade={()=>{setShowBriefing(false);setShowPay(true);}} articles={articles} lang={lang}/>}
 <div style={{padding:"8px 12px 6px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,background:"rgba(9,9,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.05)",position:"relative",zIndex:10}}>
 <div style={{display:"flex",alignItems:"center",gap:7}} onClick={handleLogoTap}>
-<svg width="24" height="24" viewBox="0 0 80 80" fill="none">
-<defs><linearGradient id="qngrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#a78bfa"/><stop offset="100%" stopColor="#3b82f6"/></linearGradient></defs>
-<path d="M8 40 L68 14 L50 66 L38 48 Z" fill="url(#qngrad)"/>
-<path d="M38 48 L50 66 L44 50 Z" fill="rgba(0,0,0,0.25)"/>
-</svg>
-<div>
-<div style={{fontSize:15,fontWeight:900,letterSpacing:-.5,lineHeight:1}}>QuickNews</div>
-<div style={{fontSize:8,color:"rgba(255,255,255,0.3)"}}>{articles.length} {t.tagline}</div>
-</div>
+<svg width="24" height="24" viewBox="0 0 80 80" fill="none"><defs><linearGradient id="qngrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#a78bfa"/><stop offset="100%" stopColor="#3b82f6"/></linearGradient></defs><path d="M8 40 L68 14 L50 66 L38 48 Z" fill="url(#qngrad)"/><path d="M38 48 L50 66 L44 50 Z" fill="rgba(0,0,0,0.25)"/></svg>
+<div><div style={{fontSize:15,fontWeight:900,letterSpacing:-.5,lineHeight:1}}>QuickNews</div><div style={{fontSize:8,color:"rgba(255,255,255,0.3)"}}>{articles.length} {t.tagline}</div></div>
 </div>
 <div style={{display:"flex",gap:6,alignItems:"center"}}>
-<button onClick={()=>{const m=appMode==="serious"?"meme":"serious";setAppMode(m);localStorage.setItem("qn_mode",m);}} style={{display:"flex",alignItems:"center",gap:3,background:isMemeMode?"rgba(167,139,250,0.15)":"rgba(59,130,246,0.12)",border:`1px solid ${isMemeMode?"rgba(167,139,250,0.4)":"rgba(59,130,246,0.3)"}`,borderRadius:100,padding:"4px 9px",color:isMemeMode?"#c4b5fd":"#60a5fa",fontSize:10,fontWeight:700,cursor:"pointer"}}>
-<span>{isMemeMode?"🤣":"📰"}</span><span>{isMemeMode?t.memeMode:t.seriousMode}</span>
-</button>
-<button onClick={()=>setShowCountry(true)} style={{display:"flex",alignItems:"center",gap:3,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:100,padding:"4px 8px",color:"#fff",fontSize:10,fontWeight:700,cursor:"pointer"}}>
-<span style={{fontSize:13}}>{activeCountryObj.flag}</span>
-</button>
+<button onClick={()=>{const m=appMode==="serious"?"meme":"serious";setAppMode(m);localStorage.setItem("qn_mode",m);}} style={{display:"flex",alignItems:"center",gap:3,background:isMemeMode?"rgba(167,139,250,0.15)":"rgba(59,130,246,0.12)",border:`1px solid ${isMemeMode?"rgba(167,139,250,0.4)":"rgba(59,130,246,0.3)"}`,borderRadius:100,padding:"4px 9px",color:isMemeMode?"#c4b5fd":"#60a5fa",fontSize:10,fontWeight:700,cursor:"pointer"}}><span>{isMemeMode?"🤣":"📰"}</span><span>{isMemeMode?t.memeMode:t.seriousMode}</span></button>
+<button onClick={()=>setShowCountry(true)} style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:100,padding:"4px 8px",color:"#fff",fontSize:13,cursor:"pointer"}}>{activeCountryObj.flag}</button>
 <button onClick={()=>setShowBriefing(true)} style={{width:30,height:30,borderRadius:"50%",background:isPro?"rgba(59,130,246,0.12)":"rgba(124,58,237,0.15)",border:`1px solid ${isPro?"rgba(59,130,246,0.3)":"rgba(124,58,237,0.4)"}`,color:isPro?"#60a5fa":"#c4b5fd",fontSize:14,cursor:"pointer"}}>🎙️</button>
 </div>
 </div>
-{isBreaking&&<div style={{padding:"5px 12px",background:"rgba(239,68,68,0.15)",borderBottom:"1px solid rgba(239,68,68,0.3)",flexShrink:0,display:"flex",alignItems:"center",gap:7,position:"relative",zIndex:9}}><span style={{width:7,height:7,borderRadius:"50%",background:"#ef4444",flexShrink:0,animation:"blink .7s infinite"}}/><span style={{fontSize:10,fontWeight:800,color:"#f87171",letterSpacing:1,textTransform:"uppercase"}}>{t.urgent}</span></div>}
-<div style={{padding:"5px 10px",background:"rgba(9,9,18,0.95)",borderBottom:"1px solid rgba(255,255,255,0.04)",flexShrink:0,display:"flex",gap:5,overflowX:"auto",scrollbarWidth:"none",position:"relative",zIndex:8}}>
+{isBreaking&&!isMemeMode&&<div style={{padding:"5px 12px",background:"rgba(239,68,68,0.15)",borderBottom:"1px solid rgba(239,68,68,0.3)",flexShrink:0,display:"flex",alignItems:"center",gap:7,position:"relative",zIndex:9}}><span style={{width:7,height:7,borderRadius:"50%",background:"#ef4444",flexShrink:0,animation:"blink .7s infinite"}}/><span style={{fontSize:10,fontWeight:800,color:"#f87171",letterSpacing:1,textTransform:"uppercase"}}>{t.urgent}</span></div>}
+{!isMemeMode&&<div style={{padding:"5px 10px",background:"rgba(9,9,18,0.95)",borderBottom:"1px solid rgba(255,255,255,0.04)",flexShrink:0,display:"flex",gap:5,overflowX:"auto",scrollbarWidth:"none",position:"relative",zIndex:8}}>
 {CATS.map(c=><button key={c.k} onClick={()=>setActiveCat(c.k)} style={{display:"flex",alignItems:"center",gap:3,padding:"4px 10px",borderRadius:100,border:`1.5px solid ${activeCat===c.k?c.color:"rgba(255,255,255,0.08)"}`,background:activeCat===c.k?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.03)",color:activeCat===c.k?c.color:"rgba(255,255,255,0.45)",fontSize:10,fontWeight:700,cursor:"pointer",flexShrink:0,boxShadow:activeCat===c.k?`0 0 8px ${c.color}44`:"none"}}><span style={{fontSize:11}}>{c.i}</span><span>{lang==="en"?c.le:c.l}</span></button>)}
-</div>
+</div>}
 {s&&(
-<div key={animKey} className={slideDir==="up"?"slide-in-up":"slide-in-down"} style={{flex:1,display:"flex",flexDirection:"column",padding:"5px 11px",overflow:"hidden",gap:5,position:"relative",zIndex:1}}>
-<NewsCard story={s} isBreaking={isBreaking} isMemeMode={isMemeMode} t={t} lang={lang} onLike={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))} liked={liked[s.id]} onAI={()=>setShowAI(a=>!a)} showAI={showAI}/>
+<div key={animKey} className={slideDir==="up"?"slide-in-up":"slide-in-down"} style={{flex:1,display:"flex",flexDirection:"column",padding:isMemeMode?"0":"5px 11px",overflow:"hidden",gap:isMemeMode?0:5,position:"relative",zIndex:1}}>
+{isMemeMode&&(()=>{
+const viralPct=getViralPct(s.headline);
+const jaikComment=memeJaik[s.id||s.headline]||"⚡ Cargando...";
+return(
+<div style={{position:"relative",flex:1,overflow:"hidden"}}>
+{s.img&&<div style={{position:"absolute",inset:0}}><img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/></div>}
+<div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,0.5) 0%,rgba(0,0,0,0.05) 35%,rgba(0,0,0,0.05) 50%,rgba(0,0,0,0.75) 72%,rgba(0,0,0,0.97) 100%)",zIndex:1}}/>
+<div style={{position:"absolute",inset:0,zIndex:2,display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+<div style={{padding:"6px 8px",display:"flex",gap:5,overflowX:"auto"}}>
+{MEME_CATS.map(c=><button key={c.k} onClick={()=>setActiveMemecat(c.k)} style={{padding:"4px 10px",borderRadius:100,fontSize:9,fontWeight:800,border:`1.5px solid ${activeMemecat===c.k?"#f97316":"rgba(255,255,255,0.2)"}`,background:activeMemecat===c.k?"rgba(249,115,22,0.2)":"rgba(0,0,0,0.3)",color:activeMemecat===c.k?"#f97316":"rgba(255,255,255,0.7)",flexShrink:0,backdropFilter:"blur(8px)",cursor:"pointer"}}>{c.i} {c.l}</button>)}
+</div>
+<div style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",gap:16,alignItems:"center"}}>
+{[[liked[s.id]?"❤️":"🤍",s.r?.h||"0",()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))],["💬",s.r?.c||"0",()=>setShowAI(a=>!a)],["↗️","Share",()=>navigator.share&&navigator.share({title:s.headline,url:s.url||window.location.href})]].map(([ic,cnt,fn],i)=>(
+<div key={i} onClick={fn} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer"}}>
+<div style={{width:44,height:44,borderRadius:"50%",background:i===0&&liked[s.id]?"rgba(239,68,68,0.3)":"rgba(0,0,0,0.45)",backdropFilter:"blur(12px)",border:`1px solid ${i===0&&liked[s.id]?"rgba(239,68,68,0.6)":"rgba(255,255,255,0.2)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{ic}</div>
+<div style={{fontSize:9,fontWeight:800,color:"#fff",textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>{cnt}</div>
+</div>
+))}
+</div>
+<div style={{padding:"0 12px 10px"}}>
+<div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
+<span style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:100,padding:"2px 8px",fontSize:8,color:"rgba(255,255,255,0.55)"}}>📰 Original</span>
+<span style={{fontSize:9,color:"rgba(255,255,255,0.4)",fontStyle:"italic",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis",flex:1}}>{s.headline}</span>
+</div>
+<div style={{fontFamily:"'Playfair Display',serif",fontSize:16,fontWeight:900,lineHeight:1.3,marginBottom:8,textShadow:"0 2px 16px rgba(0,0,0,0.9)",paddingRight:60}}>{getMemeReaction(s.headline)} {s.headline} 💥</div>
+<div style={{background:"rgba(99,102,241,0.18)",border:"1px solid rgba(99,102,241,0.3)",borderRadius:12,padding:"7px 10px",marginBottom:7,display:"flex",gap:7,backdropFilter:"blur(10px)"}}>
+<div style={{width:22,height:22,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,flexShrink:0}}>🤖</div>
+<div><div style={{fontSize:9,fontWeight:800,color:"#a78bfa",marginBottom:2}}>JAIK dice:</div><div style={{fontSize:11,color:"rgba(255,255,255,0.85)",lineHeight:1.45}}>{jaikComment}</div></div>
+</div>
+<div style={{display:"flex",alignItems:"center",gap:6,marginBottom:7}}>
+<span style={{fontSize:13,animation:"fireShake 0.8s infinite",display:"inline-block"}}>🔥</span>
+<span style={{fontSize:11,fontWeight:800,color:"#f97316"}}>Subiendo Rápido</span>
+{["🇩🇴 RD","🇲🇽 MX","🇨🇴 CO"].map(c=><span key={c} style={{fontSize:9,background:"rgba(255,255,255,0.1)",borderRadius:100,padding:"2px 6px",color:"rgba(255,255,255,0.65)"}}>{c}</span>)}
+<span style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginLeft:"auto"}}>{s.time}</span>
+</div>
+<div style={{borderRadius:10,overflow:"hidden",border:"1px solid rgba(34,197,94,0.4)",animation:"viralPulse 2s infinite"}}>
+<div style={{padding:"7px 11px",background:"linear-gradient(90deg,rgba(34,197,94,0.15),rgba(16,185,129,0.08))",display:"flex",alignItems:"center",gap:8}}>
+<span style={{fontSize:15}}>🚀</span>
+<span style={{fontSize:11,fontWeight:800,flex:1}}>IA: <span style={{color:"#4ade80"}}>{viralPct}%</span> probabilidad de viralizarse en 24h</span>
+<div style={{width:60,height:4,background:"rgba(255,255,255,0.1)",borderRadius:100,overflow:"hidden"}}><div style={{height:"100%",background:"linear-gradient(90deg,#22c55e,#4ade80)",borderRadius:100,width:viralPct+"%"}}/></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+);})()}
+{!isMemeMode&&<>
+<div className={isBreaking?"breaking-card":"neon-b"} style={{borderRadius:13,overflow:"hidden",background:isBreaking?"rgba(30,5,5,0.85)":"rgba(10,12,30,0.75)",backdropFilter:"blur(12px)",flexShrink:0}}>
+{s.img?(<div style={{position:"relative",height:140,overflow:"hidden",background:"#111"}}><img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.65)"}} onError={e=>e.target.parentNode.style.minHeight="60px"}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 20%,rgba(10,12,30,0.97) 100%)"}}/><div style={{position:"absolute",bottom:8,left:10,right:10}}><div style={{display:"flex",gap:5,marginBottom:4,flexWrap:"wrap"}}><span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:isBreaking?"rgba(239,68,68,0.5)":"rgba(239,68,68,0.35)",border:"1px solid rgba(239,68,68,0.6)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span><span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.2)",color:"rgba(255,255,255,0.85)"}}>{s.cat}</span></div><div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,color:isBreaking?"#fca5a5":"#fff",textShadow:"0 1px 4px rgba(0,0,0,0.8)"}}>{s.headline}</div><div style={{fontSize:9,color:"rgba(255,255,255,0.5)",marginTop:2}}>{s.time}</div></div></div>
+):(<div style={{padding:"8px 10px"}}><div style={{display:"flex",gap:5,marginBottom:5}}><span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.5)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span><span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)"}}>{s.cat}</span></div><div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,color:isBreaking?"#fca5a5":"#fff"}}>{s.headline}</div><div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:2}}>{s.time}</div></div>)}
+<div style={{display:"flex",gap:10,alignItems:"center",padding:"6px 10px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+<button onClick={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:liked[s.id]?"#ef4444":"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700}}><span style={{fontSize:14}}>{liked[s.id]?"❤️":"🤍"}</span>{s.r?.h||"0"}</button>
+<button onClick={()=>setShowAI(a=>!a)} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:showAI?"#a78bfa":"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700}}><span style={{fontSize:14}}>💬</span>{s.r?.c||"0"}</button>
+{s.url&&<a href={s.url} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:3,color:"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700,textDecoration:"none"}}><span style={{fontSize:14}}>🔗</span></a>}
+<button style={{marginLeft:"auto",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,padding:"4px 10px",color:"rgba(255,255,255,0.5)",fontSize:9,fontWeight:700,cursor:"pointer"}}>{t.share}</button>
+</div>
+</div>
 <div style={{flexShrink:0,display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none"}}>
 {VIBES.map(v=><button key={v.k} onClick={()=>pickVibe(v.k)} style={{display:"flex",alignItems:"center",gap:3,padding:"5px 9px",borderRadius:100,border:`1.5px solid ${vibe===v.k?v.c:"rgba(255,255,255,0.12)"}`,background:vibe===v.k?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.03)",boxShadow:vibe===v.k?`0 0 8px ${v.c}55`:"none",cursor:"pointer",flexShrink:0}}><span style={{fontSize:13}}>{v.i}</span><span style={{fontSize:10,fontWeight:800,color:vibe===v.k?v.c:"rgba(255,255,255,0.5)"}}>{v.l}</span>{v.lock&&!isPro&&<span style={{fontSize:9,opacity:.6}}>🔒</span>}</button>)}
 </div>
 {!showAI&&<div style={{borderRadius:12,background:"rgba(10,8,28,0.75)",border:`1px solid ${vd.br}`,padding:"8px 11px",flexShrink:0}}><div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}><span style={{fontSize:13}}>{vd.i}</span><span style={{fontSize:11,fontWeight:800,color:vd.c}}>{vd.l}:</span></div><div style={{fontSize:12,color:"rgba(255,255,255,0.8)",lineHeight:1.55}}>{vibes[vibe]||vibes.Quick}</div></div>}
-{showAI&&(
-<div style={{borderRadius:12,background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.07))",border:"1px solid rgba(139,92,246,0.3)",padding:"9px",flexShrink:0}}>
+{showAI&&(<div style={{borderRadius:12,background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.07))",border:"1px solid rgba(139,92,246,0.3)",padding:"9px",flexShrink:0}}>
 <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:7}}><div style={{width:24,height:24,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>🤖</div><div style={{flex:1,fontSize:11,fontWeight:800}}>JAIK {!isPro&&<span style={{color:"rgba(255,255,255,0.3)",fontWeight:400}}>· {Math.max(0,3-aiN)} {t.free}</span>}</div><button onClick={()=>setShowAI(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:14,cursor:"pointer"}}>✕</button></div>
 <div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:6}}>{(lang==="en"?["Why did this happen?","How does it affect me?","Give me context"]:["¿Por qué pasó esto?","¿Cómo me afecta?","Dame el contexto"]).map((q,i)=><button key={i} onClick={()=>askAI(q)} style={{padding:"5px 8px",background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.18)",borderRadius:8,color:"rgba(255,255,255,0.65)",fontSize:10,cursor:"pointer",textAlign:"left"}}>→ {q}</button>)}</div>
 <div style={{display:"flex",gap:5}}><input id="aiQ" placeholder={t.askJaik} onKeyDown={e=>e.key==="Enter"&&askAI(e.target.value)} style={{flex:1,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"5px 9px",color:"#fff",fontSize:10,outline:"none"}}/><button onClick={()=>askAI(document.getElementById("aiQ")?.value)} style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"#fff",fontSize:12,cursor:"pointer"}}>↑</button></div>
 {(aiLoad||aiAns)&&<div style={{marginTop:6,background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.15)",borderRadius:8,padding:"7px 9px",fontSize:11,color:"#e8f0fe",lineHeight:1.5}}>{aiLoad?t.thinking:aiAns}</div>}
+</div>)}
+{!showAI&&<div style={{display:"flex",flexDirection:"column",gap:5,flexShrink:0}}>
+<div style={{borderRadius:12,background:"rgba(10,8,28,0.8)",border:"1px solid rgba(239,68,68,0.2)",padding:"8px 10px"}}>
+<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:7}}>
+<div style={{fontSize:10,fontWeight:800,color:"#f97316",letterSpacing:1,textTransform:"uppercase"}}>🔥 Trending ahora</div>
+<div style={{display:"flex",alignItems:"center",gap:4,fontSize:8,color:"rgba(255,255,255,0.35)"}}><span style={{width:5,height:5,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>live</div>
 </div>
-)}
+{TRENDING_TOPICS.map((item,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 0",borderBottom:i<TRENDING_TOPICS.length-1?"1px solid rgba(255,255,255,0.04)":"none"}}><span style={{fontSize:11,fontWeight:900,color:item.hot?"#ef4444":"rgba(255,255,255,0.2)",width:14,flexShrink:0}}>{item.n}</span><span style={{flex:1,fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.8)"}}>{item.text}</span><span style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>{item.count}</span><span style={{fontSize:9,color:"#22c55e"}}>↑</span></div>)}
+</div>
+<div onClick={()=>setShowPay(true)} style={{borderRadius:12,background:"linear-gradient(135deg,rgba(124,58,237,0.18),rgba(79,70,229,0.12))",border:"1px solid rgba(124,58,237,0.3)",padding:"9px 12px",display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
+<div style={{width:34,height:34,borderRadius:10,background:"linear-gradient(135deg,#7c3aed,#4f46e5)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>💎</div>
+<div style={{flex:1}}><div style={{fontSize:12,fontWeight:900,marginBottom:2}}>QuickNews Pro</div><div style={{fontSize:9,color:"rgba(255,255,255,0.4)"}}>Análisis · Sin anuncios · JAIK ilimitado</div></div>
+<button style={{padding:"6px 11px",background:"linear-gradient(135deg,#7c3aed,#4f46e5)",border:"none",borderRadius:100,fontSize:10,fontWeight:800,color:"#fff",cursor:"pointer",whiteSpace:"nowrap"}}>$2.99/mes</button>
+</div>
+</div>}
 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,marginBottom:2}}>
 <div style={{fontSize:9,color:"rgba(255,255,255,0.15)"}}>{loadingMore?<span style={{animation:"pulse 1s infinite"}}>⚡ {t.loadingMore}</span>:<span>{t.swipe} · {si+1}/{articles.length}</span>}</div>
 <button onClick={()=>pickVibe(VIBES[(VIBES.findIndex(v=>v.k===vibe)+1)%VIBES.length].k)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:100,padding:"4px 10px",color:"rgba(255,255,255,0.5)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{t.changeVibe}</button>
 </div>
 {articles[si+1]&&<div onClick={()=>swipe(1)} style={{flexShrink:0,borderRadius:12,overflow:"hidden",position:"relative",height:65,background:"rgba(10,12,30,0.6)",border:"1px solid rgba(255,255,255,0.08)",cursor:"pointer"}}>{articles[si+1].img&&<img src={articles[si+1].img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.35)"}} onError={e=>e.target.style.display="none"}/>}<div style={{position:"absolute",inset:0,background:"linear-gradient(to right,rgba(10,12,30,0.92) 0%,rgba(10,12,30,0.6) 100%)",display:"flex",alignItems:"center",padding:"0 12px",gap:10}}><div style={{flex:1}}><div style={{fontSize:8,color:"rgba(255,255,255,0.4)",marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>{t.next} · {articles[si+1].cat}</div><div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.85)",lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{articles[si+1].headline}</div></div><div style={{fontSize:18,color:"rgba(255,255,255,0.3)"}}>↑</div></div></div>}
+</>}
 </div>
 )}
 <div style={{background:"rgba(5,5,15,0.95)",backdropFilter:"blur(20px)",borderTop:"1px solid rgba(139,92,246,0.25)",display:"flex",zIndex:20,flexShrink:0}}>
