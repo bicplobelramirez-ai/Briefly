@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#05050f;font-family:'DM Sans',sans-serif;color:#fff;overflow:hidden;}
@@ -36,6 +37,11 @@ body{background:#05050f;font-family:'DM Sans',sans-serif;color:#fff;overflow:hid
 <div id="root"></div>
 <script type="text/babel">
 const {useState,useRef,useEffect}=React;
+const SUPA_URL="https://irhedtvljmrftyfvc.supabase.co";
+const SUPA_KEY="sb_publishable_hQd19npfddwVsDSfXRXUVA_D-zfUOtY";
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
+function getUserId(){let id=localStorage.getItem("qn_uid");if(!id){id=crypto.randomUUID();localStorage.setItem("qn_uid",id);}return id;}
+const UID=getUserId();
 const T={
 es:{tagline:"noticias · live",now:"AHORA",urgent:"🔴 URGENTE",changeVibe:"🔄 Cambiar vibe",swipe:"↑ desliza",next:"↑ Siguiente",share:"↗️ Share",loading:"Cargando noticias...",noResults:"Sin resultados para",searchPlaceholder:"Buscar noticias...",hotTopics:"🔥 Temas populares",chooseRegion:"🌍 Elige tu región",regionSub:"Las noticias se filtrarán para tu país",thinking:"⚡ Pensando...",askJaik:"Pregúntale a JAIK...",proMode:"MODO PRO",proSub:"Análisis profundo",back:"← Volver",memeMode:"Meme 🤣",seriousMode:"Serio 📰",eli5:"En palabras simples: ",real:"Sin filtro: ",free:"gratis",loadingMore:"Cargando más..."},
 en:{tagline:"news · live",now:"NOW",urgent:"🔴 URGENT",changeVibe:"🔄 Change vibe",swipe:"↑ swipe",next:"↑ Next",share:"↗️ Share",loading:"Loading news...",noResults:"No results for",searchPlaceholder:"Search news...",hotTopics:"🔥 Hot topics",chooseRegion:"🌍 Choose your region",regionSub:"News will be filtered for your country",thinking:"⚡ Thinking...",askJaik:"Ask JAIK...",proMode:"PRO MODE",proSub:"Deep analysis",back:"← Back",memeMode:"Meme 🤣",seriousMode:"Serious 📰",eli5:"In simple words: ",real:"No filter: ",free:"free",loadingMore:"Loading more..."}
@@ -115,6 +121,38 @@ return(
 {[["💎",lang==="en"?"Pro analysis":"Análisis Pro"],["🎙️",lang==="en"?"Daily AI briefing":"Resumen diario IA"],["🤖",lang==="en"?"Unlimited JAIK":"JAIK ilimitado"],["🚫",lang==="en"?"No ads":"Sin anuncios"],["🌍",lang==="en"?"Local news":"Noticias locales"]].map(([ic,tx])=><div key={tx} style={{display:"flex",gap:9,alignItems:"center",marginBottom:8}}><span>{ic}</span><span style={{fontSize:12,color:"rgba(255,255,255,0.6)"}}>{tx}</span></div>)}
 <button onClick={onBuy} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#7c3aed,#4f46e5)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginTop:12,marginBottom:7}}>⭐ {lang==="en"?"7 days free":"7 días gratis"}</button>
 <button onClick={onClose} style={{width:"100%",padding:"10px",background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,cursor:"pointer",fontSize:11,color:"rgba(255,255,255,0.25)"}}>{lang==="en"?"Continue free":"Continuar gratis"}</button>
+</div>
+</div>
+);
+}
+function CommentsPanel({article,onClose,lang}){
+const [comments,setComments]=useState([]);const [text,setText]=useState("");const [loading,setLoading]=useState(true);const [sending,setSending]=useState(false);
+const articleUrl=article.url||article.headline;
+useEffect(()=>{loadComments();},[]);
+async function loadComments(){setLoading(true);try{const {data}=await supa.from("comments").select("*").eq("article_url",articleUrl).order("created_at",{ascending:false});setComments(data||[]);}catch{}setLoading(false);}
+async function sendComment(){if(!text.trim())return;setSending(true);try{const {data}=await supa.from("comments").insert({article_url:articleUrl,user_id:UID,text:text.trim()}).select();if(data)setComments(prev=>[data[0],...prev]);setText("");}catch{}setSending(false);}
+function timeAgo(ts){const diff=Date.now()-new Date(ts);const m=Math.floor(diff/60000);if(m<1)return"ahora";if(m<60)return m+"m";if(m<1440)return Math.floor(m/60)+"h";return Math.floor(m/1440)+"d";}
+return(
+<div style={{position:"fixed",inset:0,zIndex:450,background:"rgba(0,0,0,0.88)",backdropFilter:"blur(18px)",display:"flex",alignItems:"flex-end"}}>
+<div style={{width:"100%",maxWidth:400,margin:"0 auto",background:"#0d0d1f",borderRadius:"22px 22px 0 0",border:"1px solid rgba(255,255,255,0.1)",maxHeight:"75vh",display:"flex",flexDirection:"column",animation:"slideUp .3s ease"}}>
+<div style={{padding:"12px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+<div style={{fontSize:13,fontWeight:900}}>💬 {lang==="en"?"Comments":"Comentarios"} {comments.length>0&&<span style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontWeight:400}}>· {comments.length}</span>}</div>
+<button onClick={onClose} style={{width:28,height:28,borderRadius:"50%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:14,cursor:"pointer"}}>✕</button>
+</div>
+<div style={{flex:1,overflowY:"auto",padding:"10px 12px"}}>
+{loading?<div style={{textAlign:"center",padding:"30px",fontSize:20,animation:"spin 1s linear infinite"}}>⚡</div>
+:comments.length===0?<div style={{textAlign:"center",padding:"30px",color:"rgba(255,255,255,0.3)",fontSize:12}}>{lang==="en"?"Be the first to comment":"Sé el primero en comentar"} 👇</div>
+:comments.map((c,i)=>(
+<div key={i} style={{marginBottom:10,padding:"9px 11px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12}}>
+<div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4}}><div style={{width:22,height:22,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11}}>👤</div><span style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>Usuario · {timeAgo(c.created_at)}</span></div>
+<div style={{fontSize:12,color:"rgba(255,255,255,0.85)",lineHeight:1.5}}>{c.text}</div>
+</div>
+))}
+</div>
+<div style={{padding:"10px 12px 30px",borderTop:"1px solid rgba(255,255,255,0.07)",flexShrink:0,display:"flex",gap:8}}>
+<input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendComment()} placeholder={lang==="en"?"Write a comment...":"Escribe un comentario..."} style={{flex:1,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:100,padding:"9px 14px",color:"#fff",fontSize:12,outline:"none"}}/>
+<button onClick={sendComment} disabled={sending||!text.trim()} style={{width:38,height:38,borderRadius:"50%",background:text.trim()?"linear-gradient(135deg,#6366f1,#8b5cf6)":"rgba(255,255,255,0.06)",border:"none",color:"#fff",fontSize:16,cursor:"pointer"}}>↑</button>
+</div>
 </div>
 </div>
 );
@@ -240,7 +278,6 @@ const [si,setSi]=useState(0);
 const [slideDir,setSlideDir]=useState("up");
 const [animKey,setAnimKey]=useState(0);
 const [vibe,setVibe]=useState("Quick");
-const [liked,setLiked]=useState({});
 const [showPay,setShowPay]=useState(false);
 const [showPro,setShowPro]=useState(false);
 const [isPro,setIsPro]=useState(false);
@@ -249,6 +286,7 @@ const [showSearch,setShowSearch]=useState(false);
 const [showAdmin,setShowAdmin]=useState(false);
 const [showCountry,setShowCountry]=useState(false);
 const [showAI,setShowAI]=useState(false);
+const [showComments,setShowComments]=useState(false);
 const [aiAns,setAiAns]=useState("");
 const [aiLoad,setAiLoad]=useState(false);
 const [aiN,setAiN]=useState(0);
@@ -260,6 +298,7 @@ const [activeMemecat,setActiveMemecat]=useState("trending");
 const [country,setCountry]=useState("any");
 const [tapCount,setTapCount]=useState(0);
 const [memeJaik,setMemeJaik]=useState({});
+const [dbLikes,setDbLikes]=useState({});
 const ty=useRef(null);const timer=useRef(null);const tapTimer=useRef(null);
 const t=T[lang]||T.es;
 const isMemeMode=appMode==="meme";
@@ -279,6 +318,21 @@ const txt=d.content?.find(b=>b.type==="text")?.text||"El internet en llamas 🔥
 setMemeJaik(prev=>({...prev,[key]:txt}));
 }catch{setMemeJaik(prev=>({...prev,[key]:"Sin palabras 💀"}));}
 }
+async function toggleLike(article){
+const url=article.url||article.headline;
+const isLiked=dbLikes[url];
+if(isLiked){await supa.from("likes").delete().eq("article_url",url).eq("user_id",UID);setDbLikes(prev=>({...prev,[url]:false}));}
+else{await supa.from("likes").insert({article_url:url,user_id:UID});setDbLikes(prev=>({...prev,[url]:true}));}
+}
+async function loadEngagement(arts){
+if(!arts||arts.length===0)return;
+const urls=arts.map(a=>a.url||a.headline).filter(Boolean);
+try{const {data:myLikes}=await supa.from("likes").select("article_url").eq("user_id",UID).in("article_url",urls);const likesMap={};(myLikes||[]).forEach(l=>likesMap[l.article_url]=true);setDbLikes(prev=>({...prev,...likesMap}));}catch{}
+}
+function shareArticle(article){
+if(navigator.share){navigator.share({title:article.headline,url:article.url||window.location.href});}
+else{navigator.clipboard?.writeText(article.url||window.location.href);}
+}
 async function loadNews(p,replace,cat,ctry){
 if(p===1)setLoading(true);else setLoadingMore(true);
 try{
@@ -288,11 +342,11 @@ let url="/api/news?page="+p;
 if(cat)url+="&cat="+cat;
 if(ctry&&ctry!=="any")url+="&country="+ctry;
 const r=await fetch(url);const data=await r.json();const arts=data.articles||data;
-if(Array.isArray(arts)&&arts.length>0){const combined=breaking&&p===1?[breaking,...arts]:arts;setArticles(prev=>replace?combined:[...prev,...arts]);setPage(p);if(replace)setSi(0);}
+if(Array.isArray(arts)&&arts.length>0){const combined=breaking&&p===1?[breaking,...arts]:arts;setArticles(prev=>replace?combined:[...prev,...arts]);setPage(p);if(replace)setSi(0);loadEngagement(combined);}
 }catch{}
 setLoading(false);setLoadingMore(false);
 }
-function swipe(d){setAiAns("");setShowAI(false);setShowPro(false);const next=si+d;if(next>=0&&next<articles.length){setSlideDir(d===1?"up":"down");setAnimKey(k=>k+1);setSi(next);if(d===1&&next>=articles.length-2&&!loadingMore)loadNews(page+1,false,activeCat,country);}}
+function swipe(d){setAiAns("");setShowAI(false);setShowPro(false);setShowComments(false);const next=si+d;if(next>=0&&next<articles.length){setSlideDir(d===1?"up":"down");setAnimKey(k=>k+1);setSi(next);if(d===1&&next>=articles.length-2&&!loadingMore)loadNews(page+1,false,activeCat,country);}}
 function handleLogoTap(){const n=tapCount+1;setTapCount(n);clearTimeout(tapTimer.current);if(n>=3){setShowAdmin(true);setTapCount(0);}else tapTimer.current=setTimeout(()=>setTapCount(0),1000);}
 function pickVibe(v){if(v==="Pro"&&!isPro){setShowPay(true);return;}setVibe(v);if(v==="Pro"&&isPro)setShowPro(true);}
 async function askAI(q){if(!q||!s)return;if(!isPro&&aiN>=3){setShowPay(true);return;}setAiN(n=>n+1);setAiLoad(true);setAiAns("");try{const sys=lang==="en"?`JAIK from QuickNews. News: "${s.headline}". Answer English, max 2 sentences.`:`JAIK de QuickNews. Noticia: "${s.headline}". Español, máx 2 oraciones.`;const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:150,system:sys,messages:[{role:"user",content:q}]})});const d=await r.json();setAiAns(d.content?.find(b=>b.type==="text")?.text||"Error.");}catch{setAiAns(lang==="en"?"Connection error.":"Error de conexión.");}setAiLoad(false);}
@@ -313,6 +367,7 @@ return(
 {showPro&&s&&<ProPanel story={s} onClose={()=>setShowPro(false)} lang={lang} onChangeMode={()=>{setShowPro(false);pickVibe("Quick");}}/>}
 {showPay&&<Paywall onClose={()=>setShowPay(false)} onBuy={()=>{setIsPro(true);setShowPay(false);}} lang={lang}/>}
 {showBriefing&&<BriefingPanel onClose={()=>setShowBriefing(false)} isPro={isPro} onUpgrade={()=>{setShowBriefing(false);setShowPay(true);}} articles={articles} lang={lang}/>}
+{showComments&&s&&<CommentsPanel article={s} onClose={()=>setShowComments(false)} lang={lang}/>}
 <div style={{padding:"8px 12px 6px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,background:"rgba(9,9,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.05)",position:"relative",zIndex:10}}>
 <div style={{display:"flex",alignItems:"center",gap:7}} onClick={handleLogoTap}>
 <svg width="24" height="24" viewBox="0 0 80 80" fill="none"><defs><linearGradient id="qngrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#a78bfa"/><stop offset="100%" stopColor="#3b82f6"/></linearGradient></defs><path d="M8 40 L68 14 L50 66 L38 48 Z" fill="url(#qngrad)"/><path d="M38 48 L50 66 L44 50 Z" fill="rgba(0,0,0,0.25)"/></svg>
@@ -342,9 +397,9 @@ return(
 {MEME_CATS.map(c=><button key={c.k} onClick={()=>setActiveMemecat(c.k)} style={{padding:"4px 10px",borderRadius:100,fontSize:9,fontWeight:800,border:`1.5px solid ${activeMemecat===c.k?"#f97316":"rgba(255,255,255,0.2)"}`,background:activeMemecat===c.k?"rgba(249,115,22,0.2)":"rgba(0,0,0,0.3)",color:activeMemecat===c.k?"#f97316":"rgba(255,255,255,0.7)",flexShrink:0,backdropFilter:"blur(8px)",cursor:"pointer"}}>{c.i} {c.l}</button>)}
 </div>
 <div style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",gap:16,alignItems:"center"}}>
-{[[liked[s.id]?"❤️":"🤍",s.r?.h||"0",()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))],["💬",s.r?.c||"0",()=>setShowAI(a=>!a)],["↗️","Share",()=>navigator.share&&navigator.share({title:s.headline,url:s.url||window.location.href})]].map(([ic,cnt,fn],i)=>(
+{[[dbLikes[s.url||s.headline]?"❤️":"🤍",s.r?.h||"0",()=>toggleLike(s)],["💬",s.r?.c||"0",()=>setShowComments(true)],["↗️","Share",()=>shareArticle(s)]].map(([ic,cnt,fn],i)=>(
 <div key={i} onClick={fn} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer"}}>
-<div style={{width:44,height:44,borderRadius:"50%",background:i===0&&liked[s.id]?"rgba(239,68,68,0.3)":"rgba(0,0,0,0.45)",backdropFilter:"blur(12px)",border:`1px solid ${i===0&&liked[s.id]?"rgba(239,68,68,0.6)":"rgba(255,255,255,0.2)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{ic}</div>
+<div style={{width:44,height:44,borderRadius:"50%",background:i===0&&dbLikes[s.url||s.headline]?"rgba(239,68,68,0.3)":"rgba(0,0,0,0.45)",backdropFilter:"blur(12px)",border:`1px solid ${i===0&&dbLikes[s.url||s.headline]?"rgba(239,68,68,0.6)":"rgba(255,255,255,0.2)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{ic}</div>
 <div style={{fontSize:9,fontWeight:800,color:"#fff",textShadow:"0 1px 6px rgba(0,0,0,0.9)"}}>{cnt}</div>
 </div>
 ))}
@@ -381,10 +436,10 @@ return(
 {s.img?(<div style={{position:"relative",height:140,overflow:"hidden",background:"#111"}}><img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.65)"}} onError={e=>e.target.parentNode.style.minHeight="60px"}/><div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 20%,rgba(10,12,30,0.97) 100%)"}}/><div style={{position:"absolute",bottom:8,left:10,right:10}}><div style={{display:"flex",gap:5,marginBottom:4,flexWrap:"wrap"}}><span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:isBreaking?"rgba(239,68,68,0.5)":"rgba(239,68,68,0.35)",border:"1px solid rgba(239,68,68,0.6)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span><span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.2)",color:"rgba(255,255,255,0.85)"}}>{s.cat}</span></div><div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,color:isBreaking?"#fca5a5":"#fff",textShadow:"0 1px 4px rgba(0,0,0,0.8)"}}>{s.headline}</div><div style={{fontSize:9,color:"rgba(255,255,255,0.5)",marginTop:2}}>{s.time}</div></div></div>
 ):(<div style={{padding:"8px 10px"}}><div style={{display:"flex",gap:5,marginBottom:5}}><span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.5)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span><span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)"}}>{s.cat}</span></div><div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,color:isBreaking?"#fca5a5":"#fff"}}>{s.headline}</div><div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:2}}>{s.time}</div></div>)}
 <div style={{display:"flex",gap:10,alignItems:"center",padding:"6px 10px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
-<button onClick={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:liked[s.id]?"#ef4444":"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700}}><span style={{fontSize:14}}>{liked[s.id]?"❤️":"🤍"}</span>{s.r?.h||"0"}</button>
-<button onClick={()=>setShowAI(a=>!a)} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:showAI?"#a78bfa":"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700}}><span style={{fontSize:14}}>💬</span>{s.r?.c||"0"}</button>
+<button onClick={()=>toggleLike(s)} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:dbLikes[s.url||s.headline]?"#ef4444":"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700}}><span style={{fontSize:14}}>{dbLikes[s.url||s.headline]?"❤️":"🤍"}</span>{s.r?.h||"0"}</button>
+<button onClick={()=>setShowComments(true)} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700}}><span style={{fontSize:14}}>💬</span>{s.r?.c||"0"}</button>
 {s.url&&<a href={s.url} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:3,color:"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700,textDecoration:"none"}}><span style={{fontSize:14}}>🔗</span></a>}
-<button style={{marginLeft:"auto",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,padding:"4px 10px",color:"rgba(255,255,255,0.5)",fontSize:9,fontWeight:700,cursor:"pointer"}}>{t.share}</button>
+<button onClick={()=>shareArticle(s)} style={{marginLeft:"auto",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,padding:"4px 10px",color:"rgba(255,255,255,0.5)",fontSize:9,fontWeight:700,cursor:"pointer"}}>{t.share}</button>
 </div>
 </div>
 <div style={{flexShrink:0,display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none"}}>
