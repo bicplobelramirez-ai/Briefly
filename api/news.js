@@ -1,12 +1,11 @@
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Cache-Control", "s-maxage=300");
+  res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=30");
 
   const key = process.env.NEWSDATA_API_KEY;
   const gnewsKey = process.env.GNEWS_API_KEY;
   const { q, page = 1, cat, country } = req.query;
 
-  // Detectar país por IP
   const validCountries = ["ar","mx","co","cl","pe","ve","ec","bo","py","uy","cu","do","es","br","us","gt","hn","sv","ni","cr","pa"];
   let detectedCountry = country || "any";
 
@@ -23,43 +22,43 @@ export default async function handler(req, res) {
   const proto = req.headers["x-forwarded-proto"] || "https";
   const base = `${proto}://${host}`;
 
-  // 🇺🇸 EE.UU. — medios en español
+  // Fecha de hace 12 horas para forzar noticias recientes
+  const fromDate = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+  // 🇺🇸 EE.UU.
   if (detectedCountry === "us") {
     try {
-      const usUrl = `${base}/api/us-news?page=${page}${cat?"&cat="+cat:""}${q?"&q="+encodeURIComponent(q):""}`;
+      const usUrl = `${base}/api/us-news?page=${page}${cat ? "&cat=" + cat : ""}${q ? "&q=" + encodeURIComponent(q) : ""}`;
       const usRes = await fetch(usUrl);
       const usData = await usRes.json();
       if (usData.articles?.length > 0) return res.status(200).json(usData);
     } catch {}
   }
 
-  // 🇩🇴 República Dominicana — medios locales
+  // 🇩🇴 República Dominicana
   if (detectedCountry === "do") {
     try {
-      const rdUrl = `${base}/api/rd-news?page=${page}${cat?"&cat="+cat:""}${q?"&q="+encodeURIComponent(q):""}`;
+      const rdUrl = `${base}/api/rd-news?page=${page}${cat ? "&cat=" + cat : ""}${q ? "&q=" + encodeURIComponent(q) : ""}`;
       const rdRes = await fetch(rdUrl);
       const rdData = await rdRes.json();
       if (rdData.articles?.length > 0) return res.status(200).json(rdData);
     } catch {}
   }
 
-  // Mapeo categorías NewsData
   const catMap = {
-    politica:"politics", tech:"technology", deportes:"sports",
-    economia:"business", entretenimiento:"entertainment",
-    ciencia:"science", mundial:"world",
+    politica: "politics", tech: "technology", deportes: "sports",
+    economia: "business", entretenimiento: "entertainment",
+    ciencia: "science", mundial: "world",
   };
 
-  // NewsData.io para otros países
+  // NewsData.io para países específicos
   if (key && detectedCountry !== "any") {
     try {
-      let url = `https://newsdata.io/api/1/news?apikey=${key}&language=es&size=10&country=${detectedCountry}`;
+      let url = `https://newsdata.io/api/1/news?apikey=${key}&language=es&size=10&country=${detectedCountry}&timeframe=12`;
       if (cat && catMap[cat]) url += `&category=${catMap[cat]}`;
       if (q) url += `&q=${encodeURIComponent(q)}`;
-
       const r = await fetch(url);
       const data = await r.json();
-
       if (data.status === "success" && data.results?.length > 0) {
         return res.status(200).json({
           country: detectedCountry,
@@ -69,19 +68,31 @@ export default async function handler(req, res) {
     } catch {}
   }
 
-  // Fallback: GNews sin país
+  // Fallback: GNews con filtro de fecha reciente
   try {
-    let gnewsUrl = `https://gnews.io/api/v4/top-headlines?lang=es&country=any&max=10&apikey=${gnewsKey}`;
-    if (cat && catMap[cat]) gnewsUrl = `https://gnews.io/api/v4/top-headlines?topic=${catMap[cat]}&lang=es&country=any&max=10&apikey=${gnewsKey}`;
-    if (q) gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=es&max=10&apikey=${gnewsKey}`;
+    let gnewsUrl;
+    if (q) {
+      gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=es&country=any&max=10&from=${fromDate}&sortby=publishedAt&apikey=${gnewsKey}`;
+    } else if (cat && catMap[cat]) {
+      gnewsUrl = `https://gnews.io/api/v4/top-headlines?topic=${catMap[cat]}&lang=es&country=any&max=10&from=${fromDate}&sortby=publishedAt&apikey=${gnewsKey}`;
+    } else {
+      gnewsUrl = `https://gnews.io/api/v4/top-headlines?lang=es&country=any&max=10&from=${fromDate}&sortby=publishedAt&apikey=${gnewsKey}`;
+    }
 
     const r = await fetch(gnewsUrl);
     const data = await r.json();
 
     if (data.articles?.length > 0) {
+      // Filtrar noticias de más de 24h
+      const recent = data.articles.filter(a => {
+        if (!a.publishedAt) return true;
+        const diff = Date.now() - new Date(a.publishedAt).getTime();
+        return diff < 24 * 60 * 60 * 1000;
+      });
+      const list = recent.length > 0 ? recent : data.articles;
       return res.status(200).json({
         country: detectedCountry,
-        articles: mapGNews(data.articles, page)
+        articles: mapGNews(list, page)
       });
     }
   } catch {}
@@ -99,7 +110,7 @@ function mapNewsData(results, page) {
     img: a.image_url || "",
     url: a.link || "",
     memeText: a.title.substring(0, 55) + "... 👀",
-    r: { h: rnd(1,30)+"K", c: rnd(1,10)+"K", s: rnd(1,6)+"K" },
+    r: { h: rnd(1, 30) + "K", c: rnd(1, 10) + "K", s: rnd(1, 6) + "K" },
     vibes: {
       ELI5: "En palabras simples: " + (a.description || a.title),
       Quick: a.description || a.title,
@@ -119,7 +130,7 @@ function mapGNews(articles, page) {
     img: a.image || "",
     url: a.url,
     memeText: a.title.substring(0, 55) + "... 👀",
-    r: { h: rnd(5,50)+"K", c: rnd(1,15)+"K", s: rnd(1,8)+"K" },
+    r: { h: rnd(5, 50) + "K", c: rnd(1, 15) + "K", s: rnd(1, 8) + "K" },
     vibes: {
       ELI5: "En palabras simples: " + a.description,
       Quick: a.description,
@@ -134,8 +145,8 @@ function timeAgo(dateStr) {
   try {
     const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
     if (diff < 60) return `hace ${diff} min`;
-    if (diff < 1440) return `hace ${Math.floor(diff/60)}h`;
-    return `hace ${Math.floor(diff/1440)}d`;
+    if (diff < 1440) return `hace ${Math.floor(diff / 60)}h`;
+    return `hace ${Math.floor(diff / 1440)}d`;
   } catch { return "reciente"; }
 }
 
