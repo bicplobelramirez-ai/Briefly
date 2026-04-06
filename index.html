@@ -156,6 +156,75 @@ function TrendingScreen({onClose,lang,country}){
 }
 // ── FIN TRENDING WIDGET ────────────────────────────────────────────────────
 
+
+// ── WEATHER WIDGET ────────────────────────────────────────────────────────
+const WX_CODES={0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"🌨️",73:"🌨️",75:"❄️",80:"🌦️",81:"🌧️",82:"⛈️",95:"⛈️",99:"⛈️"};
+const WX_DESC={
+  es:{0:"Despejado",1:"Mayorm. despejado",2:"Parcialmente nublado",3:"Nublado",45:"Neblina",48:"Neblina",51:"Llovizna",53:"Llovizna",55:"Llovizna",61:"Lluvia leve",63:"Lluvia",65:"Lluvia fuerte",71:"Nieve leve",73:"Nieve",75:"Nieve fuerte",80:"Chubascos",81:"Chubascos",82:"Tormenta",95:"Tormenta",99:"Tormenta"},
+  en:{0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Cloudy",45:"Foggy",48:"Foggy",51:"Drizzle",53:"Drizzle",55:"Drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",71:"Light snow",73:"Snow",75:"Heavy snow",80:"Showers",81:"Showers",82:"Thunderstorm",95:"Thunderstorm",99:"Thunderstorm"}
+};
+
+function WeatherWidget({lang}){
+  const [wx,setWx]=useState(null);
+  const [city,setCity]=useState("");
+  const [status,setStatus]=useState("loading"); // loading | ok | denied
+
+  function request(){
+    if(!navigator.geolocation){setStatus("denied");return;}
+    setStatus("loading");
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      try{
+        const {latitude:lat,longitude:lon}=pos.coords;
+        const wRes=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`);
+        const wData=await wRes.json();
+        const cw=wData.current_weather;
+        const gRes=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+        const gData=await gRes.json();
+        const cityName=gData.address?.city||gData.address?.town||gData.address?.village||gData.address?.county||"";
+        setCity(cityName);
+        setWx({temp:Math.round(cw.temperature),code:cw.weathercode,wind:Math.round(cw.windspeed)});
+        setStatus("ok");
+      }catch{setStatus("denied");}
+    },()=>setStatus("denied"),{timeout:10000});
+  }
+
+  useEffect(()=>{request();},[]);
+
+  const icon=wx?WX_CODES[wx.code]||"🌡️":"🌡️";
+  const desc=wx?(WX_DESC[lang]||WX_DESC.es)[wx.code]||"":"";
+  const unit=wx?(lang==="en"?`${Math.round(wx.temp*9/5+32)}°F`:`${wx.temp}°C`):"--";
+
+  if(status==="loading")return(
+    <div style={{borderRadius:12,background:"rgba(10,12,30,0.75)",border:"1px solid rgba(96,165,250,0.15)",padding:"8px 12px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+      <span style={{fontSize:20,animation:"spin 1.5s linear infinite",display:"inline-block"}}>🌡️</span>
+      <div style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>{lang==="en"?"Getting weather...":"Obteniendo clima..."}</div>
+    </div>
+  );
+
+  if(status==="denied")return(
+    <div onClick={request} style={{borderRadius:12,background:"rgba(10,12,30,0.75)",border:"1px solid rgba(96,165,250,0.15)",padding:"8px 12px",display:"flex",alignItems:"center",gap:10,flexShrink:0,cursor:"pointer"}}>
+      <span style={{fontSize:18}}>📍</span>
+      <div style={{flex:1,fontSize:11,color:"rgba(255,255,255,0.4)"}}>{lang==="en"?"Tap to show local weather":"Toca para ver el clima local"}</div>
+      <span style={{fontSize:10,color:"rgba(96,165,250,0.6)"}}>→</span>
+    </div>
+  );
+
+  return(
+    <div style={{borderRadius:12,background:"rgba(10,12,30,0.75)",border:"1px solid rgba(96,165,250,0.25)",padding:"8px 12px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+      <span style={{fontSize:24}}>{icon}</span>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:6}}>
+          <span style={{fontSize:20,fontWeight:900,color:"#fff"}}>{unit}</span>
+          <span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>{desc}</span>
+        </div>
+        {city&&<div style={{fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:1}}>📍 {city}</div>}
+      </div>
+      <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",textAlign:"right"}}>💨 {wx.wind} km/h</div>
+    </div>
+  );
+}
+// ── FIN WEATHER WIDGET ─────────────────────────────────────────────────────
+
 function CountrySelector({current,onSelect,onClose,lang}){
   const t=T[lang]||T.es;
   return(
@@ -345,7 +414,9 @@ function BriefingPanel({onClose,isPro,onUpgrade,articles,lang}){
 }
 
 function App(){
-  const [lang,setLang]=useState(localStorage.getItem("qn_lang")||(navigator.language?.startsWith("en")?"en":"es"));
+  const browserLang=navigator.language||navigator.userLanguage||"es";
+  const defaultLang=localStorage.getItem("qn_lang")||(browserLang.startsWith("en")?"en":browserLang.startsWith("pt")?"es":"es");
+  const [lang,setLang]=useState(defaultLang);
   const [appMode,setAppMode]=useState(localStorage.getItem("qn_mode")||"serious");
   const [articles,setArticles]=useState([]);
   const [si,setSi]=useState(0);
@@ -568,6 +639,8 @@ function App(){
             </div>
           )}
 
+          {!showAI&&<WeatherWidget lang={lang}/>}
+
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,marginBottom:2}}>
             <div style={{fontSize:9,color:"rgba(255,255,255,0.15)"}}>{loadingMore?<span style={{animation:"pulse 1s infinite"}}>⚡ {t.loadingMore}</span>:<span>{t.swipe} · {si+1}/{articles.length}</span>}</div>
             <button onClick={()=>pickVibe(VIBES[(VIBES.findIndex(v=>v.k===vibe)+1)%VIBES.length].k)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:100,padding:"4px 10px",color:"rgba(255,255,255,0.5)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{t.changeVibe}</button>
@@ -599,4 +672,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
-
