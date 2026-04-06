@@ -303,9 +303,9 @@ function TopicsOfDay({lang,country,onSelectArticle}){
 
   return(
     <div style={{flexShrink:0}}>
-      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
+      <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:5}}>
         <div style={{width:5,height:5,borderRadius:"50%",background:"#22c55e",animation:"blink .9s infinite"}}/>
-        <div style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase"}}>{lang==="en"?"Topics of the day":"Temas del día"}</div>
+        <div style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase"}}>{lang==="en"?"Topics":"Temas del día"}</div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
         {topics.map((t,i)=>(
@@ -317,7 +317,6 @@ function TopicsOfDay({lang,country,onSelectArticle}){
             <div style={{fontSize:8,color:"rgba(255,255,255,0.25)",marginTop:4}}>{t.article.time}</div>
           </div>
         ))}
-        <WeatherWidget lang={lang}/>
       </div>
     </div>
   );
@@ -331,7 +330,7 @@ const WX_DESC={
   en:{0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Cloudy",45:"Foggy",48:"Foggy",51:"Drizzle",53:"Drizzle",55:"Drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",71:"Light snow",73:"Snow",75:"Heavy snow",80:"Showers",81:"Showers",82:"Thunderstorm",95:"Thunderstorm",99:"Thunderstorm"}
 };
 
-function WeatherWidget({lang}){
+function WeatherWidget({lang,compact=false}){
   const [wx,setWx]=useState(null);
   const [city,setCity]=useState("");
   const [status,setStatus]=useState("loading"); // loading | ok | denied
@@ -373,6 +372,17 @@ function WeatherWidget({lang}){
       <span style={{fontSize:18}}>📍</span>
       <div style={{flex:1,fontSize:11,color:"rgba(255,255,255,0.4)"}}>{lang==="en"?"Tap to show local weather":"Toca para ver el clima local"}</div>
       <span style={{fontSize:10,color:"rgba(96,165,250,0.6)"}}>→</span>
+    </div>
+  );
+
+  if(compact)return(
+    <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:10,background:"rgba(96,165,250,0.08)",border:"1px solid rgba(96,165,250,0.15)",marginBottom:7}}>
+      <span style={{fontSize:18}}>{icon}</span>
+      <div style={{flex:1}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:5}}><span style={{fontSize:16,fontWeight:900,color:"#fff"}}>{unit}</span><span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>{desc}</span></div>
+        {city&&<div style={{fontSize:8,color:"rgba(255,255,255,0.3)"}}>📍 {city}</div>}
+      </div>
+      <div style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>💨 {wx.wind} km/h</div>
     </div>
   );
 
@@ -810,6 +820,11 @@ function App(){
                 <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:2}}>{s.time}</div>
               </div>
             )}
+            {/* Clima + Temas del día dentro de la tarjeta */}
+            <div style={{padding:"8px 10px",background:"rgba(5,5,20,0.5)",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+              <WeatherWidget lang={lang} compact={true}/>
+              <TopicsOfDay lang={lang} country={country} onSelectArticle={a=>{setArticles(p=>[a,...p]);setSi(0);}}/>
+            </div>
           </div>
 
           {isMemeMode&&(
@@ -853,10 +868,6 @@ function App(){
             </div>
           )}
 
-
-          <SponsoredSlot lang={lang}/>
-
-          <TopicsOfDay lang={lang} country={country} onSelectArticle={a=>{setArticles(p=>[a,...p]);setSi(0);}}/>
 
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,marginBottom:2}}>
             <div style={{fontSize:9,color:"rgba(255,255,255,0.15)"}}>{loadingMore?<span style={{animation:"pulse 1s infinite"}}>⚡ {t.loadingMore}</span>:<span>{t.swipe} · {si+1}/{articles.length}</span>}</div>
