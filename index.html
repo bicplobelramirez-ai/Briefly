@@ -183,6 +183,147 @@ function BreakingTicker({articles,breakingNews,lang}){
 }
 // ── FIN BREAKING TICKER ────────────────────────────────────────────────────
 
+
+// ── EN 60 SEGUNDOS (reemplaza vibe box) ──────────────────────────────────
+function SixtySeconds({story,lang,vibe,vibeText,vd}){
+  const [votes,setVotes]=useState({yes:Math.floor(Math.random()*15000)+5000,no:Math.floor(Math.random()*8000)+2000});
+  const [voted,setVoted]=useState(null);
+  const [showBullets,setShowBullets]=useState(false);
+
+  if(!story)return null;
+
+  const total=votes.yes+votes.no;
+  const yesPct=Math.round(votes.yes/total*100);
+  const noPct=100-yesPct;
+
+  function vote(v){
+    if(voted)return;
+    setVoted(v);
+    setVotes(prev=>({...prev,[v]:prev[v]+1}));
+  }
+
+  const desc=story.description||story.headline;
+  const bullets=[
+    story.headline.length>58?story.headline.substring(0,58)+"...":story.headline,
+    desc.length>65?desc.substring(0,65)+"...":desc,
+    lang==="en"?"Source: "+story.cat:"Fuente: "+story.cat
+  ];
+
+  const pollQ=lang==="en"?"Important?":"¿Importante?";
+  const yesLbl=lang==="en"?"Yes":"Sí";
+  const votesLbl=lang==="en"?`${(total/1000).toFixed(1)}K votes`:`${(total/1000).toFixed(1)}K votos`;
+
+  return(
+    <div style={{borderRadius:12,background:"rgba(10,8,28,0.75)",border:`1px solid ${vd?vd.br:"rgba(99,102,241,0.3)"}`,padding:"8px 11px",flexShrink:0}}>
+      {/* Vibe text row */}
+      <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:showBullets?6:0}}>
+        <span style={{fontSize:13}}>{vd?vd.i:"⚡"}</span>
+        <span style={{fontSize:11,fontWeight:800,color:vd?vd.c:"#a78bfa"}}>{vd?vd.l:"Quick"}:</span>
+        <div style={{flex:1,fontSize:11,color:"rgba(255,255,255,0.8)",lineHeight:1.45,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:showBullets?1:2,WebkitBoxOrient:"vertical"}}>{vibeText}</div>
+        <button onClick={()=>setShowBullets(b=>!b)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:12,cursor:"pointer",flexShrink:0,padding:"0 2px"}}>{showBullets?"▲":"▼"}</button>
+      </div>
+
+      {/* Expandible: bullets + encuesta */}
+      {showBullets&&(
+        <div style={{display:"flex",gap:10,alignItems:"flex-start",borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:7,marginTop:4}}>
+          <div style={{flex:1}}>
+            <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.35)",letterSpacing:1,textTransform:"uppercase",marginBottom:5}}>🧠 {lang==="en"?"In 60 sec":"En 60 seg"}</div>
+            {bullets.map((b,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"flex-start",gap:5,marginBottom:4}}>
+                <div style={{width:4,height:4,borderRadius:"50%",background:"#6366f1",flexShrink:0,marginTop:4}}/>
+                <div style={{fontSize:10,color:"rgba(255,255,255,0.65)",lineHeight:1.4}}>{b}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{width:95,flexShrink:0}}>
+            <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",marginBottom:4,fontWeight:700}}>{pollQ}</div>
+            <div onClick={()=>vote("yes")} style={{borderRadius:7,padding:"5px 7px",marginBottom:3,display:"flex",justifyContent:"space-between",fontSize:10,fontWeight:800,cursor:voted?"default":"pointer",background:voted==="yes"?"#3b82f6":voted?"rgba(255,255,255,0.05)":"rgba(59,130,246,0.18)",border:`1px solid ${voted==="yes"?"#3b82f6":"rgba(59,130,246,0.25)"}`,color:voted==="yes"?"#fff":"rgba(255,255,255,0.6)"}}>
+              <span>{yesLbl}</span>{voted&&<span>{yesPct}%</span>}
+            </div>
+            <div onClick={()=>vote("no")} style={{borderRadius:7,padding:"5px 7px",display:"flex",justifyContent:"space-between",fontSize:10,fontWeight:800,cursor:voted?"default":"pointer",background:voted==="no"?"rgba(239,68,68,0.35)":"rgba(255,255,255,0.05)",border:`1px solid ${voted==="no"?"rgba(239,68,68,0.5)":"rgba(255,255,255,0.08)"}`,color:voted==="no"?"#f87171":"rgba(255,255,255,0.4)"}}>
+              <span>No</span>{voted&&<span>{noPct}%</span>}
+            </div>
+            {voted?<div style={{fontSize:8,color:"rgba(255,255,255,0.2)",textAlign:"right",marginTop:2}}>{votesLbl}</div>:<div style={{fontSize:8,color:"rgba(255,255,255,0.2)",textAlign:"center",marginTop:2}}>{lang==="en"?"tap to vote":"toca para votar"}</div>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+// ── FIN EN 60 SEGUNDOS ─────────────────────────────────────────────────────
+
+
+// ── SLOT PATROCINADO ──────────────────────────────────────────────────────
+function SponsoredSlot({lang}){
+  const [ad,setAd]=useState(null);
+  useEffect(()=>{
+    fetch("/api/get-sponsored").then(r=>r.json()).then(d=>{if(d&&d.title)setAd(d);}).catch(()=>{});
+  },[]);
+  if(!ad)return null;
+  return(
+    <div style={{borderRadius:12,overflow:"hidden",border:"1px solid rgba(245,158,11,0.2)",background:"rgba(10,10,20,0.9)",flexShrink:0,position:"relative"}}>
+      <div style={{position:"absolute",top:7,left:9,fontSize:8,fontWeight:800,color:"rgba(255,255,255,0.35)",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:4,padding:"1px 5px",letterSpacing:0.5,zIndex:1}}>{lang==="en"?"Sponsored":"Patrocinado"}</div>
+      <div style={{display:"flex",alignItems:"center",minHeight:75}}>
+        <div style={{flex:1,padding:"22px 12px 12px"}}>
+          {ad.brand&&<div style={{fontSize:9,color:"rgba(245,158,11,0.7)",fontWeight:800,marginBottom:3,textTransform:"uppercase",letterSpacing:1}}>{ad.brand}</div>}
+          <div style={{fontSize:13,fontWeight:900,color:"#fff",lineHeight:1.3,marginBottom:7}}>{ad.title}</div>
+          {ad.url?<a href={ad.url} target="_blank" rel="noopener noreferrer" style={{display:"inline-block",padding:"5px 13px",background:"linear-gradient(135deg,#f59e0b,#d97706)",borderRadius:100,fontSize:10,fontWeight:800,color:"#fff",textDecoration:"none"}}>{ad.cta||"Ver oferta →"}</a>:<span style={{display:"inline-block",padding:"5px 13px",background:"linear-gradient(135deg,#f59e0b,#d97706)",borderRadius:100,fontSize:10,fontWeight:800,color:"#fff"}}>{ad.cta||"Ver más →"}</span>}
+        </div>
+        {ad.img&&<div style={{width:90,height:75,flexShrink:0,overflow:"hidden"}}><img src={ad.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.parentNode.style.display="none"}/></div>}
+        {!ad.img&&<div style={{width:80,height:75,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,background:"rgba(255,255,255,0.03)"}}>{ad.emoji||"⭐"}</div>}
+      </div>
+    </div>
+  );
+}
+// ── FIN SLOT PATROCINADO ───────────────────────────────────────────────────
+
+// ── TEMAS DEL DÍA ─────────────────────────────────────────────────────────
+function TopicsOfDay({lang,country,onSelectArticle}){
+  const [topics,setTopics]=useState([]);
+
+  const TOPICS_CFG=[
+    {k:"politica",emoji:"🏛️",color:"#ef4444",svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="10" r="6" stroke="#ef4444" strokeWidth="1.5" fill="rgba(239,68,68,0.1)"/><path d="M12 16 L12 21" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round"/><circle cx="12" cy="10" r="2" fill="#ef4444"/><path d="M9 7.5L10.5 9M15 7.5L13.5 9M9 12.5L10.5 11M15 12.5L13.5 11" stroke="#fca5a5" strokeWidth="1" strokeLinecap="round"/></svg>},
+    {k:"ciencia",emoji:"🌕",color:"#60a5fa",svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="14" cy="12" r="5" fill="rgba(96,165,250,0.12)" stroke="#60a5fa" strokeWidth="1.5"/><circle cx="15.5" cy="10.5" r="1.2" fill="rgba(255,255,255,0.2)"/><circle cx="13" cy="13" r="0.8" fill="rgba(255,255,255,0.15)"/><path d="M5 17 Q9 7 14 7" stroke="#8b5cf6" strokeWidth="1.2" strokeDasharray="2 2" strokeLinecap="round"/><circle cx="5" cy="17" r="1.2" fill="#8b5cf6"/></svg>},
+  ];
+
+  useEffect(()=>{
+    Promise.all(TOPICS_CFG.map(cfg=>
+      fetch(`/api/news?page=1&cat=${cfg.k}&country=${country||"any"}`)
+        .then(r=>r.json())
+        .then(d=>{
+          const a=(d.articles||[])[0];
+          if(!a)return null;
+          return{...cfg,article:a,label:lang==="en"?cfg.k.charAt(0).toUpperCase()+cfg.k.slice(1):cfg.k==="politica"?"Política":"Ciencia"};
+        })
+        .catch(()=>null)
+    )).then(res=>setTopics(res.filter(Boolean)));
+  },[country,lang]);
+
+  if(topics.length===0)return null;
+
+  return(
+    <div style={{flexShrink:0}}>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
+        <div style={{width:5,height:5,borderRadius:"50%",background:"#22c55e",animation:"blink .9s infinite"}}/>
+        <div style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase"}}>{lang==="en"?"Topics of the day":"Temas del día"}</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+        {topics.map((t,i)=>(
+          <div key={i} onClick={()=>t.article&&onSelectArticle(t.article)} style={{borderRadius:11,background:"rgba(10,12,30,0.8)",border:"1px solid rgba(255,255,255,0.07)",padding:"9px 10px",cursor:"pointer",position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${t.color},transparent)`}}/>
+            <div style={{width:34,height:34,borderRadius:9,background:`${t.color}15`,border:`1px solid ${t.color}33`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:5}}>{t.svg}</div>
+            <div style={{fontSize:9,fontWeight:800,color:t.color,marginBottom:3}}>{t.label}</div>
+            <div style={{fontSize:11,fontWeight:800,color:"#fff",lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical"}}>{t.article.headline}</div>
+            <div style={{fontSize:8,color:"rgba(255,255,255,0.25)",marginTop:4}}>{t.article.time}</div>
+          </div>
+        ))}
+        <WeatherWidget lang={lang}/>
+      </div>
+    </div>
+  );
+}
+// ── FIN TEMAS DEL DÍA ─────────────────────────────────────────────────────
+
 // ── WEATHER WIDGET ────────────────────────────────────────────────────────
 const WX_CODES={0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"🌨️",73:"🌨️",75:"❄️",80:"🌦️",81:"🌧️",82:"⛈️",95:"⛈️",99:"⛈️"};
 const WX_DESC={
@@ -272,6 +413,44 @@ function CountrySelector({current,onSelect,onClose,lang}){
   );
 }
 
+
+function SponsoredForm(){
+  const [brand,setBrand]=useState("");
+  const [title,setTitle]=useState("");
+  const [cta,setCta]=useState("");
+  const [url,setUrl]=useState("");
+  const [emoji,setEmoji]=useState("⭐");
+  const [status,setStatus]=useState("");
+  const [loading,setLoading]=useState(false);
+
+  async function save(){
+    if(!title){setStatus("⚠️ Agrega un título");return;}
+    setLoading(true);setStatus("");
+    try{
+      const r=await fetch("/api/breaking",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"sponsored",brand,title,cta,url,emoji})});
+      const d=await r.json();
+      if(d.ok)setStatus("✅ Guardado");
+      else setStatus("❌ "+(d.error||"Error"));
+    }catch{setStatus("❌ Error");}
+    setLoading(false);
+  }
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      {[["🏷️ Marca",brand,setBrand,"Nike · Oferta especial"],["📣 Título",title,setTitle,"Air Max 90 — 30% OFF hoy"],["🔗 URL",url,setUrl,"https://..."],["🔘 Botón CTA",cta,setCta,"Ver oferta →"],["😊 Emoji",emoji,setEmoji,"👟"]].map(([lbl,val,set,ph])=>(
+        <div key={lbl}>
+          <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>{lbl}</div>
+          <input value={val} onChange={e=>set(e.target.value)} placeholder={ph} style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"8px 11px",color:"#fff",fontSize:12,outline:"none"}}/>
+        </div>
+      ))}
+      {status&&<div style={{fontSize:11,color:status.includes("✅")?"#4ade80":"#f87171"}}>{status}</div>}
+      <button onClick={save} disabled={loading} style={{padding:"10px",background:"linear-gradient(135deg,#f59e0b,#d97706)",border:"none",borderRadius:12,fontSize:12,fontWeight:800,color:"#fff",cursor:"pointer"}}>
+        {loading?"Guardando...":"💾 Guardar patrocinado"}
+      </button>
+    </div>
+  );
+}
+
 function AdminPanel({onClose}){
   const [pass,setPass]=useState("");const [headline,setHeadline]=useState("");const [desc,setDesc]=useState("");const [cat,setCat]=useState("🔴 URGENTE");const [status,setStatus]=useState("");const [loading,setLoading]=useState(false);const [hasBreaking,setHasBreaking]=useState(false);
   useEffect(()=>{fetch("/api/get-breaking").then(r=>r.json()).then(d=>{if(d)setHasBreaking(true);}).catch(()=>{});}, []);
@@ -300,6 +479,10 @@ function AdminPanel({onClose}){
         <div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>📰 Titular</div><textarea value={headline} onChange={e=>setHeadline(e.target.value)} placeholder="Titular urgente..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none",resize:"none",height:75,fontFamily:"'DM Sans',sans-serif"}}/></div>
         <div style={{marginBottom:16}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>📝 Descripción</div><textarea value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Más detalles..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none",resize:"none",height:60,fontFamily:"'DM Sans',sans-serif"}}/></div>
         {status&&<div style={{background:status.includes("✅")?"rgba(34,197,94,0.1)":"rgba(239,68,68,0.1)",border:`1px solid ${status.includes("✅")?"rgba(34,197,94,0.3)":"rgba(239,68,68,0.3)"}`,borderRadius:10,padding:"9px 12px",marginBottom:12,fontSize:12,color:status.includes("✅")?"#4ade80":"#f87171"}}>{status}</div>}
+        <div style={{marginBottom:16,borderTop:"1px solid rgba(255,255,255,0.07)",paddingTop:14}}>
+          <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.6)",marginBottom:10}}>👟 Slot Patrocinado</div>
+          <SponsoredForm/>
+        </div>
         <button onClick={publish} disabled={loading} style={{width:"100%",padding:"14px",background:loading?"rgba(255,255,255,0.05)":"linear-gradient(135deg,#ef4444,#dc2626)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:loading?"rgba(255,255,255,0.3)":"#fff",cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
           {loading?<><span style={{animation:"spin .8s linear infinite",display:"inline-block"}}>⚡</span>Publicando...</>:"🔴 Publicar ahora"}
         </button>
@@ -601,7 +784,7 @@ function App(){
       </div>
 
       {s&&(
-        <div key={animKey} className={slideDir==="up"?"slide-in-up":"slide-in-down"} style={{flex:1,display:"flex",flexDirection:"column",padding:"5px 11px",overflow:"hidden",gap:5,position:"relative",zIndex:1}}>
+        <div key={animKey} className={slideDir==="up"?"slide-in-up":"slide-in-down"} style={{flex:1,display:"flex",flexDirection:"column",padding:"5px 11px",overflowY:"auto",gap:5,position:"relative",zIndex:1}}>
 
           {/* Tarjeta principal */}
           <div className={isBreaking?"breaking-card":"neon-b"} style={{borderRadius:13,overflow:"hidden",background:isBreaking?"rgba(30,5,5,0.85)":"rgba(10,12,30,0.75)",backdropFilter:"blur(12px)",flexShrink:0}}>
@@ -657,7 +840,7 @@ function App(){
             {VIBES.map(v=><button key={v.k} onClick={()=>pickVibe(v.k)} style={{display:"flex",alignItems:"center",gap:3,padding:"5px 9px",borderRadius:100,border:`1.5px solid ${vibe===v.k?v.c:"rgba(255,255,255,0.12)"}`,background:vibe===v.k?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.03)",boxShadow:vibe===v.k?`0 0 8px ${v.c}55`:"none",cursor:"pointer",flexShrink:0}}><span style={{fontSize:13}}>{v.i}</span><span style={{fontSize:10,fontWeight:800,color:vibe===v.k?v.c:"rgba(255,255,255,0.5)"}}>{v.l}</span>{v.lock&&!isPro&&<span style={{fontSize:9,opacity:.6}}>🔒</span>}</button>)}
           </div>
 
-          {!showAI&&<div style={{borderRadius:12,background:"rgba(10,8,28,0.75)",border:`1px solid ${vd.br}`,padding:"8px 11px",flexShrink:0}}><div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}><span style={{fontSize:13}}>{vd.i}</span><span style={{fontSize:11,fontWeight:800,color:vd.c}}>{vd.l}:</span></div><div style={{fontSize:12,color:"rgba(255,255,255,0.8)",lineHeight:1.55}}>{vibes[vibe]||vibes.Quick}</div></div>}
+          {!showAI&&<div style={{borderRadius:12,background:"rgba(10,8,28,0.75)",border:`1px solid ${vd.br}`,padding:"8px 11px",flexShrink:0}}><div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}><span style={{fontSize:13}}>{vd.i}</span><span style={{fontSize:11,fontWeight:800,color:vd.c}}>{vd.l}:</span></div><div style={{fontSize:12,color:"rgba(255,255,255,0.8)",lineHeight:1.5,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical"}}>{vibes[vibe]||vibes.Quick}</div></div>}
 
           {showAI&&(
             <div style={{borderRadius:12,background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.07))",border:"1px solid rgba(139,92,246,0.3)",padding:"9px",flexShrink:0}}>
@@ -668,7 +851,10 @@ function App(){
             </div>
           )}
 
-          <WeatherWidget lang={lang}/>
+
+          <SponsoredSlot lang={lang}/>
+
+          <TopicsOfDay lang={lang} country={country} onSelectArticle={a=>{setArticles(p=>[a,...p]);setSi(0);}}/>
 
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,marginBottom:2}}>
             <div style={{fontSize:9,color:"rgba(255,255,255,0.15)"}}>{loadingMore?<span style={{animation:"pulse 1s infinite"}}>⚡ {t.loadingMore}</span>:<span>{t.swipe} · {si+1}/{articles.length}</span>}</div>
