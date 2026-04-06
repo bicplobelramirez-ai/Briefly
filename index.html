@@ -824,11 +824,7 @@ function App(){
                 <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:2}}>{s.time}</div>
               </div>
             )}
-            {/* Clima + Temas del día dentro de la tarjeta */}
-            <div style={{padding:"8px 10px",background:"rgba(5,5,20,0.5)",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
-              <WeatherWidget lang={lang} compact={true}/>
-              <TopicsOfDay lang={lang} country={country} onSelectArticle={a=>{setArticles(p=>[a,...p]);setSi(0);}}/>
-            </div>
+
           </div>
 
           {isMemeMode&&(
@@ -863,6 +859,15 @@ function App(){
 
           {!showAI&&<div style={{borderRadius:12,background:"rgba(10,8,28,0.75)",border:`1px solid ${vd.br}`,padding:"8px 11px",flexShrink:0}}><div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}><span style={{fontSize:13}}>{vd.i}</span><span style={{fontSize:11,fontWeight:800,color:vd.c}}>{vd.l}:</span></div><div style={{fontSize:12,color:"rgba(255,255,255,0.8)",lineHeight:1.5,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical"}}>{vibes[vibe]||vibes.Quick}</div></div>}
 
+          {!showAI&&<div style={{borderRadius:12,background:"rgba(5,5,20,0.6)",border:"1px solid rgba(255,255,255,0.07)",padding:"8px 10px",flexShrink:0}}>
+            <WeatherWidget lang={lang} compact={true}/>
+            <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:6}}>
+              <div style={{width:5,height:5,borderRadius:"50%",background:"#22c55e",animation:"blink .9s infinite"}}/>
+              <div style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase"}}>{lang==="en"?"Topics":"Temas del día"}</div>
+            </div>
+            <TopicsOfDay lang={lang} country={country} onSelectArticle={a=>{setArticles(p=>[a,...p]);setSi(0);}}/>
+          </div>}
+
           {showAI&&(
             <div style={{borderRadius:12,background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.07))",border:"1px solid rgba(139,92,246,0.3)",padding:"9px",flexShrink:0}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:7}}><div style={{width:24,height:24,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>🤖</div><div style={{flex:1,fontSize:11,fontWeight:800}}>JAIK {!isPro&&<span style={{color:"rgba(255,255,255,0.3)",fontWeight:400}}>· {Math.max(0,3-aiN)} {t.free}</span>}</div><button onClick={()=>setShowAI(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:14,cursor:"pointer"}}>✕</button></div>
@@ -871,6 +876,7 @@ function App(){
               {(aiLoad||aiAns)&&<div style={{marginTop:6,background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.15)",borderRadius:8,padding:"7px 9px",fontSize:11,color:"#e8f0fe",lineHeight:1.5}}>{aiLoad?t.thinking:aiAns}</div>}
             </div>
           )}
+
 
 
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,marginBottom:2}}>
@@ -904,4 +910,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
-
