@@ -30,6 +30,7 @@ body{background:#05050f;font-family:'DM Sans',sans-serif;color:#fff;overflow:hid
 .breaking-card{border:1px solid rgba(239,68,68,0.6)!important;animation:breakingglow 2s ease-in-out infinite;}
 .slide-in-up{animation:slideInUp 0.35s cubic-bezier(0.22,1,0.36,1);}
 .slide-in-down{animation:slideInDown 0.35s cubic-bezier(0.22,1,0.36,1);}
+@keyframes ticker{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
 </style>
 </head>
 <body>
@@ -156,6 +157,31 @@ function TrendingScreen({onClose,lang,country}){
 }
 // ── FIN TRENDING WIDGET ────────────────────────────────────────────────────
 
+
+
+// ── BREAKING TICKER ────────────────────────────────────────────────────────
+function BreakingTicker({articles,breakingNews,lang}){
+  // Toma el breaking manual + los 3 primeros artículos del feed
+  const items=[];
+  if(breakingNews&&breakingNews.headline)items.push("🔴 "+breakingNews.headline);
+  articles.slice(0,4).forEach(a=>items.push("• "+a.headline));
+  if(items.length===0)return null;
+  const text=items.join("   ·   ");
+  return(
+    <div style={{background:"rgba(239,68,68,0.12)",borderBottom:"1px solid rgba(239,68,68,0.35)",display:"flex",alignItems:"center",height:26,overflow:"hidden",flexShrink:0,position:"relative",zIndex:9}}>
+      <div style={{background:"#ef4444",color:"#fff",fontSize:8,fontWeight:900,padding:"0 9px",height:"100%",display:"flex",alignItems:"center",gap:3,flexShrink:0,letterSpacing:1}}>
+        <span style={{width:5,height:5,borderRadius:"50%",background:"#fff",display:"inline-block",animation:"blink .7s infinite"}}/>
+        BREAKING
+      </div>
+      <div style={{overflow:"hidden",flex:1}}>
+        <div style={{fontSize:10,color:"#fca5a5",fontWeight:700,whiteSpace:"nowrap",animation:"ticker 25s linear infinite",display:"inline-block",paddingLeft:12}}>
+          {text}
+        </div>
+      </div>
+    </div>
+  );
+}
+// ── FIN BREAKING TICKER ────────────────────────────────────────────────────
 
 // ── WEATHER WIDGET ────────────────────────────────────────────────────────
 const WX_CODES={0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"🌨️",73:"🌨️",75:"❄️",80:"🌦️",81:"🌧️",82:"⛈️",95:"⛈️",99:"⛈️"};
@@ -433,6 +459,7 @@ function App(){
   const [showCountry,setShowCountry]=useState(false);
   const [showAI,setShowAI]=useState(false);
   const [showTrending,setShowTrending]=useState(false);
+  const [breakingNews,setBreakingNews]=useState(null);
   const [aiAns,setAiAns]=useState("");
   const [aiLoad,setAiLoad]=useState(false);
   const [aiN,setAiN]=useState(0);
@@ -462,7 +489,7 @@ function App(){
     if(p===1)setLoading(true);else setLoadingMore(true);
     try{
       let breaking=null;
-      if(p===1){try{const rb=await fetch("/api/get-breaking");breaking=await rb.json();}catch{}}
+      if(p===1){try{const rb=await fetch("/api/get-breaking");breaking=await rb.json();if(breaking&&breaking.headline)setBreakingNews(breaking);}catch{}}
       let url="/api/news?page="+p;
       if(cat)url+="&cat="+cat;
       if(ctry&&ctry!=="any")url+="&country="+ctry;
@@ -564,6 +591,8 @@ function App(){
         </div>
       </div>
 
+      <BreakingTicker articles={articles} breakingNews={breakingNews} lang={lang}/>
+
       {isBreaking&&<div style={{padding:"5px 12px",background:"rgba(239,68,68,0.15)",borderBottom:"1px solid rgba(239,68,68,0.3)",flexShrink:0,display:"flex",alignItems:"center",gap:7,position:"relative",zIndex:9}}><span style={{width:7,height:7,borderRadius:"50%",background:"#ef4444",flexShrink:0,animation:"blink .7s infinite"}}/><span style={{fontSize:10,fontWeight:800,color:"#f87171",letterSpacing:1,textTransform:"uppercase"}}>{t.urgent}</span></div>}
 
       {/* Categorías */}
@@ -639,7 +668,7 @@ function App(){
             </div>
           )}
 
-          {!showAI&&<WeatherWidget lang={lang}/>}
+          <WeatherWidget lang={lang}/>
 
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,marginBottom:2}}>
             <div style={{fontSize:9,color:"rgba(255,255,255,0.15)"}}>{loadingMore?<span style={{animation:"pulse 1s infinite"}}>⚡ {t.loadingMore}</span>:<span>{t.swipe} · {si+1}/{articles.length}</span>}</div>
