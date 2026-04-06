@@ -415,9 +415,10 @@ function CountrySelector({current,onSelect,onClose,lang}){
 
 
 function SponsoredForm(){
+  const [pass,setPass]=useState("");
   const [brand,setBrand]=useState("");
   const [title,setTitle]=useState("");
-  const [cta,setCta]=useState("");
+  const [cta,setCta]=useState("Ver oferta →");
   const [url,setUrl]=useState("");
   const [emoji,setEmoji]=useState("⭐");
   const [status,setStatus]=useState("");
@@ -425,9 +426,10 @@ function SponsoredForm(){
 
   async function save(){
     if(!title){setStatus("⚠️ Agrega un título");return;}
+    if(!pass){setStatus("⚠️ Ingresa la contraseña");return;}
     setLoading(true);setStatus("");
     try{
-      const r=await fetch("/api/breaking",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"sponsored",brand,title,cta,url,emoji})});
+      const r=await fetch("/api/save-sponsored",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass,brand,title,cta,url,emoji})});
       const d=await r.json();
       if(d.ok)setStatus("✅ Guardado");
       else setStatus("❌ "+(d.error||"Error"));
@@ -437,10 +439,10 @@ function SponsoredForm(){
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:8}}>
-      {[["🏷️ Marca",brand,setBrand,"Nike · Oferta especial"],["📣 Título",title,setTitle,"Air Max 90 — 30% OFF hoy"],["🔗 URL",url,setUrl,"https://..."],["🔘 Botón CTA",cta,setCta,"Ver oferta →"],["😊 Emoji",emoji,setEmoji,"👟"]].map(([lbl,val,set,ph])=>(
+      {[["🔑 Contraseña",pass,setPass,"Tu contraseña",true],["🏷️ Marca",brand,setBrand,"Nike · Oferta especial",false],["📣 Título",title,setTitle,"Air Max 90 — 30% OFF hoy",false],["🔗 URL",url,setUrl,"https://...",false],["🔘 Botón CTA",cta,setCta,"Ver oferta →",false],["😊 Emoji",emoji,setEmoji,"👟",false]].map(([lbl,val,set,ph,isPwd])=>(
         <div key={lbl}>
           <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>{lbl}</div>
-          <input value={val} onChange={e=>set(e.target.value)} placeholder={ph} style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"8px 11px",color:"#fff",fontSize:12,outline:"none"}}/>
+          <input type={isPwd?"password":"text"} value={val} onChange={e=>set(e.target.value)} placeholder={ph} style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"8px 11px",color:"#fff",fontSize:12,outline:"none"}}/>
         </div>
       ))}
       {status&&<div style={{fontSize:11,color:status.includes("✅")?"#4ade80":"#f87171"}}>{status}</div>}
@@ -887,4 +889,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
-
