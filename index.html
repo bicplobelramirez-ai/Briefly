@@ -299,7 +299,11 @@ function TopicsOfDay({lang,country,onSelectArticle}){
     )).then(res=>setTopics(res.filter(Boolean)));
   },[country,lang]);
 
-  if(topics.length===0)return null;
+  if(topics.length===0)return(
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+      {[1,2].map(i=><div key={i} style={{borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",padding:"8px",height:90,animation:"pulse 1.5s infinite"}}/>)}
+    </div>
+  );
 
   return(
     <div style={{flexShrink:0}}>
