@@ -835,7 +835,7 @@ function App(){
   const [showCountry,setShowCountry]=useState(false);
   const [showAI,setShowAI]=useState(false);
   const [showTrending,setShowTrending]=useState(false);
-  const [showMemeNews,setShowMemeNews]=useState(false);
+  const [showMemeNews,setShowMemeNews]=useState((localStorage.getItem('qn_mode')||'serious')==='meme');
   const [breakingNews,setBreakingNews]=useState(null);
   const [aiAns,setAiAns]=useState("");
   const [aiLoad,setAiLoad]=useState(false);
@@ -943,7 +943,7 @@ function App(){
       {showPay&&<Paywall onClose={()=>setShowPay(false)} onBuy={()=>{setIsPro(true);setShowPay(false);}} lang={lang}/>}
       {showBriefing&&<BriefingPanel onClose={()=>setShowBriefing(false)} isPro={isPro} onUpgrade={()=>{setShowBriefing(false);setShowPay(true);}} articles={articles} lang={lang}/>}
       {showTrending&&<TrendingScreen onClose={()=>setShowTrending(false)} lang={lang} country={country}/>}
-      {(isMemeMode||showMemeNews)&&s&&<MemeNewsScreen
+      {showMemeNews&&s&&<MemeNewsScreen
         article={s}
         lang={lang}
         country={country}
