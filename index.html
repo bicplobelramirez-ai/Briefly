@@ -408,7 +408,7 @@ function WeatherWidget({lang,compact=false}){
 
 
 // ── MEMENEWS SCREEN ───────────────────────────────────────────────────────
-function MemeNewsScreen({article,lang,country,onSwipe,idx,total,onNext}){
+function MemeNewsScreen({article,lang,country,onSwipe,idx,total,onNext,onClose}){
   const [viral,setViral]=useState(null);
   const [viralLoad,setViralLoad]=useState(false);
   const [liked,setLiked]=useState(false);
@@ -464,7 +464,7 @@ function MemeNewsScreen({article,lang,country,onSwipe,idx,total,onNext}){
       <div style={{padding:"12px 16px 8px",background:"rgba(10,10,20,0.97)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
         <div style={{fontSize:20,fontWeight:900,background:"linear-gradient(135deg,#a78bfa,#ec4899)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:"-0.5px"}}>MemeNews</div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <span style={{fontSize:18}}>🔔</span>
+          <button onClick={onClose} style={{padding:"5px 11px",borderRadius:100,border:"1px solid rgba(59,130,246,0.3)",background:"rgba(59,130,246,0.12)",color:"#60a5fa",fontSize:10,fontWeight:700,cursor:"pointer"}}>📰 Serio</button>
           <div style={{width:28,height:28,borderRadius:8,background:"linear-gradient(135deg,#a78bfa,#ec4899)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>💎</div>
         </div>
       </div>
@@ -944,6 +944,7 @@ function App(){
       {showBriefing&&<BriefingPanel onClose={()=>setShowBriefing(false)} isPro={isPro} onUpgrade={()=>{setShowBriefing(false);setShowPay(true);}} articles={articles} lang={lang}/>}
       {showTrending&&<TrendingScreen onClose={()=>setShowTrending(false)} lang={lang} country={country}/>}
       {showMemeNews&&s&&<MemeNewsScreen
+        onClose={()=>{setShowMemeNews(false);setAppMode("serious");localStorage.setItem("qn_mode","serious");}}
         article={s}
         lang={lang}
         country={country}
