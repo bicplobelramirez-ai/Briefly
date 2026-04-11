@@ -584,6 +584,150 @@ function MemeNewsScreen({article,lang,country,onSwipe,idx,total,onNext,onClose})
 }
 // ── FIN MEMENEWS ───────────────────────────────────────────────────────────
 
+
+// ── VOCES QUE MUEVEN EL MUNDO ─────────────────────────────────────────────
+function VoicesSection({lang}){
+  const [voices,setVoices]=useState([]);
+
+  useEffect(()=>{
+    fetch("/api/get-voices").then(r=>r.json()).then(d=>{
+      if(Array.isArray(d)&&d.length>0)setVoices(d);
+    }).catch(()=>{});
+  },[]);
+
+  if(voices.length===0)return null;
+
+  const networkIcon={"twitter":"𝕏","x":"𝕏","instagram":"📸","facebook":"👥","linkedin":"💼","threads":"@"}
+
+  return(
+    <div style={{flexShrink:0}}>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,padding:"0 2px"}}>
+        <span style={{fontSize:12}}>🌍</span>
+        <span style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase"}}>{lang==="en"?"Voices that move the world":"Voces que mueven el mundo"}</span>
+      </div>
+      {voices.map((v,i)=>(
+        <div key={i} style={{borderRadius:14,background:"rgba(10,10,25,0.95)",border:"1px solid rgba(255,255,255,0.08)",overflow:"hidden",marginBottom:8,animation:`fadeUp 0.3s ${i*0.08}s both`}}>
+          {/* Header */}
+          <div style={{padding:"10px 12px 6px",display:"flex",alignItems:"center",gap:9}}>
+            <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#1a1a2e,#252540)",border:"2px solid rgba(99,102,241,0.4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
+              {v.emoji||"👤"}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:4}}>
+                <span style={{fontSize:12,fontWeight:900,color:"#fff"}}>{v.name}</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#1d9bf0"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91C1.88 9.33 1 10.57 1 12s.88 2.67 2.19 3.34c-.46 1.39-.2 2.9.81 3.91s2.52 1.26 3.91.8c.66 1.31 1.9 2.19 3.33 2.19s2.68-.88 3.34-2.19c1.39.46 2.9.2 3.91-.81s1.26-2.52.8-3.91C21.37 14.67 22.25 13.43 22.25 12zm-13.1 5.73L5.5 14.09l1.41-1.41 2.24 2.23 5.95-5.95 1.41 1.41-7.36 7.36z"/></svg>
+              </div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{v.role}</div>
+            </div>
+            <span style={{fontSize:16,flexShrink:0}}>{networkIcon[v.network?.toLowerCase()]||"𝕏"}</span>
+          </div>
+          {/* Cita */}
+          <div style={{padding:"0 12px 8px"}}>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.88)",lineHeight:1.6,fontStyle:"italic"}}>"{v.quote}"</div>
+          </div>
+          {/* Footer */}
+          <div style={{padding:"6px 12px 8px",background:"rgba(255,255,255,0.02)",borderTop:"1px solid rgba(255,255,255,0.05)",display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>{v.time||"reciente"} · vía {v.network||"X"}</span>
+            <div style={{marginLeft:"auto",display:"flex",gap:10}}>
+              {v.likes&&<span style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>❤️ {v.likes}</span>}
+              {v.retweets&&<span style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>🔁 {v.retweets}</span>}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+// ── FIN VOCES ──────────────────────────────────────────────────────────────
+
+
+// ── MARKETS TICKER ─────────────────────────────────────────────────────────
+function MarketsTicker(){
+  const [prices,setPrices]=useState({
+    gold:{price:"--",change:"--",up:true},
+    oil:{price:"--",change:"--",up:false},
+    silver:{price:"--",change:"--",up:true},
+    btc:{price:"--",change:"--",up:true},
+    sp500:{price:"--",change:"--",up:true},
+    eur:{price:"--",change:"--",up:false},
+  });
+
+  useEffect(()=>{
+    fetchPrices();
+    const interval=setInterval(fetchPrices,5*60*1000);
+    return()=>clearInterval(interval);
+  },[]);
+
+  async function fetchPrices(){
+    try{
+      // Usar Yahoo Finance proxy gratuito
+      const symbols=["GC=F","CL=F","SI=F","BTC-USD","^GSPC","EURUSD=X"];
+      const results=await Promise.all(symbols.map(sym=>
+        fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`)
+          .then(r=>r.json())
+          .catch(()=>null)
+      ));
+
+      const fmt=(n)=>{
+        if(!n||isNaN(n))return"--";
+        if(n>1000)return(n/1000).toFixed(1)+"K";
+        if(n>100)return n.toFixed(1);
+        return n.toFixed(2);
+      };
+
+      const getPct=(r)=>{
+        try{
+          const meta=r?.chart?.result?.[0]?.meta;
+          if(!meta)return{price:"--",change:"--",up:true};
+          const price=meta.regularMarketPrice;
+          const prev=meta.previousClose||meta.chartPreviousClose;
+          const pct=prev?((price-prev)/prev*100):0;
+          return{price:fmt(price),change:(pct>=0?"+":"")+pct.toFixed(1)+"%",up:pct>=0};
+        }catch{return{price:"--",change:"--",up:true};}
+      };
+
+      setPrices({
+        gold:getPct(results[0]),
+        oil:getPct(results[1]),
+        silver:getPct(results[2]),
+        btc:getPct(results[3]),
+        sp500:getPct(results[4]),
+        eur:getPct(results[5]),
+      });
+    }catch{}
+  }
+
+  const items=[
+    {icon:"🥇",label:"ORO",color:"#fbbf24",...prices.gold},
+    {icon:"🛢️",label:"WTI",color:"#94a3b8",...prices.oil},
+    {icon:"⬜",label:"PLATA",color:"#e2e8f0",...prices.silver},
+    {icon:"₿",label:"BTC",color:"#f59e0b",...prices.btc},
+    {icon:"📊",label:"S&P500",color:"#34d399",...prices.sp500},
+    {icon:"💶",label:"EUR/USD",color:"#a78bfa",...prices.eur},
+  ];
+
+  const text=items.map(i=>`${i.icon} ${i.label} $${i.price} ${i.change}`).join("  ·  ");
+
+  return(
+    <div style={{background:"rgba(10,15,35,0.95)",borderBottom:"1px solid rgba(99,102,241,0.2)",display:"flex",alignItems:"center",height:24,overflow:"hidden",flexShrink:0}}>
+      <div style={{background:"linear-gradient(135deg,#1e3a5f,#1a2e4a)",color:"#60a5fa",fontSize:8,fontWeight:900,padding:"0 8px",height:"100%",display:"flex",alignItems:"center",gap:3,flexShrink:0,letterSpacing:1}}>
+        📈 MERCADOS
+      </div>
+      <div style={{overflow:"hidden",flex:1}}>
+        <div style={{display:"inline-flex",alignItems:"center",whiteSpace:"nowrap",animation:"tickerMarket 35s linear infinite"}}>
+          {[...items,...items].map((item,i)=>(
+            <span key={i} style={{display:"inline-flex",alignItems:"center",gap:4,padding:"0 10px",fontSize:9,fontWeight:800,color:item.color}}>
+              {item.icon} {item.label} <span style={{color:"rgba(255,255,255,0.9)"}}>${item.price}</span> <span style={{color:item.up?"#4ade80":"#f87171",fontSize:8}}>{item.up?"▲":"▼"}{item.change}</span>
+              {i<items.length*2-1&&<span style={{color:"rgba(255,255,255,0.1)",marginLeft:4}}>·</span>}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+// ── FIN MARKETS TICKER ─────────────────────────────────────────────────────
+
 function CountrySelector({current,onSelect,onClose,lang}){
   const t=T[lang]||T.es;
   return(
@@ -605,6 +749,59 @@ function CountrySelector({current,onSelect,onClose,lang}){
   );
 }
 
+
+
+function VoicesForm(){
+  const [pass,setPass]=useState("");
+  const [name,setName]=useState("");
+  const [role,setRole]=useState("");
+  const [emoji,setEmoji]=useState("👤");
+  const [quote,setQuote]=useState("");
+  const [network,setNetwork]=useState("X");
+  const [likes,setLikes]=useState("");
+  const [retweets,setRetweets]=useState("");
+  const [time,setTime]=useState("");
+  const [status,setStatus]=useState("");
+  const [loading,setLoading]=useState(false);
+
+  async function save(){
+    if(!name||!quote){setStatus("⚠️ Nombre y cita son requeridos");return;}
+    if(!pass){setStatus("⚠️ Ingresa la contraseña");return;}
+    setLoading(true);setStatus("");
+    try{
+      const r=await fetch("/api/save-voice",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass,name,role,emoji,quote,network,likes,retweets,time:time||"reciente"})});
+      const d=await r.json();
+      if(d.ok){setStatus("✅ Publicada");setName("");setRole("");setQuote("");setLikes("");setRetweets("");setTime("");}
+      else setStatus("❌ "+(d.error||"Error"));
+    }catch{setStatus("❌ Error");}
+    setLoading(false);
+  }
+
+  const NETS=["X","Instagram","Facebook","LinkedIn","Threads"];
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      {[["🔑 Contraseña",pass,setPass,"Tu contraseña",true],["👤 Nombre",name,setName,"Elon Musk",false],["💼 Cargo",role,setRole,"CEO Tesla & SpaceX",false],["😊 Emoji",emoji,setEmoji,"👤",false],["🕐 Tiempo",time,setTime,"hace 2h",false],["❤️ Likes",likes,setLikes,"234K",false],["🔁 Retweets",retweets,setRetweets,"89K",false]].map(([lbl,val,set,ph,isPwd])=>(
+        <div key={lbl}>
+          <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>{lbl}</div>
+          <input type={isPwd?"password":"text"} value={val} onChange={e=>set(e.target.value)} placeholder={ph} style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"8px 11px",color:"#fff",fontSize:12,outline:"none"}}/>
+        </div>
+      ))}
+      <div>
+        <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>🌐 Red Social</div>
+        <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{NETS.map(n=><button key={n} onClick={()=>setNetwork(n)} style={{padding:"4px 10px",borderRadius:100,border:`1.5px solid ${network===n?"#6366f1":"rgba(255,255,255,0.1)"}`,background:network===n?"rgba(99,102,241,0.2)":"rgba(255,255,255,0.04)",color:network===n?"#a78bfa":"rgba(255,255,255,0.5)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{n}</button>)}</div>
+      </div>
+      <div>
+        <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>💬 Cita</div>
+        <textarea value={quote} onChange={e=>setQuote(e.target.value)} placeholder="Escribe la cita exacta..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"8px 11px",color:"#fff",fontSize:12,outline:"none",resize:"none",height:80,fontFamily:"'DM Sans',sans-serif"}}/>
+      </div>
+      {status&&<div style={{fontSize:11,color:status.includes("✅")?"#4ade80":"#f87171"}}>{status}</div>}
+      <button onClick={save} disabled={loading} style={{padding:"10px",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",borderRadius:12,fontSize:12,fontWeight:800,color:"#fff",cursor:"pointer"}}>
+        {loading?"Guardando...":"🌍 Publicar voz"}
+      </button>
+    </div>
+  );
+}
 
 function SponsoredForm(){
   const [pass,setPass]=useState("");
@@ -673,6 +870,10 @@ function AdminPanel({onClose}){
         <div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>📰 Titular</div><textarea value={headline} onChange={e=>setHeadline(e.target.value)} placeholder="Titular urgente..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none",resize:"none",height:75,fontFamily:"'DM Sans',sans-serif"}}/></div>
         <div style={{marginBottom:16}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>📝 Descripción</div><textarea value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Más detalles..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none",resize:"none",height:60,fontFamily:"'DM Sans',sans-serif"}}/></div>
         {status&&<div style={{background:status.includes("✅")?"rgba(34,197,94,0.1)":"rgba(239,68,68,0.1)",border:`1px solid ${status.includes("✅")?"rgba(34,197,94,0.3)":"rgba(239,68,68,0.3)"}`,borderRadius:10,padding:"9px 12px",marginBottom:12,fontSize:12,color:status.includes("✅")?"#4ade80":"#f87171"}}>{status}</div>}
+        <div style={{marginBottom:16,borderTop:"1px solid rgba(255,255,255,0.07)",paddingTop:14}}>
+          <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.6)",marginBottom:10}}>🌍 Voces del Mundo</div>
+          <VoicesForm/>
+        </div>
         <div style={{marginBottom:16,borderTop:"1px solid rgba(255,255,255,0.07)",paddingTop:14}}>
           <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.6)",marginBottom:10}}>👟 Slot Patrocinado</div>
           <SponsoredForm/>
@@ -989,6 +1190,8 @@ function App(){
 
       <BreakingTicker articles={articles} breakingNews={breakingNews} lang={lang}/>
 
+      <MarketsTicker/>
+
       {isBreaking&&<div style={{padding:"5px 12px",background:"rgba(239,68,68,0.15)",borderBottom:"1px solid rgba(239,68,68,0.3)",flexShrink:0,display:"flex",alignItems:"center",gap:7,position:"relative",zIndex:9}}><span style={{width:7,height:7,borderRadius:"50%",background:"#ef4444",flexShrink:0,animation:"blink .7s infinite"}}/><span style={{fontSize:10,fontWeight:800,color:"#f87171",letterSpacing:1,textTransform:"uppercase"}}>{t.urgent}</span></div>}
 
       {/* Categorías */}
@@ -1073,6 +1276,11 @@ function App(){
               {(aiLoad||aiAns)&&<div style={{marginTop:6,background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.15)",borderRadius:8,padding:"7px 9px",fontSize:11,color:"#e8f0fe",lineHeight:1.5}}>{aiLoad?t.thinking:aiAns}</div>}
             </div>
           )}
+
+          {/* Voces que mueven el mundo */}
+          {!showAI&&<div style={{margin:"4px 10px 0",flexShrink:0}}>
+            <VoicesSection lang={lang}/>
+          </div>}
 
           {/* 4. CLIMA + TEMAS */}
           {!showAI&&<div style={{margin:"4px 10px 0",borderRadius:10,background:"rgba(5,5,20,0.6)",border:"1px solid rgba(255,255,255,0.07)",padding:"6px 9px",flexShrink:0}}>
