@@ -660,40 +660,9 @@ function MarketsTicker(){
 
   async function fetchPrices(){
     try{
-      // Usar Yahoo Finance proxy gratuito
-      const symbols=["GC=F","CL=F","SI=F","BTC-USD","^GSPC","EURUSD=X"];
-      const results=await Promise.all(symbols.map(sym=>
-        fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`)
-          .then(r=>r.json())
-          .catch(()=>null)
-      ));
-
-      const fmt=(n)=>{
-        if(!n||isNaN(n))return"--";
-        if(n>1000)return(n/1000).toFixed(1)+"K";
-        if(n>100)return n.toFixed(1);
-        return n.toFixed(2);
-      };
-
-      const getPct=(r)=>{
-        try{
-          const meta=r?.chart?.result?.[0]?.meta;
-          if(!meta)return{price:"--",change:"--",up:true};
-          const price=meta.regularMarketPrice;
-          const prev=meta.previousClose||meta.chartPreviousClose;
-          const pct=prev?((price-prev)/prev*100):0;
-          return{price:fmt(price),change:(pct>=0?"+":"")+pct.toFixed(1)+"%",up:pct>=0};
-        }catch{return{price:"--",change:"--",up:true};}
-      };
-
-      setPrices({
-        gold:getPct(results[0]),
-        oil:getPct(results[1]),
-        silver:getPct(results[2]),
-        btc:getPct(results[3]),
-        sp500:getPct(results[4]),
-        eur:getPct(results[5]),
-      });
+      const r=await fetch("/api/markets");
+      const data=await r.json();
+      if(data&&data.gold)setPrices(data);
     }catch{}
   }
 
