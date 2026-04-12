@@ -164,11 +164,20 @@ function TrendingScreen({onClose,lang,country}){
 // ── BREAKING TICKER ────────────────────────────────────────────────────────
 function BreakingTicker({articles,breakingNews,lang}){
   const [markets,setMarkets]=useState("");
+  const [marketItems,setMarketItems]=useState(null);
   useEffect(()=>{
     fetch("/api/markets").then(r=>r.json()).then(d=>{
       if(!d||!d.gold)return;
-      const m="🥇"+d.gold.price+(d.gold.up?"▲":"▼")+" 🛢️"+d.oil.price+(d.oil.up?"▲":"▼")+" ⬜"+d.silver.price+(d.silver.up?"▲":"▼")+" ₿"+d.btc.price+(d.btc.up?"▲":"▼")+" 📊"+d.sp500.price+(d.sp500.up?"▲":"▼")+" 💶"+d.eur.price+(d.eur.up?"▲":"▼");
-      setMarkets(m);
+      const items2=[
+        {icon:"🥇",price:d.gold.price,change:d.gold.change,up:d.gold.up},
+        {icon:"🛢️",price:d.oil.price,change:d.oil.change,up:d.oil.up},
+        {icon:"⬜",price:d.silver.price,change:d.silver.change,up:d.silver.up},
+        {icon:"₿",price:d.btc.price,change:d.btc.change,up:d.btc.up},
+        {icon:"📊",price:d.sp500.price,change:d.sp500.change,up:d.sp500.up},
+        {icon:"💶",price:d.eur.price,change:d.eur.change,up:d.eur.up},
+      ];
+      setMarketItems(items2);
+      setMarkets("loaded");
     }).catch(()=>{});
   },[]);
   const items=[];
@@ -184,8 +193,17 @@ function BreakingTicker({articles,breakingNews,lang}){
         LIVE
       </div>
       <div style={{overflow:"hidden",flex:1}}>
-        <div style={{fontSize:10,color:"#fca5a5",fontWeight:700,whiteSpace:"nowrap",animation:"ticker 40s linear infinite",display:"inline-block",paddingLeft:12}}>
-          {fullText}>{newsText}</span>}{markets&&marketItems&&marketItems.map((it,i)=><span key={i}> <span style={{color:"#fff"}}>{it.icon}{it.price}</span><span style={{color:it.up?"#4ade80":"#f87171"}}>{it.up?"▲":"▼"}{it.change}</span></span>)}
+        <div style={{fontSize:10,fontWeight:700,whiteSpace:"nowrap",animation:"ticker 40s linear infinite",display:"inline-block",paddingLeft:12}}>
+          <span style={{color:"#fca5a5"}}>{newsText}</span>
+          {markets&&<span style={{color:"rgba(255,255,255,0.3)"}}> ━ </span>}
+          {marketItems&&marketItems.map((item,i)=>(
+            <span key={i}>
+              <span style={{color:"rgba(255,255,255,0.7)"}}>{item.icon}</span>
+              <span style={{color:"#fff",fontWeight:800}}>{item.price}</span>
+              <span style={{color:item.up?"#4ade80":"#f87171",fontSize:9}}>{item.up?"▲":"▼"}{item.change}</span>
+              {i<marketItems.length-1&&<span style={{color:"rgba(255,255,255,0.2)"}}> · </span>}
+            </span>
+          ))}
         </div>
       </div>
     </div>
@@ -1241,4 +1259,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
-
