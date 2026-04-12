@@ -657,29 +657,7 @@ function VoicesSection({lang}){
 // ── FIN VOCES ──────────────────────────────────────────────────────────────
 
 
-// ── MARKETS TICKER ─────────────────────────────────────────────────────────
-function MarketsTicker(){
-  const [data,setData]=useState(null);
-  React.useEffect(()=>{
-    fetch("/api/markets").then(r=>r.json()).then(d=>{if(d&&d.gold)setData(d);}).catch(()=>{});
-  },[]);
-  const items=[
-    {icon:"🥇",k:"gold",label:"ORO",color:"#fbbf24"},
-    {icon:"🛢️",k:"oil",label:"WTI",color:"#94a3b8"},
-    {icon:"⬜",k:"silver",label:"PLATA",color:"#e2e8f0"},
-    {icon:"₿",k:"btc",label:"BTC",color:"#f59e0b"},
-    {icon:"📊",k:"sp500",label:"S&P",color:"#34d399"},
-    {icon:"💶",k:"eur",label:"EUR",color:"#a78bfa"},
-  ];
-  const txt=items.map(i=>{const d2=data?data[i.k]:null;return`${i.icon} ${i.label} ${d2?"$"+d2.price:"..."} ${d2?d2.change:""}`;}).join("  ·  ");
-  return(
-    <div style={{background:"rgba(10,15,35,0.95)",borderBottom:"1px solid rgba(59,130,246,0.25)",display:"flex",alignItems:"center",height:24,overflow:"hidden",flexShrink:0}}>
-      <div style={{background:"#1e3a5f",color:"#93c5fd",fontSize:8,fontWeight:900,padding:"0 8px",height:"100%",display:"flex",alignItems:"center",flexShrink:0,letterSpacing:1,whiteSpace:"nowrap"}}>📈 MERCADOS</div>
-      <marquee style={{flex:1,fontSize:9,fontWeight:700,color:"rgba(255,255,255,0.8)"}} scrollamount="3">{txt}</marquee>
-    </div>
-  );
-}
-// ── FIN MARKETS TICKER ─────────────────────────────────────────────────────
+ ─────────────────────────────────────────────────────
 
 function CountrySelector({current,onSelect,onClose,lang}){
   const t=T[lang]||T.es;
