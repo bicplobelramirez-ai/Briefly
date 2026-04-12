@@ -167,14 +167,7 @@ function BreakingTicker({articles,breakingNews,lang}){
   useEffect(()=>{
     fetch("/api/markets").then(r=>r.json()).then(d=>{
       if(!d||!d.gold)return;
-      const m=[
-        "🥇 ORO $"+d.gold.price+" "+(d.gold.up?"▲":"▼")+d.gold.change,
-        "🛢️ WTI $"+d.oil.price+" "+(d.oil.up?"▲":"▼")+d.oil.change,
-        "⬜ PLATA $"+d.silver.price+" "+(d.silver.up?"▲":"▼")+d.silver.change,
-        "₿ BTC $"+d.btc.price+" "+(d.btc.up?"▲":"▼")+d.btc.change,
-        "📊 S&P "+d.sp500.price+" "+(d.sp500.up?"▲":"▼")+d.sp500.change,
-        "💶 EUR "+d.eur.price+" "+(d.eur.up?"▲":"▼")+d.eur.change,
-      ].join("   ·   ");
+      const m="🥇"+d.gold.price+(d.gold.up?"▲":"▼")+" 🛢️"+d.oil.price+(d.oil.up?"▲":"▼")+" ⬜"+d.silver.price+(d.silver.up?"▲":"▼")+" ₿"+d.btc.price+(d.btc.up?"▲":"▼")+" 📊"+d.sp500.price+(d.sp500.up?"▲":"▼")+" 💶"+d.eur.price+(d.eur.up?"▲":"▼");
       setMarkets(m);
     }).catch(()=>{});
   },[]);
@@ -198,7 +191,7 @@ function BreakingTicker({articles,breakingNews,lang}){
     </div>
   );
 }
-// ── FIN BREAKING TICKER ───────────────────────────────────────────────────
+// ── FIN BREAKING TICKER ────────────────────────────────────────────────────
 
 
 // ── EN 60 SEGUNDOS (reemplaza vibe box) ──────────────────────────────────
@@ -657,7 +650,6 @@ function VoicesSection({lang}){
 // ── FIN VOCES ──────────────────────────────────────────────────────────────
 
 
- ─────────────────────────────────────────────────────
 
 function CountrySelector({current,onSelect,onClose,lang}){
   const t=T[lang]||T.es;
@@ -1121,7 +1113,6 @@ function App(){
 
       <BreakingTicker articles={articles} breakingNews={breakingNews} lang={lang}/>
 
-      <MarketsTicker/>
 
       {isBreaking&&<div style={{padding:"5px 12px",background:"rgba(239,68,68,0.15)",borderBottom:"1px solid rgba(239,68,68,0.3)",flexShrink:0,display:"flex",alignItems:"center",gap:7,position:"relative",zIndex:9}}><span style={{width:7,height:7,borderRadius:"50%",background:"#ef4444",flexShrink:0,animation:"blink .7s infinite"}}/><span style={{fontSize:10,fontWeight:800,color:"#f87171",letterSpacing:1,textTransform:"uppercase"}}>{t.urgent}</span></div>}
 
@@ -1250,4 +1241,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
-
