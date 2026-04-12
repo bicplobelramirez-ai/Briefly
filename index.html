@@ -185,7 +185,7 @@ function BreakingTicker({articles,breakingNews,lang}){
       </div>
       <div style={{overflow:"hidden",flex:1}}>
         <div style={{fontSize:10,color:"#fca5a5",fontWeight:700,whiteSpace:"nowrap",animation:"ticker 40s linear infinite",display:"inline-block",paddingLeft:12}}>
-          {newsText&&<span style={{color:"#fca5a5"}}>{newsText}</span>}{markets&&marketItems&&marketItems.map((it,i)=><span key={i}> <span style={{color:"#fff"}}>{it.icon}{it.price}</span><span style={{color:it.up?"#4ade80":"#f87171"}}>{it.up?"▲":"▼"}{it.change}</span></span>)}
+          {fullText}>{newsText}</span>}{markets&&marketItems&&marketItems.map((it,i)=><span key={i}> <span style={{color:"#fff"}}>{it.icon}{it.price}</span><span style={{color:it.up?"#4ade80":"#f87171"}}>{it.up?"▲":"▼"}{it.change}</span></span>)}
         </div>
       </div>
     </div>
