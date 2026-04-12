@@ -31,6 +31,7 @@ body{background:#05050f;font-family:'DM Sans',sans-serif;color:#fff;overflow:hid
 .slide-in-up{animation:slideInUp 0.35s cubic-bezier(0.22,1,0.36,1);}
 .slide-in-down{animation:slideInDown 0.35s cubic-bezier(0.22,1,0.36,1);}
 @keyframes jaikpulse{0%,100%{box-shadow:0 0 6px rgba(139,92,246,0.5)}50%{box-shadow:0 0 14px rgba(139,92,246,0.9)}}
+@keyframes tickerMarket{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 @keyframes ticker{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
 </style>
 </head>
@@ -166,27 +167,38 @@ function BreakingTicker({articles,breakingNews,lang}){
   useEffect(()=>{
     fetch("/api/markets").then(r=>r.json()).then(d=>{
       if(!d||!d.gold)return;
-      const m="🥇$"+d.gold.price+" 🛢️$"+d.oil.price+" ⬜$"+d.silver.price+" ₿$"+d.btc.price+" 📊"+d.sp500.price+" 💶"+d.eur.price;
+      const m=[
+        "🥇 ORO $"+d.gold.price+" "+(d.gold.up?"▲":"▼")+d.gold.change,
+        "🛢️ WTI $"+d.oil.price+" "+(d.oil.up?"▲":"▼")+d.oil.change,
+        "⬜ PLATA $"+d.silver.price+" "+(d.silver.up?"▲":"▼")+d.silver.change,
+        "₿ BTC $"+d.btc.price+" "+(d.btc.up?"▲":"▼")+d.btc.change,
+        "📊 S&P "+d.sp500.price+" "+(d.sp500.up?"▲":"▼")+d.sp500.change,
+        "💶 EUR "+d.eur.price+" "+(d.eur.up?"▲":"▼")+d.eur.change,
+      ].join("   ·   ");
       setMarkets(m);
     }).catch(()=>{});
   },[]);
   const items=[];
   if(breakingNews&&breakingNews.headline)items.push("🔴 "+breakingNews.headline);
   articles.slice(0,4).forEach(a=>items.push("• "+a.headline));
-  const fullText=items.join(" · ")+(markets?" ━ "+markets:"");
-  if(!fullText)return null;
+  const newsText=items.join("   ·   ");
+  const fullText=newsText+(markets?"   ━━━   "+markets:"");
+  if(!newsText&&!markets)return null;
   return(
     <div style={{background:"rgba(239,68,68,0.12)",borderBottom:"1px solid rgba(239,68,68,0.35)",display:"flex",alignItems:"center",height:26,overflow:"hidden",flexShrink:0,position:"relative",zIndex:9}}>
       <div style={{background:"#ef4444",color:"#fff",fontSize:8,fontWeight:900,padding:"0 9px",height:"100%",display:"flex",alignItems:"center",gap:3,flexShrink:0,letterSpacing:1}}>
-        <span style={{width:5,height:5,borderRadius:"50%",background:"#fff",display:"inline-block",animation:"blink .7s infinite"}}/>LIVE
+        <span style={{width:5,height:5,borderRadius:"50%",background:"#fff",display:"inline-block",animation:"blink .7s infinite"}}/>
+        LIVE
       </div>
       <div style={{overflow:"hidden",flex:1}}>
-        <div style={{fontSize:10,color:"#fca5a5",fontWeight:700,whiteSpace:"nowrap",animation:"ticker 40s linear infinite",display:"inline-block",paddingLeft:12}}>{fullText}</div>
+        <div style={{fontSize:10,color:"#fca5a5",fontWeight:700,whiteSpace:"nowrap",animation:"ticker 40s linear infinite",display:"inline-block",paddingLeft:12}}>
+          {fullText}
+        </div>
       </div>
     </div>
   );
 }
-// ── FIN BREAKING TICKER ──────────────────────────────────────────────────── ────────────────────────────────────────────────────
+// ── FIN BREAKING TICKER ────────────────────────────────────────────────────
 
 
 // ── EN 60 SEGUNDOS (reemplaza vibe box) ──────────────────────────────────
@@ -647,47 +659,23 @@ function VoicesSection({lang}){
 
 // ── MARKETS TICKER ─────────────────────────────────────────────────────────
 function MarketsTicker(){
-  const [items,setItems]=useState([
-    {icon:"🥇",label:"ORO",color:"#fbbf24",price:"...",change:"",up:true},
-    {icon:"🛢️",label:"WTI",color:"#94a3b8",price:"...",change:"",up:false},
-    {icon:"⬜",label:"PLATA",color:"#e2e8f0",price:"...",change:"",up:true},
-    {icon:"₿",label:"BTC",color:"#f59e0b",price:"...",change:"",up:true},
-    {icon:"📊",label:"S&P500",color:"#34d399",price:"...",change:"",up:true},
-    {icon:"💶",label:"EUR/USD",color:"#a78bfa",price:"...",change:"",up:false},
-  ]);
-
-  useEffect(()=>{
-    fetch("/api/markets").then(r=>r.json()).then(d=>{
-      if(!d||!d.gold)return;
-      setItems([
-        {icon:"🥇",label:"ORO",color:"#fbbf24",...d.gold},
-        {icon:"🛢️",label:"WTI",color:"#94a3b8",...d.oil},
-        {icon:"⬜",label:"PLATA",color:"#e2e8f0",...d.silver},
-        {icon:"₿",label:"BTC",color:"#f59e0b",...d.btc},
-        {icon:"📊",label:"S&P500",color:"#34d399",...d.sp500},
-        {icon:"💶",label:"EUR/USD",color:"#a78bfa",...d.eur},
-      ]);
-    }).catch(()=>{});
+  const [data,setData]=useState(null);
+  React.useEffect(()=>{
+    fetch("/api/markets").then(r=>r.json()).then(d=>{if(d&&d.gold)setData(d);}).catch(()=>{});
   },[]);
-
+  const items=[
+    {icon:"🥇",k:"gold",label:"ORO",color:"#fbbf24"},
+    {icon:"🛢️",k:"oil",label:"WTI",color:"#94a3b8"},
+    {icon:"⬜",k:"silver",label:"PLATA",color:"#e2e8f0"},
+    {icon:"₿",k:"btc",label:"BTC",color:"#f59e0b"},
+    {icon:"📊",k:"sp500",label:"S&P",color:"#34d399"},
+    {icon:"💶",k:"eur",label:"EUR",color:"#a78bfa"},
+  ];
+  const txt=items.map(i=>{const d2=data?data[i.k]:null;return`${i.icon} ${i.label} ${d2?"$"+d2.price:"..."} ${d2?d2.change:""}`;}).join("  ·  ");
   return(
-    <div style={{background:"rgba(10,15,35,0.95)",borderBottom:"1px solid rgba(99,102,241,0.2)",display:"flex",alignItems:"center",height:24,overflow:"hidden",flexShrink:0}}>
-      <div style={{background:"linear-gradient(135deg,#1e3a5f,#1a2e4a)",color:"#60a5fa",fontSize:8,fontWeight:900,padding:"0 8px",height:"100%",display:"flex",alignItems:"center",flexShrink:0,letterSpacing:1,whiteSpace:"nowrap"}}>
-        📈 MERCADOS
-      </div>
-      <div style={{overflow:"hidden",flex:1}}>
-        <div style={{display:"inline-flex",alignItems:"center",whiteSpace:"nowrap",animation:"tickerMarket 35s linear infinite"}}>
-          {[...items,...items].map((item,i)=>(
-            <span key={i} style={{display:"inline-flex",alignItems:"center",gap:3,padding:"0 10px",fontSize:9,fontWeight:800,color:item.color}}>
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-              <span style={{color:"rgba(255,255,255,0.9)"}}>${item.price}</span>
-              <span style={{color:item.up?"#4ade80":"#f87171",fontSize:8}}>{item.up?"▲":"▼"}{item.change}</span>
-              <span style={{color:"rgba(255,255,255,0.1)",marginLeft:4}}>·</span>
-            </span>
-          ))}
-        </div>
-      </div>
+    <div style={{background:"rgba(10,15,35,0.95)",borderBottom:"1px solid rgba(59,130,246,0.25)",display:"flex",alignItems:"center",height:24,overflow:"hidden",flexShrink:0}}>
+      <div style={{background:"#1e3a5f",color:"#93c5fd",fontSize:8,fontWeight:900,padding:"0 8px",height:"100%",display:"flex",alignItems:"center",flexShrink:0,letterSpacing:1,whiteSpace:"nowrap"}}>📈 MERCADOS</div>
+      <marquee style={{flex:1,fontSize:9,fontWeight:700,color:"rgba(255,255,255,0.8)"}} scrollamount="3">{txt}</marquee>
     </div>
   );
 }
@@ -1250,10 +1238,6 @@ function App(){
           {/* 4. CLIMA + TEMAS */}
           {!showAI&&<div style={{margin:"4px 10px 0",borderRadius:10,background:"rgba(5,5,20,0.6)",border:"1px solid rgba(255,255,255,0.07)",padding:"6px 9px",flexShrink:0}}>
             <WeatherWidget lang={lang} compact={true}/>
-            <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:5}}>
-              <div style={{width:5,height:5,borderRadius:"50%",background:"#22c55e",animation:"blink .9s infinite"}}/>
-              <div style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase"}}>{lang==="en"?"Topics":"Temas del día"}</div>
-            </div>
             <TopicsOfDay lang={lang} country={country} onSelectArticle={a=>{setArticles(p=>[a,...p]);setSi(0);}}/>
           </div>}
 
