@@ -166,16 +166,27 @@ function BreakingTicker({articles,breakingNews,lang}){
   useEffect(()=>{
     fetch("/api/markets").then(r=>r.json()).then(d=>{
       if(!d||!d.gold)return;
-      const m="🥇 $"+d.gold.price+"  🛢️ $"+d.oil.price+"  ⬜ $"+d.silver.price+"  ₿ $"+d.btc.price+"  📊 "+d.sp500.price+"  💶 "+d.eur.price;
+      const m="🥇$"+d.gold.price+" 🛢️$"+d.oil.price+" ⬜$"+d.silver.price+" ₿$"+d.btc.price+" 📊"+d.sp500.price+" 💶"+d.eur.price;
       setMarkets(m);
     }).catch(()=>{});
   },[]);
   const items=[];
   if(breakingNews&&breakingNews.headline)items.push("🔴 "+breakingNews.headline);
   articles.slice(0,4).forEach(a=>items.push("• "+a.headline));
-  const text=items.join("   ·   ")+(markets?"   ━━━   "+markets:"");
-  if(!text)return null;
-// ── FIN BREAKING TICKER ────────────────────────────────────────────────────
+  const fullText=items.join(" · ")+(markets?" ━ "+markets:"");
+  if(!fullText)return null;
+  return(
+    <div style={{background:"rgba(239,68,68,0.12)",borderBottom:"1px solid rgba(239,68,68,0.35)",display:"flex",alignItems:"center",height:26,overflow:"hidden",flexShrink:0,position:"relative",zIndex:9}}>
+      <div style={{background:"#ef4444",color:"#fff",fontSize:8,fontWeight:900,padding:"0 9px",height:"100%",display:"flex",alignItems:"center",gap:3,flexShrink:0,letterSpacing:1}}>
+        <span style={{width:5,height:5,borderRadius:"50%",background:"#fff",display:"inline-block",animation:"blink .7s infinite"}}/>LIVE
+      </div>
+      <div style={{overflow:"hidden",flex:1}}>
+        <div style={{fontSize:10,color:"#fca5a5",fontWeight:700,whiteSpace:"nowrap",animation:"ticker 40s linear infinite",display:"inline-block",paddingLeft:12}}>{fullText}</div>
+      </div>
+    </div>
+  );
+}
+// ── FIN BREAKING TICKER ──────────────────────────────────────────────────── ────────────────────────────────────────────────────
 
 
 // ── EN 60 SEGUNDOS (reemplaza vibe box) ──────────────────────────────────
