@@ -1108,11 +1108,7 @@ function App(){
       {/* Header */}
       <div style={{padding:"8px 12px 6px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,background:"rgba(9,9,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.05)",position:"relative",zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:7}} onClick={handleLogoTap}>
-          <svg width="24" height="24" viewBox="0 0 80 80" fill="none">
-            <defs><linearGradient id="qngrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#a78bfa"/><stop offset="100%" stopColor="#3b82f6"/></linearGradient></defs>
-            <path d="M8 40 L68 14 L50 66 L38 48 Z" fill="url(#qngrad)"/>
-            <path d="M38 48 L50 66 L44 50 Z" fill="rgba(0,0,0,0.25)"/>
-          </svg>
+          <img src="/logo.png" alt="QN" style={{width:32,height:32,objectFit:"contain",borderRadius:4}}/>
           <div>
             <div style={{fontSize:15,fontWeight:900,letterSpacing:-.5,lineHeight:1}}>QuickNews</div>
             <div style={{fontSize:8,color:"rgba(255,255,255,0.3)"}}>{articles.length} {t.tagline}</div>
