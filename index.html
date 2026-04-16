@@ -30,9 +30,6 @@ body{background:#05050f;font-family:'DM Sans',sans-serif;color:#fff;overflow:hid
 .breaking-card{border:1px solid rgba(239,68,68,0.6)!important;animation:breakingglow 2s ease-in-out infinite;}
 .slide-in-up{animation:slideInUp 0.35s cubic-bezier(0.22,1,0.36,1);}
 .slide-in-down{animation:slideInDown 0.35s cubic-bezier(0.22,1,0.36,1);}
-@keyframes jaikpulse{0%,100%{box-shadow:0 0 6px rgba(139,92,246,0.5)}50%{box-shadow:0 0 14px rgba(139,92,246,0.9)}}
-@keyframes tickerMarket{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-@keyframes ticker{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
 </style>
 </head>
 <body>
@@ -50,63 +47,69 @@ const CATS=[{k:"",i:"🌍",l:"Todo",le:"All",color:"#60a5fa"},{k:"politica",i:"�
 const COUNTRIES=[{code:"any",flag:"🌍",name:"Todo",nameEn:"World"},{code:"ar",flag:"🇦🇷",name:"Argentina",nameEn:"Argentina"},{code:"mx",flag:"🇲🇽",name:"México",nameEn:"Mexico"},{code:"co",flag:"🇨🇴",name:"Colombia",nameEn:"Colombia"},{code:"do",flag:"🇩🇴",name:"Rep. Dom.",nameEn:"Dominican Rep."},{code:"cl",flag:"🇨🇱",name:"Chile",nameEn:"Chile"},{code:"pe",flag:"🇵🇪",name:"Perú",nameEn:"Peru"},{code:"ve",flag:"🇻🇪",name:"Venezuela",nameEn:"Venezuela"},{code:"ec",flag:"🇪🇨",name:"Ecuador",nameEn:"Ecuador"},{code:"es",flag:"🇪🇸",name:"España",nameEn:"Spain"},{code:"br",flag:"🇧🇷",name:"Brasil",nameEn:"Brazil"},{code:"us",flag:"🇺🇸",name:"EE.UU.",nameEn:"USA"},{code:"gt",flag:"🇬🇹",name:"Guatemala",nameEn:"Guatemala"},{code:"cr",flag:"🇨🇷",name:"Costa Rica",nameEn:"Costa Rica"},{code:"pa",flag:"🇵🇦",name:"Panamá",nameEn:"Panama"},{code:"cu",flag:"🇨🇺",name:"Cuba",nameEn:"Cuba"},{code:"uy",flag:"🇺🇾",name:"Uruguay",nameEn:"Uruguay"},{code:"bo",flag:"🇧🇴",name:"Bolivia",nameEn:"Bolivia"},{code:"py",flag:"🇵🇾",name:"Paraguay",nameEn:"Paraguay"}];
 const STARS=[[8,12,1.5,2.1],[15,28,1,3.4],[22,8,1.2,1.8],[35,18,0.8,2.7],[42,35,1.4,1.5],[55,10,1,4],[63,22,1.6,2.2],[70,40,0.9,3.1],[78,15,1.2,1.9],[85,30,1,2.5],[12,55,0.8,3.8],[28,62,1.3,2],[38,75,1,2.9],[50,58,1.5,1.6],[65,70,0.9,3.3]];
 
-// ── TRENDING WIDGET (GNews) ────────────────────────────────────────────────
-function TrendingScreen({onClose,lang,country}){
+// ── TRENDING WIDGET CON IA ──────────────────────────────────────────────────
+function TrendingScreen({onClose,lang}){
   const [topics,setTopics]=useState([]);
   const [loading,setLoading]=useState(true);
   const [lastUpdate,setLastUpdate]=useState("");
-
-  const CATS_CFG=[
-    {k:"",emoji:"🌍",label:"Mundial",labelEn:"World",color:"#60a5fa"},
-    {k:"politica",emoji:"🏛️",label:"Política",labelEn:"Politics",color:"#ef4444"},
-    {k:"tech",emoji:"🤖",label:"Tech",labelEn:"Tech",color:"#3b82f6"},
-    {k:"deportes",emoji:"⚽",label:"Deportes",labelEn:"Sports",color:"#22c55e"},
-    {k:"economia",emoji:"💰",label:"Economía",labelEn:"Economy",color:"#f59e0b"},
-    {k:"entretenimiento",emoji:"🎬",label:"Entrete.",labelEn:"Entertain.",color:"#a78bfa"},
-    {k:"ciencia",emoji:"🔬",label:"Ciencia",labelEn:"Science",color:"#06b6d4"},
-  ];
 
   useEffect(()=>{fetchTrending();},[]);
 
   async function fetchTrending(){
     setLoading(true);
     try{
-      const results=await Promise.all(
-        CATS_CFG.map(cat=>
-          fetch(`/api/news?page=1${cat.k?"&cat="+cat.k:""}&country=${country||"any"}`)
-            .then(r=>r.json())
-            .then(d=>{
-              const arts=d.articles||[];
-              const top=arts[0];
-              if(!top)return null;
-              return{
-                emoji:cat.emoji,
-                label:lang==="en"?cat.labelEn:cat.label,
-                color:cat.color,
-                title:top.headline,
-                summary:top.description||top.headline,
-                time:top.time,
-                url:top.url||""
-              };
-            })
-            .catch(()=>null)
-        )
-      );
-      setTopics(results.filter(Boolean).map((t,i)=>({...t,rank:i+1})));
-      setLastUpdate(new Date().toLocaleTimeString(lang==="en"?"en-US":"es-ES",{hour:"2-digit",minute:"2-digit"}));
-    }catch{}
+      const today=new Date().toLocaleDateString(lang==="en"?"en-US":"es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+      const sys=lang==="en"
+        ? `You are a news editor. Today is ${today}. Return ONLY valid JSON, no markdown, no extra text: {"topics":[{"rank":1,"title":"short topic name","summary":"one sentence what's happening","category":"Politics|Tech|Economy|Sports|World|Science|Entertainment","trend":"up","emoji":"🔥"}]} with exactly 7 trending topics happening RIGHT NOW globally. Use web search to find current breaking news.`
+        : `Eres editor de noticias. Hoy es ${today}. Devuelve SOLO JSON válido, sin markdown ni texto extra: {"topics":[{"rank":1,"title":"nombre corto del tema","summary":"una oración de qué está pasando","category":"Política|Tech|Economía|Deportes|Mundial|Ciencia|Entretenimiento","trend":"up","emoji":"🔥"}]} con exactamente 7 temas trending AHORA MISMO en el mundo. Usa búsqueda web para encontrar noticias actuales de hoy.`;
+
+      const r=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1000,
+          tools:[{"type":"web_search_20250305","name":"web_search"}],
+          system:sys,
+          messages:[{role:"user",content:lang==="en"?"What are the top 7 trending news topics right now? Search and return JSON only.":"¿Cuáles son los 7 temas más trending ahora mismo? Busca y devuelve solo JSON."}]
+        })
+      });
+      const d=await r.json();
+      const textBlock=d.content?.find(b=>b.type==="text");
+      if(textBlock){
+        const raw=textBlock.text.replace(/```json|```/g,"").trim();
+        const parsed=JSON.parse(raw);
+        setTopics(parsed.topics||[]);
+        setLastUpdate(new Date().toLocaleTimeString(lang==="en"?"en-US":"es-ES",{hour:"2-digit",minute:"2-digit"}));
+      }
+    }catch(e){
+      setTopics([
+        {rank:1,title:"Error al cargar",summary:"No se pudo obtener temas trending. Intenta de nuevo.",category:"Info",trend:"up",emoji:"⚠️"}
+      ]);
+    }
     setLoading(false);
   }
 
+  const catColors={
+    "Política":"#ef4444","Politics":"#ef4444",
+    "Tech":"#3b82f6",
+    "Economía":"#f59e0b","Economy":"#f59e0b",
+    "Deportes":"#22c55e","Sports":"#22c55e",
+    "Mundial":"#f97316","World":"#f97316",
+    "Ciencia":"#06b6d4","Science":"#06b6d4",
+    "Entretenimiento":"#a78bfa","Entertainment":"#a78bfa",
+  };
+
   return(
     <div style={{position:"fixed",inset:0,zIndex:200,background:"#05050f",display:"flex",flexDirection:"column"}}>
+      {/* Header */}
       <div style={{padding:"12px 14px",background:"rgba(9,9,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{width:34,height:34,borderRadius:10,background:"linear-gradient(135deg,#f97316,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔥</div>
           <div>
             <div style={{fontSize:15,fontWeight:900}}>{lang==="en"?"Trending Now":"Trending Ahora"}</div>
             <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>
-              {loading?(lang==="en"?"Loading...":"Cargando..."):(lang==="en"?`Updated ${lastUpdate}`:`Actualizado ${lastUpdate}`)}
+              {loading?(lang==="en"?"Searching web...":"Buscando en la web..."):(lang==="en"?`Updated ${lastUpdate}`:`Actualizado ${lastUpdate}`)}
             </div>
           </div>
         </div>
@@ -117,6 +120,8 @@ function TrendingScreen({onClose,lang,country}){
           <button onClick={onClose} style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:14,cursor:"pointer"}}>✕</button>
         </div>
       </div>
+
+      {/* Content */}
       <div style={{flex:1,overflowY:"auto",padding:"12px"}}>
         {loading?(
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -129,27 +134,35 @@ function TrendingScreen({onClose,lang,country}){
                 </div>
               </div>
             ))}
+            <div style={{textAlign:"center",padding:"10px",fontSize:11,color:"rgba(255,255,255,0.3)"}}>
+              {lang==="en"?"🤖 AI searching the web for breaking news...":"🤖 IA buscando noticias de último momento..."}
+            </div>
           </div>
         ):(
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {topics.map((topic,i)=>(
-              <div key={i} onClick={()=>topic.url&&window.open(topic.url,"_blank")} style={{borderRadius:14,background:"rgba(10,12,30,0.8)",border:"1px solid rgba(255,255,255,0.08)",padding:"13px 14px",display:"flex",gap:12,alignItems:"flex-start",animation:`fadeUp 0.3s ${i*0.06}s both`,cursor:topic.url?"pointer":"default"}}>
-                <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flexShrink:0}}>
-                  <div style={{width:32,height:32,borderRadius:9,background:`${topic.color}18`,border:`1px solid ${topic.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{topic.emoji}</div>
-                  <div style={{fontSize:10,fontWeight:900,color:"rgba(255,255,255,0.2)"}}>#{topic.rank}</div>
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                    <span style={{fontSize:10,fontWeight:800,color:topic.color,padding:"1px 7px",background:`${topic.color}15`,borderRadius:100,border:`1px solid ${topic.color}33`}}>{topic.label}</span>
-                    <span style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>{topic.time}</span>
+            {topics.map((topic,i)=>{
+              const color=catColors[topic.category]||"#60a5fa";
+              return(
+                <div key={i} style={{borderRadius:14,background:"rgba(10,12,30,0.8)",border:`1px solid rgba(255,255,255,0.08)`,padding:"13px 14px",display:"flex",gap:12,alignItems:"flex-start",animation:`fadeUp 0.3s ${i*0.05}s both`}}>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flexShrink:0}}>
+                    <div style={{width:28,height:28,borderRadius:8,background:`rgba(${color==="#ef4444"?"239,68,68":color==="#3b82f6"?"59,130,246":color==="#f59e0b"?"245,158,11":color==="#22c55e"?"34,197,94":color==="#f97316"?"249,115,22":color==="#06b6d4"?"6,182,212":"167,139,250"},0.15)`,border:`1px solid ${color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>
+                      {topic.emoji}
+                    </div>
+                    <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.2)"}}>#{topic.rank}</div>
                   </div>
-                  <div style={{fontSize:13,fontWeight:800,color:"#fff",lineHeight:1.3,marginBottom:4,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{topic.title}</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",lineHeight:1.5,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{topic.summary}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                      <span style={{fontSize:10,fontWeight:800,color:color,padding:"1px 7px",background:`${color}18`,borderRadius:100,border:`1px solid ${color}33`}}>{topic.category}</span>
+                      <span style={{fontSize:10,color:"#22c55e"}}>↑ {lang==="en"?"trending":"trending"}</span>
+                    </div>
+                    <div style={{fontSize:13,fontWeight:800,color:"#fff",lineHeight:1.3,marginBottom:5}}>{topic.title}</div>
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",lineHeight:1.5}}>{topic.summary}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
-            <div style={{textAlign:"center",padding:"10px 0 4px",fontSize:10,color:"rgba(255,255,255,0.2)"}}>
-              📡 {lang==="en"?"Live news by category":"Noticias en vivo por categoría"}
+              );
+            })}
+            <div style={{textAlign:"center",padding:"12px 0 4px",fontSize:10,color:"rgba(255,255,255,0.2)"}}>
+              🤖 {lang==="en"?"Generated by AI with live web search":"Generado por IA con búsqueda web en vivo"}
             </div>
           </div>
         )}
@@ -158,516 +171,6 @@ function TrendingScreen({onClose,lang,country}){
   );
 }
 // ── FIN TRENDING WIDGET ────────────────────────────────────────────────────
-
-
-
-// ── BREAKING TICKER ────────────────────────────────────────────────────────
-function BreakingTicker({articles,breakingNews,lang}){
-  const [markets,setMarkets]=useState("");
-  const [marketItems,setMarketItems]=useState(null);
-  useEffect(()=>{
-    fetch("/api/markets").then(r=>r.json()).then(d=>{
-      if(!d||!d.gold)return;
-      const items2=[
-        {icon:"🥇",price:d.gold.price,change:d.gold.change,up:d.gold.up},
-        {icon:"🛢️",price:d.oil.price,change:d.oil.change,up:d.oil.up},
-        {icon:"⬜",price:d.silver.price,change:d.silver.change,up:d.silver.up},
-        {icon:"₿",price:d.btc.price,change:d.btc.change,up:d.btc.up},
-        {icon:"📊",price:d.sp500.price,change:d.sp500.change,up:d.sp500.up},
-        {icon:"💶",price:d.eur.price,change:d.eur.change,up:d.eur.up},
-      ];
-      setMarketItems(items2);
-      setMarkets("loaded");
-    }).catch(()=>{});
-  },[]);
-  const items=[];
-  if(breakingNews&&breakingNews.headline)items.push("🔴 "+breakingNews.headline);
-  articles.slice(0,4).forEach(a=>items.push("• "+a.headline));
-  const newsText=items.join("   ·   ");
-  const fullText=newsText+(markets?"   ━━━   "+markets:"");
-  if(!newsText&&!markets)return null;
-  return(
-    <div style={{background:"rgba(239,68,68,0.12)",borderBottom:"1px solid rgba(239,68,68,0.35)",display:"flex",alignItems:"center",height:26,overflow:"hidden",flexShrink:0,position:"relative",zIndex:9}}>
-      <div style={{background:"#ef4444",color:"#fff",fontSize:8,fontWeight:900,padding:"0 9px",height:"100%",display:"flex",alignItems:"center",gap:3,flexShrink:0,letterSpacing:1}}>
-        <span style={{width:5,height:5,borderRadius:"50%",background:"#fff",display:"inline-block",animation:"blink .7s infinite"}}/>
-        LIVE
-      </div>
-      <div style={{overflow:"hidden",flex:1}}>
-        <div style={{fontSize:10,fontWeight:700,whiteSpace:"nowrap",animation:"ticker 40s linear infinite",display:"inline-block",paddingLeft:12}}>
-          <span style={{color:"#fca5a5"}}>{newsText}</span>
-          {markets&&<span style={{color:"rgba(255,255,255,0.3)"}}> ━ </span>}
-          {marketItems&&marketItems.map((item,i)=>(
-            <span key={i}>
-              <span style={{color:"rgba(255,255,255,0.7)"}}>{item.icon}</span>
-              <span style={{color:"#fff",fontWeight:800}}>{item.price}</span>
-              <span style={{color:item.up?"#4ade80":"#f87171",fontSize:9}}>{item.up?"▲":"▼"}{item.change}</span>
-              {i<marketItems.length-1&&<span style={{color:"rgba(255,255,255,0.2)"}}> · </span>}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-// ── FIN BREAKING TICKER ────────────────────────────────────────────────────
-
-
-// ── EN 60 SEGUNDOS (reemplaza vibe box) ──────────────────────────────────
-function SixtySeconds({story,lang,vibe,vibeText,vd}){
-  const [votes,setVotes]=useState({yes:Math.floor(Math.random()*15000)+5000,no:Math.floor(Math.random()*8000)+2000});
-  const [voted,setVoted]=useState(null);
-  const [showBullets,setShowBullets]=useState(false);
-
-  if(!story)return null;
-
-  const total=votes.yes+votes.no;
-  const yesPct=Math.round(votes.yes/total*100);
-  const noPct=100-yesPct;
-
-  function vote(v){
-    if(voted)return;
-    setVoted(v);
-    setVotes(prev=>({...prev,[v]:prev[v]+1}));
-  }
-
-  const desc=story.description||story.headline;
-  const bullets=[
-    story.headline.length>58?story.headline.substring(0,58)+"...":story.headline,
-    desc.length>65?desc.substring(0,65)+"...":desc,
-    lang==="en"?"Source: "+story.cat:"Fuente: "+story.cat
-  ];
-
-  const pollQ=lang==="en"?"Important?":"¿Importante?";
-  const yesLbl=lang==="en"?"Yes":"Sí";
-  const votesLbl=lang==="en"?`${(total/1000).toFixed(1)}K votes`:`${(total/1000).toFixed(1)}K votos`;
-
-  return(
-    <div style={{borderRadius:12,background:"rgba(10,8,28,0.75)",border:`1px solid ${vd?vd.br:"rgba(99,102,241,0.3)"}`,padding:"8px 11px",flexShrink:0}}>
-      {/* Vibe text row */}
-      <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:showBullets?6:0}}>
-        <span style={{fontSize:13}}>{vd?vd.i:"⚡"}</span>
-        <span style={{fontSize:11,fontWeight:800,color:vd?vd.c:"#a78bfa"}}>{vd?vd.l:"Quick"}:</span>
-        <div style={{flex:1,fontSize:11,color:"rgba(255,255,255,0.8)",lineHeight:1.45,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:showBullets?1:2,WebkitBoxOrient:"vertical"}}>{vibeText}</div>
-        <button onClick={()=>setShowBullets(b=>!b)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:12,cursor:"pointer",flexShrink:0,padding:"0 2px"}}>{showBullets?"▲":"▼"}</button>
-      </div>
-
-      {/* Expandible: bullets + encuesta */}
-      {showBullets&&(
-        <div style={{display:"flex",gap:10,alignItems:"flex-start",borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:7,marginTop:4}}>
-          <div style={{flex:1}}>
-            <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.35)",letterSpacing:1,textTransform:"uppercase",marginBottom:5}}>🧠 {lang==="en"?"In 60 sec":"En 60 seg"}</div>
-            {bullets.map((b,i)=>(
-              <div key={i} style={{display:"flex",alignItems:"flex-start",gap:5,marginBottom:4}}>
-                <div style={{width:4,height:4,borderRadius:"50%",background:"#6366f1",flexShrink:0,marginTop:4}}/>
-                <div style={{fontSize:10,color:"rgba(255,255,255,0.65)",lineHeight:1.4}}>{b}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{width:95,flexShrink:0}}>
-            <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",marginBottom:4,fontWeight:700}}>{pollQ}</div>
-            <div onClick={()=>vote("yes")} style={{borderRadius:7,padding:"5px 7px",marginBottom:3,display:"flex",justifyContent:"space-between",fontSize:10,fontWeight:800,cursor:voted?"default":"pointer",background:voted==="yes"?"#3b82f6":voted?"rgba(255,255,255,0.05)":"rgba(59,130,246,0.18)",border:`1px solid ${voted==="yes"?"#3b82f6":"rgba(59,130,246,0.25)"}`,color:voted==="yes"?"#fff":"rgba(255,255,255,0.6)"}}>
-              <span>{yesLbl}</span>{voted&&<span>{yesPct}%</span>}
-            </div>
-            <div onClick={()=>vote("no")} style={{borderRadius:7,padding:"5px 7px",display:"flex",justifyContent:"space-between",fontSize:10,fontWeight:800,cursor:voted?"default":"pointer",background:voted==="no"?"rgba(239,68,68,0.35)":"rgba(255,255,255,0.05)",border:`1px solid ${voted==="no"?"rgba(239,68,68,0.5)":"rgba(255,255,255,0.08)"}`,color:voted==="no"?"#f87171":"rgba(255,255,255,0.4)"}}>
-              <span>No</span>{voted&&<span>{noPct}%</span>}
-            </div>
-            {voted?<div style={{fontSize:8,color:"rgba(255,255,255,0.2)",textAlign:"right",marginTop:2}}>{votesLbl}</div>:<div style={{fontSize:8,color:"rgba(255,255,255,0.2)",textAlign:"center",marginTop:2}}>{lang==="en"?"tap to vote":"toca para votar"}</div>}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-// ── FIN EN 60 SEGUNDOS ─────────────────────────────────────────────────────
-
-
-// ── SLOT PATROCINADO ──────────────────────────────────────────────────────
-function SponsoredSlot({lang}){
-  const [ad,setAd]=useState(null);
-  useEffect(()=>{
-    fetch("/api/get-sponsored").then(r=>r.json()).then(d=>{if(d&&d.title)setAd(d);}).catch(()=>{});
-  },[]);
-  if(!ad)return null;
-  return(
-    <div style={{borderRadius:12,overflow:"hidden",border:"1px solid rgba(245,158,11,0.2)",background:"rgba(10,10,20,0.9)",flexShrink:0,position:"relative"}}>
-      <div style={{position:"absolute",top:7,left:9,fontSize:8,fontWeight:800,color:"rgba(255,255,255,0.35)",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:4,padding:"1px 5px",letterSpacing:0.5,zIndex:1}}>{lang==="en"?"Sponsored":"Patrocinado"}</div>
-      <div style={{display:"flex",alignItems:"center",minHeight:75}}>
-        <div style={{flex:1,padding:"22px 12px 12px"}}>
-          {ad.brand&&<div style={{fontSize:9,color:"rgba(245,158,11,0.7)",fontWeight:800,marginBottom:3,textTransform:"uppercase",letterSpacing:1}}>{ad.brand}</div>}
-          <div style={{fontSize:13,fontWeight:900,color:"#fff",lineHeight:1.3,marginBottom:7}}>{ad.title}</div>
-          {ad.url?<a href={ad.url} target="_blank" rel="noopener noreferrer" style={{display:"inline-block",padding:"5px 13px",background:"linear-gradient(135deg,#f59e0b,#d97706)",borderRadius:100,fontSize:10,fontWeight:800,color:"#fff",textDecoration:"none"}}>{ad.cta||"Ver oferta →"}</a>:<span style={{display:"inline-block",padding:"5px 13px",background:"linear-gradient(135deg,#f59e0b,#d97706)",borderRadius:100,fontSize:10,fontWeight:800,color:"#fff"}}>{ad.cta||"Ver más →"}</span>}
-        </div>
-        {ad.img&&<div style={{width:90,height:75,flexShrink:0,overflow:"hidden"}}><img src={ad.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.parentNode.style.display="none"}/></div>}
-        {!ad.img&&<div style={{width:80,height:75,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,background:"rgba(255,255,255,0.03)"}}>{ad.emoji||"⭐"}</div>}
-      </div>
-    </div>
-  );
-}
-// ── FIN SLOT PATROCINADO ───────────────────────────────────────────────────
-
-// ── TEMAS DEL DÍA ─────────────────────────────────────────────────────────
-function TopicsOfDay({lang,country,onSelectArticle}){
-  const [topics,setTopics]=useState([]);
-
-  const TOPICS_CFG=[
-    {k:"politica",emoji:"🏛️",color:"#ef4444",svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="10" r="6" stroke="#ef4444" strokeWidth="1.5" fill="rgba(239,68,68,0.1)"/><path d="M12 16 L12 21" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round"/><circle cx="12" cy="10" r="2" fill="#ef4444"/><path d="M9 7.5L10.5 9M15 7.5L13.5 9M9 12.5L10.5 11M15 12.5L13.5 11" stroke="#fca5a5" strokeWidth="1" strokeLinecap="round"/></svg>},
-    {k:"ciencia",emoji:"🌕",color:"#60a5fa",svg:<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="14" cy="12" r="5" fill="rgba(96,165,250,0.12)" stroke="#60a5fa" strokeWidth="1.5"/><circle cx="15.5" cy="10.5" r="1.2" fill="rgba(255,255,255,0.2)"/><circle cx="13" cy="13" r="0.8" fill="rgba(255,255,255,0.15)"/><path d="M5 17 Q9 7 14 7" stroke="#8b5cf6" strokeWidth="1.2" strokeDasharray="2 2" strokeLinecap="round"/><circle cx="5" cy="17" r="1.2" fill="#8b5cf6"/></svg>},
-  ];
-
-  useEffect(()=>{
-    Promise.all(TOPICS_CFG.map(cfg=>
-      fetch(`/api/news?page=1&cat=${cfg.k}&country=${country||"any"}`)
-        .then(r=>r.json())
-        .then(d=>{
-          const a=(d.articles||[])[0];
-          if(!a)return null;
-          return{...cfg,article:a,label:lang==="en"?cfg.k.charAt(0).toUpperCase()+cfg.k.slice(1):cfg.k==="politica"?"Política":"Ciencia"};
-        })
-        .catch(()=>null)
-    )).then(res=>setTopics(res.filter(Boolean)));
-  },[country,lang]);
-
-  if(topics.length===0)return(
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-      {[1,2].map(i=><div key={i} style={{borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",padding:"8px",height:90,animation:"pulse 1.5s infinite"}}/>)}
-    </div>
-  );
-
-  return(
-    <div style={{flexShrink:0}}>
-      <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:5}}>
-        <div style={{width:5,height:5,borderRadius:"50%",background:"#22c55e",animation:"blink .9s infinite"}}/>
-        <div style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase"}}>{lang==="en"?"Topics":"Temas del día"}</div>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-        {topics.map((t,i)=>(
-          <div key={i} onClick={()=>t.article&&onSelectArticle(t.article)} style={{borderRadius:11,background:"rgba(10,12,30,0.8)",border:"1px solid rgba(255,255,255,0.07)",padding:"9px 10px",cursor:"pointer",position:"relative",overflow:"hidden"}}>
-            <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${t.color},transparent)`}}/>
-            <div style={{width:34,height:34,borderRadius:9,background:`${t.color}15`,border:`1px solid ${t.color}33`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:5}}>{t.svg}</div>
-            <div style={{fontSize:9,fontWeight:800,color:t.color,marginBottom:3}}>{t.label}</div>
-            <div style={{fontSize:11,fontWeight:800,color:"#fff",lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical"}}>{t.article.headline}</div>
-            <div style={{fontSize:8,color:"rgba(255,255,255,0.25)",marginTop:4}}>{t.article.time}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-// ── FIN TEMAS DEL DÍA ─────────────────────────────────────────────────────
-
-// ── WEATHER WIDGET ────────────────────────────────────────────────────────
-const WX_CODES={0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"🌨️",73:"🌨️",75:"❄️",80:"🌦️",81:"🌧️",82:"⛈️",95:"⛈️",99:"⛈️"};
-const WX_DESC={
-  es:{0:"Despejado",1:"Mayorm. despejado",2:"Parcialmente nublado",3:"Nublado",45:"Neblina",48:"Neblina",51:"Llovizna",53:"Llovizna",55:"Llovizna",61:"Lluvia leve",63:"Lluvia",65:"Lluvia fuerte",71:"Nieve leve",73:"Nieve",75:"Nieve fuerte",80:"Chubascos",81:"Chubascos",82:"Tormenta",95:"Tormenta",99:"Tormenta"},
-  en:{0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Cloudy",45:"Foggy",48:"Foggy",51:"Drizzle",53:"Drizzle",55:"Drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",71:"Light snow",73:"Snow",75:"Heavy snow",80:"Showers",81:"Showers",82:"Thunderstorm",95:"Thunderstorm",99:"Thunderstorm"}
-};
-
-function WeatherWidget({lang,compact=false}){
-  const [wx,setWx]=useState(null);
-  const [city,setCity]=useState("");
-  const [status,setStatus]=useState("loading"); // loading | ok | denied
-
-  function request(){
-    if(!navigator.geolocation){setStatus("denied");return;}
-    setStatus("loading");
-    navigator.geolocation.getCurrentPosition(async pos=>{
-      try{
-        const {latitude:lat,longitude:lon}=pos.coords;
-        const wRes=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`);
-        const wData=await wRes.json();
-        const cw=wData.current_weather;
-        const gRes=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
-        const gData=await gRes.json();
-        const cityName=gData.address?.city||gData.address?.town||gData.address?.village||gData.address?.county||"";
-        setCity(cityName);
-        setWx({temp:Math.round(cw.temperature),code:cw.weathercode,wind:Math.round(cw.windspeed)});
-        setStatus("ok");
-      }catch{setStatus("denied");}
-    },()=>setStatus("denied"),{timeout:10000});
-  }
-
-  useEffect(()=>{request();},[]);
-
-  const icon=wx?WX_CODES[wx.code]||"🌡️":"🌡️";
-  const desc=wx?(WX_DESC[lang]||WX_DESC.es)[wx.code]||"":"";
-  const unit=wx?(lang==="en"?`${Math.round(wx.temp*9/5+32)}°F`:`${wx.temp}°C`):"--";
-
-  if(status==="loading")return(
-    <div style={{borderRadius:12,background:"rgba(10,12,30,0.75)",border:"1px solid rgba(96,165,250,0.15)",padding:"8px 12px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
-      <span style={{fontSize:20,animation:"spin 1.5s linear infinite",display:"inline-block"}}>🌡️</span>
-      <div style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>{lang==="en"?"Getting weather...":"Obteniendo clima..."}</div>
-    </div>
-  );
-
-  if(status==="denied")return(
-    <div onClick={request} style={{borderRadius:12,background:"rgba(10,12,30,0.75)",border:"1px solid rgba(96,165,250,0.15)",padding:"8px 12px",display:"flex",alignItems:"center",gap:10,flexShrink:0,cursor:"pointer"}}>
-      <span style={{fontSize:18}}>📍</span>
-      <div style={{flex:1,fontSize:11,color:"rgba(255,255,255,0.4)"}}>{lang==="en"?"Tap to show local weather":"Toca para ver el clima local"}</div>
-      <span style={{fontSize:10,color:"rgba(96,165,250,0.6)"}}>→</span>
-    </div>
-  );
-
-  if(compact)return(
-    <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:10,background:"rgba(96,165,250,0.08)",border:"1px solid rgba(96,165,250,0.15)",marginBottom:7}}>
-      <span style={{fontSize:18}}>{icon}</span>
-      <div style={{flex:1}}>
-        <div style={{display:"flex",alignItems:"baseline",gap:5}}><span style={{fontSize:16,fontWeight:900,color:"#fff"}}>{unit}</span><span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>{desc}</span></div>
-        {city&&<div style={{fontSize:8,color:"rgba(255,255,255,0.3)"}}>📍 {city}</div>}
-      </div>
-      <div style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>💨 {wx.wind} km/h</div>
-    </div>
-  );
-
-  return(
-    <div style={{borderRadius:12,background:"rgba(10,12,30,0.75)",border:"1px solid rgba(96,165,250,0.25)",padding:"8px 12px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
-      <span style={{fontSize:24}}>{icon}</span>
-      <div style={{flex:1,minWidth:0}}>
-        <div style={{display:"flex",alignItems:"baseline",gap:6}}>
-          <span style={{fontSize:20,fontWeight:900,color:"#fff"}}>{unit}</span>
-          <span style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>{desc}</span>
-        </div>
-        {city&&<div style={{fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:1}}>📍 {city}</div>}
-      </div>
-      <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",textAlign:"right"}}>💨 {wx.wind} km/h</div>
-    </div>
-  );
-}
-// ── FIN WEATHER WIDGET ─────────────────────────────────────────────────────
-
-
-// ── MEMENEWS SCREEN ───────────────────────────────────────────────────────
-function MemeNewsScreen({article,lang,country,onSwipe,idx,total,onNext,onClose}){
-  const [viral,setViral]=useState(null);
-  const [viralLoad,setViralLoad]=useState(false);
-  const [liked,setLiked]=useState(false);
-  const [likes,setLikes]=useState(Math.floor(Math.random()*25000)+5000);
-  const [shares]=useState(Math.floor(Math.random()*8000)+1000);
-  const [comments]=useState(Math.floor(Math.random()*3000)+500);
-  const [activecat,setActivecat]=useState("trending");
-
-  const CATS=[{k:"trending",l:"🔥 Trending"},{k:"deep",l:"🧠 Deep Memes"},{k:"pop",l:"🎬 Pop Culture"},{k:"dark",l:"💀 Dark Humor"}];
-
-  const countryFlag={"do":"🇩🇴","ar":"🇦🇷","mx":"🇲🇽","co":"🇨🇴","us":"🇺🇸","es":"🇪🇸","any":"🌍"}[country]||"🌍";
-  const countryName={"do":"Rep. Dom.","ar":"Argentina","mx":"México","co":"Colombia","us":"EE.UU.","es":"España","any":"LATAM"}[country]||"LATAM";
-
-  const hoursAgo=article?.time||"hace 12h";
-  const headline=article?.headline||"";
-  const topText=headline.substring(0,40).toUpperCase();
-  const bottomText=headline.substring(40,80).toUpperCase();
-
-  useEffect(()=>{
-    if(article)fetchViral();
-  },[article?.id]);
-
-  async function fetchViral(){
-    setViralLoad(true);setViral(null);
-    try{
-      const r=await fetch("https://api.anthropic.com/v1/messages",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",
-          max_tokens:50,
-          system:"Eres un experto en viralidad de memes. Dado un titular de noticia, responde SOLO con un número entre 40 y 97 representando el % de probabilidad de que se viralice en 24h. Solo el número, nada más.",
-          messages:[{role:"user",content:article.headline}]
-        })
-      });
-      const d=await r.json();
-      const num=parseInt(d.content?.find(b=>b.type==="text")?.text?.trim()||"72");
-      setViral(isNaN(num)?72:Math.min(97,Math.max(40,num)));
-    }catch{setViral(Math.floor(Math.random()*40)+50);}
-    setViralLoad(false);
-  }
-
-  const viralColor=viral>=80?"#4ade80":viral>=60?"#f59e0b":"#60a5fa";
-
-  if(!article)return null;
-
-  return(
-    <div style={{position:"fixed",inset:0,zIndex:150,background:"#0a0a14",display:"flex",flexDirection:"column",overflowY:"auto"}}
-      onTouchStart={e=>{window._my=e.touches[0].clientY;}}
-      onTouchEnd={e=>{if(!window._my)return;const dy=window._my-e.changedTouches[0].clientY;if(dy>65)onSwipe(1);if(dy<-65)onSwipe(-1);window._my=null;}}>
-
-      {/* Header */}
-      <div style={{padding:"12px 16px 8px",background:"rgba(10,10,20,0.97)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
-        <div style={{fontSize:20,fontWeight:900,background:"linear-gradient(135deg,#a78bfa,#ec4899)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:"-0.5px"}}>MemeNews</div>
-        <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <button onClick={onClose} style={{padding:"5px 11px",borderRadius:100,border:"1px solid rgba(59,130,246,0.3)",background:"rgba(59,130,246,0.12)",color:"#60a5fa",fontSize:10,fontWeight:700,cursor:"pointer"}}>📰 Serio</button>
-          <div style={{width:28,height:28,borderRadius:8,background:"linear-gradient(135deg,#a78bfa,#ec4899)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>💎</div>
-        </div>
-      </div>
-
-      {/* Buscador */}
-      <div style={{padding:"0 16px 10px",flexShrink:0}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,padding:"9px 14px"}}>
-          <span style={{fontSize:14,color:"rgba(255,255,255,0.4)"}}>🔍</span>
-          <span style={{flex:1,fontSize:12,color:"rgba(255,255,255,0.3)"}}>Busca memes, trends o temas</span>
-          <span style={{fontSize:14,color:"rgba(255,255,255,0.4)"}}>🎤</span>
-        </div>
-      </div>
-
-      {/* Categorías */}
-      <div style={{padding:"0 16px 10px",display:"flex",gap:7,overflowX:"auto",flexShrink:0,scrollbarWidth:"none"}}>
-        {CATS.map(c=>(
-          <div key={c.k} onClick={()=>setActivecat(c.k)} style={{display:"flex",alignItems:"center",gap:4,padding:"6px 12px",borderRadius:100,background:activecat===c.k?"rgba(249,115,22,0.2)":"rgba(255,255,255,0.05)",border:`1.5px solid ${activecat===c.k?"rgba(249,115,22,0.6)":"rgba(255,255,255,0.1)"}`,color:activecat===c.k?"#fb923c":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:800,whiteSpace:"nowrap",cursor:"pointer"}}>{c.l}</div>
-        ))}
-      </div>
-
-      {/* Titular */}
-      <div style={{padding:"0 16px 8px",flexShrink:0}}>
-        <div style={{fontSize:13,fontWeight:900,color:"#fff",marginBottom:3}}>¡Este meme está explotando en {countryName} {countryFlag}!</div>
-        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{article.cat} · {hoursAgo}</div>
-      </div>
-
-      {/* MEME + Reacciones */}
-      <div style={{padding:"0 16px",position:"relative",flexShrink:0}}>
-        <div style={{position:"relative",borderRadius:16,overflow:"hidden",border:"1px solid rgba(167,139,250,0.25)"}}>
-
-          {/* Imagen */}
-          <div style={{height:280,background:"linear-gradient(135deg,#0d0520,#1a0535,#0d0520)",position:"relative",overflow:"hidden"}}>
-            {article.img&&<img src={article.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.55)"}} onError={e=>e.target.style.display="none"}/>}
-            <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,0.5) 0%,transparent 30%,transparent 55%,rgba(0,0,0,0.65) 100%)"}}/>
-
-            {/* Texto Impact TOP */}
-            <div style={{position:"absolute",top:12,left:0,right:52,textAlign:"center",padding:"0 12px"}}>
-              <div style={{fontFamily:"Impact,'Arial Black',sans-serif",fontSize:21,color:"#fff",textTransform:"uppercase",WebkitTextStroke:"2px #000",textShadow:"2px 2px 0 #000,-2px 2px 0 #000,2px -2px 0 #000,-2px -2px 0 #000",lineHeight:1.15}}>{topText}</div>
-            </div>
-
-            {/* Texto Impact BOTTOM */}
-            {bottomText&&<div style={{position:"absolute",bottom:12,left:0,right:52,textAlign:"center",padding:"0 12px"}}>
-              <div style={{fontFamily:"Impact,'Arial Black',sans-serif",fontSize:20,color:"#fff",textTransform:"uppercase",WebkitTextStroke:"2px #000",textShadow:"2px 2px 0 #000,-2px 2px 0 #000,2px -2px 0 #000,-2px -2px 0 #000",lineHeight:1.15}}>{bottomText} 💀</div>
-            </div>}
-          </div>
-
-          {/* Reacciones verticales TikTok */}
-          <div style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",gap:14,alignItems:"center"}}>
-            {[
-              [liked?"❤️":"🤍", liked?likes:likes, ()=>{setLiked(l=>!l);setLikes(n=>liked?n-1:n+1);}],
-              ["↗️", Math.round(shares/1000*10)/10+"K", null],
-              ["💬", Math.round(comments/1000*10)/10+"K", null],
-              ["🚀", null, null],
-            ].map(([icon,count,fn],i)=>(
-              <div key={i} onClick={fn||undefined} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,cursor:fn?"pointer":"default"}}>
-                <div style={{width:42,height:42,borderRadius:"50%",background:"rgba(0,0,0,0.55)",border:"2px solid rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>{icon}</div>
-                {count&&<span style={{fontSize:10,fontWeight:800,color:"#fff"}}>{typeof count==="number"?count>=1000?(count/1000).toFixed(1)+"K":count:count}</span>}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Subiendo rápido + tendencia */}
-      <div style={{padding:"8px 16px 3px",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
-        <div style={{display:"flex",alignItems:"center",gap:4}}>
-          <span style={{fontSize:14}}>🔥</span>
-          <span style={{fontSize:11,color:"rgba(255,255,255,0.6)"}}>Subiendo </span>
-          <span style={{fontSize:11,fontWeight:900,color:"#fb923c"}}>Rápido</span>
-        </div>
-        <div style={{width:1,height:12,background:"rgba(255,255,255,0.15)"}}/>
-        <div style={{display:"flex",alignItems:"center",gap:4}}>
-          <span style={{fontSize:13}}>{countryFlag}</span>
-          <span style={{fontSize:11,color:"rgba(255,255,255,0.6)"}}>Tendencia: </span>
-          <span style={{fontSize:11,fontWeight:800,color:"#fff"}}>{countryName}, LATAM</span>
-        </div>
-      </div>
-
-      {/* Creado hace */}
-      <div style={{padding:"2px 16px 8px",flexShrink:0}}>
-        <span style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>⏰ {hoursAgo}</span>
-      </div>
-
-      {/* IA viral score */}
-      <div style={{padding:"0 16px 12px",flexShrink:0}}>
-        <div style={{borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,background:`${viralColor}12`,border:`1.5px solid ${viralColor}44`}}>
-          <span style={{fontSize:16}}>{viralLoad?"⏳":"🤖"}</span>
-          <div style={{flex:1}}>
-            {viralLoad
-              ?<span style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>Calculando probabilidad...</span>
-              :<><span style={{fontSize:13,fontWeight:900,color:viralColor}}>IA: {viral}% </span><span style={{fontSize:12,color:"rgba(255,255,255,0.6)"}}>probabilidad de viralizarse en 24h</span></>
-            }
-          </div>
-        </div>
-      </div>
-
-      {/* Contador */}
-      <div style={{padding:"0 16px 8px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
-        <span style={{fontSize:9,color:"rgba(255,255,255,0.2)"}}>↑ desliza · {idx+1}/{total}</span>
-        <span style={{fontSize:9,color:"rgba(167,139,250,0.4)"}}>🤣 MemeNews</span>
-      </div>
-
-      {/* Preview siguiente */}
-      {onNext&&<div onClick={()=>onSwipe(1)} style={{margin:"0 16px 8px",borderRadius:12,overflow:"hidden",position:"relative",height:52,background:"rgba(167,139,250,0.06)",border:"1px solid rgba(167,139,250,0.15)",cursor:"pointer",flexShrink:0}}>
-        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",padding:"0 12px",gap:10}}>
-          <div style={{flex:1}}>
-            <div style={{fontSize:8,color:"rgba(167,139,250,0.4)",textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>↑ Siguiente · {onNext.cat}</div>
-            <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.75)",lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:1,WebkitBoxOrient:"vertical"}}>{onNext.headline}</div>
-          </div>
-          <div style={{fontSize:18,color:"rgba(167,139,250,0.3)"}}>↑</div>
-        </div>
-      </div>}
-
-    </div>
-  );
-}
-// ── FIN MEMENEWS ───────────────────────────────────────────────────────────
-
-
-// ── VOCES QUE MUEVEN EL MUNDO ─────────────────────────────────────────────
-function VoicesSection({lang}){
-  const [voices,setVoices]=useState([]);
-
-  useEffect(()=>{
-    fetch("/api/get-voices").then(r=>r.json()).then(d=>{
-      if(Array.isArray(d)&&d.length>0)setVoices(d);
-    }).catch(()=>{});
-  },[]);
-
-  if(voices.length===0)return null;
-
-  const networkIcon={"twitter":"𝕏","x":"𝕏","instagram":"📸","facebook":"👥","linkedin":"💼","threads":"@"}
-
-  return(
-    <div style={{flexShrink:0}}>
-      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,padding:"0 2px"}}>
-        <span style={{fontSize:12}}>🌍</span>
-        <span style={{fontSize:9,fontWeight:900,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase"}}>{lang==="en"?"Voices that move the world":"Voces que mueven el mundo"}</span>
-      </div>
-      {voices.map((v,i)=>(
-        <div key={i} style={{borderRadius:14,background:"rgba(10,10,25,0.95)",border:"1px solid rgba(255,255,255,0.08)",overflow:"hidden",marginBottom:8,animation:`fadeUp 0.3s ${i*0.08}s both`}}>
-          {/* Header */}
-          <div style={{padding:"10px 12px 6px",display:"flex",alignItems:"center",gap:9}}>
-            <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#1a1a2e,#252540)",border:"2px solid rgba(99,102,241,0.4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
-              {v.emoji||"👤"}
-            </div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:4}}>
-                <span style={{fontSize:12,fontWeight:900,color:"#fff"}}>{v.name}</span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="#1d9bf0"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91C1.88 9.33 1 10.57 1 12s.88 2.67 2.19 3.34c-.46 1.39-.2 2.9.81 3.91s2.52 1.26 3.91.8c.66 1.31 1.9 2.19 3.33 2.19s2.68-.88 3.34-2.19c1.39.46 2.9.2 3.91-.81s1.26-2.52.8-3.91C21.37 14.67 22.25 13.43 22.25 12zm-13.1 5.73L5.5 14.09l1.41-1.41 2.24 2.23 5.95-5.95 1.41 1.41-7.36 7.36z"/></svg>
-              </div>
-              <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{v.role}</div>
-            </div>
-            <span style={{fontSize:16,flexShrink:0}}>{networkIcon[v.network?.toLowerCase()]||"𝕏"}</span>
-          </div>
-          {/* Cita */}
-          <div style={{padding:"0 12px 8px"}}>
-            <div style={{fontSize:13,color:"rgba(255,255,255,0.88)",lineHeight:1.6,fontStyle:"italic"}}>"{v.quote}"</div>
-          </div>
-          {/* Footer */}
-          <div style={{padding:"6px 12px 8px",background:"rgba(255,255,255,0.02)",borderTop:"1px solid rgba(255,255,255,0.05)",display:"flex",alignItems:"center",gap:8}}>
-            <span style={{fontSize:9,color:"rgba(255,255,255,0.3)"}}>{v.time||"reciente"} · vía {v.network||"X"}</span>
-            <div style={{marginLeft:"auto",display:"flex",gap:10}}>
-              {v.likes&&<span style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>❤️ {v.likes}</span>}
-              {v.retweets&&<span style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>🔁 {v.retweets}</span>}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-// ── FIN VOCES ──────────────────────────────────────────────────────────────
-
-
 
 function CountrySelector({current,onSelect,onClose,lang}){
   const t=T[lang]||T.es;
@@ -686,99 +189,6 @@ function CountrySelector({current,onSelect,onClose,lang}){
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-
-
-function VoicesForm(){
-  const [pass,setPass]=useState("");
-  const [name,setName]=useState("");
-  const [role,setRole]=useState("");
-  const [emoji,setEmoji]=useState("👤");
-  const [quote,setQuote]=useState("");
-  const [network,setNetwork]=useState("X");
-  const [likes,setLikes]=useState("");
-  const [retweets,setRetweets]=useState("");
-  const [time,setTime]=useState("");
-  const [status,setStatus]=useState("");
-  const [loading,setLoading]=useState(false);
-
-  async function save(){
-    if(!name||!quote){setStatus("⚠️ Nombre y cita son requeridos");return;}
-    if(!pass){setStatus("⚠️ Ingresa la contraseña");return;}
-    setLoading(true);setStatus("");
-    try{
-      const r=await fetch("/api/save-voice",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass,name,role,emoji,quote,network,likes,retweets,time:time||"reciente"})});
-      const d=await r.json();
-      if(d.ok){setStatus("✅ Publicada");setName("");setRole("");setQuote("");setLikes("");setRetweets("");setTime("");}
-      else setStatus("❌ "+(d.error||"Error"));
-    }catch{setStatus("❌ Error");}
-    setLoading(false);
-  }
-
-  const NETS=["X","Instagram","Facebook","LinkedIn","Threads"];
-
-  return(
-    <div style={{display:"flex",flexDirection:"column",gap:8}}>
-      {[["🔑 Contraseña",pass,setPass,"Tu contraseña",true],["👤 Nombre",name,setName,"Elon Musk",false],["💼 Cargo",role,setRole,"CEO Tesla & SpaceX",false],["😊 Emoji",emoji,setEmoji,"👤",false],["🕐 Tiempo",time,setTime,"hace 2h",false],["❤️ Likes",likes,setLikes,"234K",false],["🔁 Retweets",retweets,setRetweets,"89K",false]].map(([lbl,val,set,ph,isPwd])=>(
-        <div key={lbl}>
-          <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>{lbl}</div>
-          <input type={isPwd?"password":"text"} value={val} onChange={e=>set(e.target.value)} placeholder={ph} style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"8px 11px",color:"#fff",fontSize:12,outline:"none"}}/>
-        </div>
-      ))}
-      <div>
-        <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>🌐 Red Social</div>
-        <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{NETS.map(n=><button key={n} onClick={()=>setNetwork(n)} style={{padding:"4px 10px",borderRadius:100,border:`1.5px solid ${network===n?"#6366f1":"rgba(255,255,255,0.1)"}`,background:network===n?"rgba(99,102,241,0.2)":"rgba(255,255,255,0.04)",color:network===n?"#a78bfa":"rgba(255,255,255,0.5)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{n}</button>)}</div>
-      </div>
-      <div>
-        <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>💬 Cita</div>
-        <textarea value={quote} onChange={e=>setQuote(e.target.value)} placeholder="Escribe la cita exacta..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"8px 11px",color:"#fff",fontSize:12,outline:"none",resize:"none",height:80,fontFamily:"'DM Sans',sans-serif"}}/>
-      </div>
-      {status&&<div style={{fontSize:11,color:status.includes("✅")?"#4ade80":"#f87171"}}>{status}</div>}
-      <button onClick={save} disabled={loading} style={{padding:"10px",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",borderRadius:12,fontSize:12,fontWeight:800,color:"#fff",cursor:"pointer"}}>
-        {loading?"Guardando...":"🌍 Publicar voz"}
-      </button>
-    </div>
-  );
-}
-
-function SponsoredForm(){
-  const [pass,setPass]=useState("");
-  const [brand,setBrand]=useState("");
-  const [title,setTitle]=useState("");
-  const [cta,setCta]=useState("Ver oferta →");
-  const [url,setUrl]=useState("");
-  const [emoji,setEmoji]=useState("⭐");
-  const [status,setStatus]=useState("");
-  const [loading,setLoading]=useState(false);
-
-  async function save(){
-    if(!title){setStatus("⚠️ Agrega un título");return;}
-    if(!pass){setStatus("⚠️ Ingresa la contraseña");return;}
-    setLoading(true);setStatus("");
-    try{
-      const r=await fetch("/api/save-sponsored",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass,brand,title,cta,url,emoji})});
-      const d=await r.json();
-      if(d.ok)setStatus("✅ Guardado");
-      else setStatus("❌ "+(d.error||"Error"));
-    }catch{setStatus("❌ Error");}
-    setLoading(false);
-  }
-
-  return(
-    <div style={{display:"flex",flexDirection:"column",gap:8}}>
-      {[["🔑 Contraseña",pass,setPass,"Tu contraseña",true],["🏷️ Marca",brand,setBrand,"Nike · Oferta especial",false],["📣 Título",title,setTitle,"Air Max 90 — 30% OFF hoy",false],["🔗 URL",url,setUrl,"https://...",false],["🔘 Botón CTA",cta,setCta,"Ver oferta →",false],["😊 Emoji",emoji,setEmoji,"👟",false]].map(([lbl,val,set,ph,isPwd])=>(
-        <div key={lbl}>
-          <div style={{fontSize:9,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>{lbl}</div>
-          <input type={isPwd?"password":"text"} value={val} onChange={e=>set(e.target.value)} placeholder={ph} style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"8px 11px",color:"#fff",fontSize:12,outline:"none"}}/>
-        </div>
-      ))}
-      {status&&<div style={{fontSize:11,color:status.includes("✅")?"#4ade80":"#f87171"}}>{status}</div>}
-      <button onClick={save} disabled={loading} style={{padding:"10px",background:"linear-gradient(135deg,#f59e0b,#d97706)",border:"none",borderRadius:12,fontSize:12,fontWeight:800,color:"#fff",cursor:"pointer"}}>
-        {loading?"Guardando...":"💾 Guardar patrocinado"}
-      </button>
     </div>
   );
 }
@@ -811,14 +221,6 @@ function AdminPanel({onClose}){
         <div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>📰 Titular</div><textarea value={headline} onChange={e=>setHeadline(e.target.value)} placeholder="Titular urgente..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none",resize:"none",height:75,fontFamily:"'DM Sans',sans-serif"}}/></div>
         <div style={{marginBottom:16}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>📝 Descripción</div><textarea value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Más detalles..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none",resize:"none",height:60,fontFamily:"'DM Sans',sans-serif"}}/></div>
         {status&&<div style={{background:status.includes("✅")?"rgba(34,197,94,0.1)":"rgba(239,68,68,0.1)",border:`1px solid ${status.includes("✅")?"rgba(34,197,94,0.3)":"rgba(239,68,68,0.3)"}`,borderRadius:10,padding:"9px 12px",marginBottom:12,fontSize:12,color:status.includes("✅")?"#4ade80":"#f87171"}}>{status}</div>}
-        <div style={{marginBottom:16,borderTop:"1px solid rgba(255,255,255,0.07)",paddingTop:14}}>
-          <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.6)",marginBottom:10}}>🌍 Voces del Mundo</div>
-          <VoicesForm/>
-        </div>
-        <div style={{marginBottom:16,borderTop:"1px solid rgba(255,255,255,0.07)",paddingTop:14}}>
-          <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.6)",marginBottom:10}}>👟 Slot Patrocinado</div>
-          <SponsoredForm/>
-        </div>
         <button onClick={publish} disabled={loading} style={{width:"100%",padding:"14px",background:loading?"rgba(255,255,255,0.05)":"linear-gradient(135deg,#ef4444,#dc2626)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:loading?"rgba(255,255,255,0.3)":"#fff",cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
           {loading?<><span style={{animation:"spin .8s linear infinite",display:"inline-block"}}>⚡</span>Publicando...</>:"🔴 Publicar ahora"}
         </button>
@@ -959,9 +361,7 @@ function BriefingPanel({onClose,isPro,onUpgrade,articles,lang}){
 }
 
 function App(){
-  const browserLang=navigator.language||navigator.userLanguage||"es";
-  const defaultLang=localStorage.getItem("qn_lang")||(browserLang.startsWith("en")?"en":browserLang.startsWith("pt")?"es":"es");
-  const [lang,setLang]=useState(defaultLang);
+  const [lang,setLang]=useState(localStorage.getItem("qn_lang")||(navigator.language?.startsWith("en")?"en":"es"));
   const [appMode,setAppMode]=useState(localStorage.getItem("qn_mode")||"serious");
   const [articles,setArticles]=useState([]);
   const [si,setSi]=useState(0);
@@ -978,8 +378,6 @@ function App(){
   const [showCountry,setShowCountry]=useState(false);
   const [showAI,setShowAI]=useState(false);
   const [showTrending,setShowTrending]=useState(false);
-  const [showMemeNews,setShowMemeNews]=useState((localStorage.getItem('qn_mode')||'serious')==='meme');
-  const [breakingNews,setBreakingNews]=useState(null);
   const [aiAns,setAiAns]=useState("");
   const [aiLoad,setAiLoad]=useState(false);
   const [aiN,setAiN]=useState(0);
@@ -987,7 +385,7 @@ function App(){
   const [loadingMore,setLoadingMore]=useState(false);
   const [page,setPage]=useState(1);
   const [activeCat,setActiveCat]=useState("");
-  const [country,setCountry]=useState(localStorage.getItem("qn_country")||"do");
+  const [country,setCountry]=useState("any");
   const [tapCount,setTapCount]=useState(0);
   const ty=useRef(null);
   const timer=useRef(null);
@@ -1009,7 +407,7 @@ function App(){
     if(p===1)setLoading(true);else setLoadingMore(true);
     try{
       let breaking=null;
-      if(p===1){try{const rb=await fetch("/api/get-breaking");breaking=await rb.json();if(breaking&&breaking.headline)setBreakingNews(breaking);}catch{}}
+      if(p===1){try{const rb=await fetch("/api/get-breaking");breaking=await rb.json();}catch{}}
       let url="/api/news?page="+p;
       if(cat)url+="&cat="+cat;
       if(ctry&&ctry!=="any")url+="&country="+ctry;
@@ -1079,43 +477,29 @@ function App(){
 
       {loading&&<div style={{position:"fixed",inset:0,zIndex:500,background:"#05050f",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}><div style={{fontSize:40,animation:"spin 1s linear infinite",display:"inline-block"}}>✈️</div><div style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.5)"}}>{t.loading}</div><div style={{display:"flex",gap:6}}>{[0,1,2].map(i=><div key={i} style={{width:6,height:6,borderRadius:"50%",background:"#6366f1",animation:`blink 1s ${i*0.3}s infinite`}}/>)}</div></div>}
 
-      {showCountry&&<CountrySelector current={country} onSelect={c=>{setCountry(c);localStorage.setItem("qn_country",c);}} onClose={()=>setShowCountry(false)} lang={lang}/>}
+      {showCountry&&<CountrySelector current={country} onSelect={c=>setCountry(c)} onClose={()=>setShowCountry(false)} lang={lang}/>}
       {showAdmin&&<AdminPanel onClose={()=>{setShowAdmin(false);loadNews(1,true,activeCat,country);}}/>}
       {showSearch&&<SearchScreen onClose={()=>setShowSearch(false)} onSelectArticle={a=>{setArticles(p=>[a,...p]);setSi(0);setShowSearch(false);}} country={country} lang={lang}/>}
       {showPro&&s&&<ProPanel story={s} onClose={()=>setShowPro(false)} lang={lang}/>}
       {showPay&&<Paywall onClose={()=>setShowPay(false)} onBuy={()=>{setIsPro(true);setShowPay(false);}} lang={lang}/>}
       {showBriefing&&<BriefingPanel onClose={()=>setShowBriefing(false)} isPro={isPro} onUpgrade={()=>{setShowBriefing(false);setShowPay(true);}} articles={articles} lang={lang}/>}
-      {showTrending&&<TrendingScreen onClose={()=>setShowTrending(false)} lang={lang} country={country}/>}
-      {showMemeNews&&s&&<MemeNewsScreen
-        onClose={()=>{setShowMemeNews(false);setAppMode("serious");localStorage.setItem("qn_mode","serious");}}
-        article={s}
-        lang={lang}
-        country={country}
-        idx={si}
-        total={articles.length}
-        onNext={articles[si+1]}
-        onSwipe={d=>{
-          const next=si+d;
-          if(next>=0&&next<articles.length){
-            setSlideDir(d===1?"up":"down");
-            setAnimKey(k=>k+1);
-            setSi(next);
-            if(d===1&&next>=articles.length-2&&!loadingMore)loadNews(page+1,false,activeCat,country);
-          }
-        }}
-      />}
+      {showTrending&&<TrendingScreen onClose={()=>setShowTrending(false)} lang={lang}/>}
 
       {/* Header */}
       <div style={{padding:"8px 12px 6px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,background:"rgba(9,9,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.05)",position:"relative",zIndex:10}}>
         <div style={{display:"flex",alignItems:"center",gap:7}} onClick={handleLogoTap}>
-          <svg width="24" height="24" viewBox="0 0 80 80" fill="none"><defs><linearGradient id="qngrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#a78bfa"/><stop offset="100%" stopColor="#3b82f6"/></linearGradient></defs><path d="M8 40 L68 14 L50 66 L38 48 Z" fill="url(#qngrad)"/><path d="M38 48 L50 66 L44 50 Z" fill="rgba(0,0,0,0.25)"/></svg>
+          <svg width="24" height="24" viewBox="0 0 80 80" fill="none">
+            <defs><linearGradient id="qngrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#a78bfa"/><stop offset="100%" stopColor="#3b82f6"/></linearGradient></defs>
+            <path d="M8 40 L68 14 L50 66 L38 48 Z" fill="url(#qngrad)"/>
+            <path d="M38 48 L50 66 L44 50 Z" fill="rgba(0,0,0,0.25)"/>
+          </svg>
           <div>
             <div style={{fontSize:15,fontWeight:900,letterSpacing:-.5,lineHeight:1}}>QuickNews</div>
             <div style={{fontSize:8,color:"rgba(255,255,255,0.3)"}}>{articles.length} {t.tagline}</div>
           </div>
         </div>
         <div style={{display:"flex",gap:6,alignItems:"center"}}>
-          <button onClick={()=>{const m=appMode==="serious"?"meme":"serious";setAppMode(m);localStorage.setItem("qn_mode",m);if(m==="meme")setShowMemeNews(true);else setShowMemeNews(false);}} style={{display:"flex",alignItems:"center",gap:3,background:isMemeMode?"rgba(167,139,250,0.15)":"rgba(59,130,246,0.12)",border:`1px solid ${isMemeMode?"rgba(167,139,250,0.4)":"rgba(59,130,246,0.3)"}`,borderRadius:100,padding:"4px 9px",color:isMemeMode?"#c4b5fd":"#60a5fa",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+          <button onClick={()=>{const m=appMode==="serious"?"meme":"serious";setAppMode(m);localStorage.setItem("qn_mode",m);}} style={{display:"flex",alignItems:"center",gap:3,background:isMemeMode?"rgba(167,139,250,0.15)":"rgba(59,130,246,0.12)",border:`1px solid ${isMemeMode?"rgba(167,139,250,0.4)":"rgba(59,130,246,0.3)"}`,borderRadius:100,padding:"4px 9px",color:isMemeMode?"#c4b5fd":"#60a5fa",fontSize:10,fontWeight:700,cursor:"pointer"}}>
             <span>{isMemeMode?"🤣":"📰"}</span><span>{isMemeMode?t.memeMode:t.seriousMode}</span>
           </button>
           <button onClick={()=>setShowCountry(true)} style={{display:"flex",alignItems:"center",gap:3,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:100,padding:"4px 8px",color:"#fff",fontSize:10,fontWeight:700,cursor:"pointer"}}>
@@ -1125,9 +509,6 @@ function App(){
         </div>
       </div>
 
-      <BreakingTicker articles={articles} breakingNews={breakingNews} lang={lang}/>
-
-
       {isBreaking&&<div style={{padding:"5px 12px",background:"rgba(239,68,68,0.15)",borderBottom:"1px solid rgba(239,68,68,0.3)",flexShrink:0,display:"flex",alignItems:"center",gap:7,position:"relative",zIndex:9}}><span style={{width:7,height:7,borderRadius:"50%",background:"#ef4444",flexShrink:0,animation:"blink .7s infinite"}}/><span style={{fontSize:10,fontWeight:800,color:"#f87171",letterSpacing:1,textTransform:"uppercase"}}>{t.urgent}</span></div>}
 
       {/* Categorías */}
@@ -1136,100 +517,79 @@ function App(){
       </div>
 
       {s&&(
-        <div key={animKey} className={slideDir==="up"?"slide-in-up":"slide-in-down"} style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",zIndex:1}}>
+        <div key={animKey} className={slideDir==="up"?"slide-in-up":"slide-in-down"} style={{flex:1,display:"flex",flexDirection:"column",padding:"5px 11px",overflow:"hidden",gap:5,position:"relative",zIndex:1}}>
 
-          {/* 1. IMAGEN GRANDE */}
-          <div className={isBreaking?"breaking-card":"neon-b"} style={{overflow:"hidden",background:isBreaking?"rgba(30,5,5,0.85)":"rgba(10,12,30,0.75)",flexShrink:0}}>
+          {/* Tarjeta principal */}
+          <div className={isBreaking?"breaking-card":"neon-b"} style={{borderRadius:13,overflow:"hidden",background:isBreaking?"rgba(30,5,5,0.85)":"rgba(10,12,30,0.75)",backdropFilter:"blur(12px)",flexShrink:0}}>
             {s.img?(
-              <div style={{position:"relative",height:"38vh",overflow:"hidden",background:"#111"}}>
-                <img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.6)"}} onError={e=>e.target.parentNode.style.minHeight="80px"}/>
-                <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,rgba(0,0,0,0.3) 0%,transparent 30%,rgba(5,5,15,0.97) 100%)"}}/>
-                <div style={{position:"absolute",top:10,left:12,display:"flex",gap:5}}>
-                  <span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:isBreaking?"rgba(239,68,68,0.5)":"rgba(239,68,68,0.35)",border:"1px solid rgba(239,68,68,0.6)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span>
-                  <span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.2)",color:"rgba(255,255,255,0.9)"}}>{s.cat}</span>
-                </div>
-                <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"12px 14px 10px"}}>
-                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:19,fontWeight:900,lineHeight:1.2,color:isBreaking?"#fca5a5":"#fff",textShadow:"0 2px 8px rgba(0,0,0,0.9)",marginBottom:4}}>{s.headline}</div>
-                  <div style={{fontSize:9,color:"rgba(255,255,255,0.45)"}}>{s.time}</div>
+              <div style={{position:"relative",height:140,overflow:"hidden",background:"#111"}}>
+                <img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.65)"}} onError={e=>e.target.parentNode.style.minHeight="60px"}/>
+                <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 20%,rgba(10,12,30,0.97) 100%)"}}/>
+                <div style={{position:"absolute",bottom:8,left:10,right:10}}>
+                  <div style={{display:"flex",gap:5,marginBottom:4,flexWrap:"wrap"}}>
+                    <span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:isBreaking?"rgba(239,68,68,0.5)":"rgba(239,68,68,0.35)",border:"1px solid rgba(239,68,68,0.6)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span>
+                    <span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.2)",color:"rgba(255,255,255,0.85)"}}>{s.cat}</span>
+                  </div>
+                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,color:isBreaking?"#fca5a5":"#fff",textShadow:"0 1px 4px rgba(0,0,0,0.8)"}}>{s.headline}</div>
+                  <div style={{fontSize:9,color:"rgba(255,255,255,0.5)",marginTop:2}}>{s.time}</div>
                 </div>
               </div>
             ):(
-              <div style={{padding:"12px 14px",background:"rgba(10,12,30,0.9)"}}>
-                <div style={{display:"flex",gap:5,marginBottom:6}}><span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.5)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span><span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)"}}>{s.cat}</span></div>
-                <div style={{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:900,lineHeight:1.25,color:isBreaking?"#fca5a5":"#fff"}}>{s.headline}</div>
-                <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:3}}>{s.time}</div>
+              <div style={{padding:"8px 10px"}}>
+                <div style={{display:"flex",gap:5,marginBottom:5}}><span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.5)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span><span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)"}}>{s.cat}</span></div>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,color:isBreaking?"#fca5a5":"#fff"}}>{s.headline}</div>
+                <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:2}}>{s.time}</div>
               </div>
             )}
           </div>
 
-          {/* 2. RESUMEN */}
-          {!showAI&&<div style={{margin:"5px 10px 0",borderRadius:10,background:"rgba(10,8,28,0.8)",border:"1px solid rgba(99,102,241,0.3)",padding:"7px 11px",flexShrink:0}}>
-            <div style={{fontSize:11,color:"rgba(255,255,255,0.82)",lineHeight:1.5,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{s.description||s.headline}</div>
-          </div>}
-
-          {/* 3. ICONOS */}
-          {!showAI&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-around",padding:"7px 10px",flexShrink:0,borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
-            <button onClick={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer"}}>
-              <span style={{fontSize:22}}>{liked[s.id]?"❤️":"🤍"}</span>
-              <span style={{fontSize:8,fontWeight:700,color:liked[s.id]?"#ef4444":"rgba(255,255,255,0.4)"}}>{s.r.h}</span>
-            </button>
-            <button style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer"}}>
-              <span style={{fontSize:22}}>💬</span>
-              <span style={{fontSize:8,fontWeight:700,color:"rgba(255,255,255,0.4)"}}>{s.r.c}</span>
-            </button>
-            {s.url?<a href={s.url} target="_blank" rel="noopener noreferrer" style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,textDecoration:"none"}}>
-              <span style={{fontSize:22}}>🔗</span>
-              <span style={{fontSize:8,fontWeight:700,color:"rgba(255,255,255,0.4)"}}>Link</span>
-            </a>:<div style={{width:22}}/>}
-            <button onClick={()=>setShowAI(a=>!a)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer"}}>
-              <div style={{width:34,height:34,borderRadius:10,background:"linear-gradient(135deg,#1e1040,#2d1b69)",border:"1.5px solid rgba(139,92,246,0.6)",display:"flex",alignItems:"center",justifyContent:"center",animation:"jaikpulse 2.5s ease-in-out infinite"}}>
-                <svg width="20" height="20" viewBox="0 0 40 40" fill="none"><path d="M20 3 L34 11 L34 29 L20 37 L6 29 L6 11 Z" fill="#1a0a3a" stroke="#8b5cf6" strokeWidth="1.5"/><rect x="11" y="14" width="7" height="4" rx="2" fill="#a78bfa"/><rect x="22" y="14" width="7" height="4" rx="2" fill="#a78bfa"/><rect x="12" y="15" width="2" height="2" rx="1" fill="white" opacity="0.7"/><rect x="23" y="15" width="2" height="2" rx="1" fill="white" opacity="0.7"/><path d="M13 26 L15 24 L18 26 L22 24 L25 26 L27 24" stroke="#8b5cf6" strokeWidth="1.5" strokeLinecap="round"/><line x1="20" y1="3" x2="20" y2="0" stroke="#8b5cf6" strokeWidth="1.5" strokeLinecap="round"/><circle cx="20" cy="0" r="1.5" fill="#c4b5fd"/></svg>
+          {isMemeMode&&(
+            <div className="neon" style={{borderRadius:13,overflow:"hidden",background:"rgba(10,8,28,0.8)",flexShrink:0}}>
+              <div style={{padding:"4px 9px 3px",display:"inline-flex",alignItems:"center",gap:4,background:"rgba(139,92,246,0.2)",borderRadius:"0 0 9px 0",border:"1px solid rgba(139,92,246,0.35)"}}><span style={{fontSize:10}}>🤣</span><span style={{fontSize:9,fontWeight:800,color:"#c4b5fd"}}>Meme take</span></div>
+              <div style={{margin:"3px 9px 0",borderRadius:11,overflow:"hidden",position:"relative",height:85,background:"linear-gradient(135deg,#1a1a2e,#0d0d1f)"}}>
+                {s.img&&<img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.45)"}} onError={e=>e.target.style.display="none"}/>}
+                <div style={{position:"absolute",top:8,left:10,right:10,fontSize:12,fontWeight:900,lineHeight:1.3,textShadow:"0 2px 8px rgba(0,0,0,0.9)"}}>{s.memeText?(s.memeText.split("\n").map((l,i)=><div key={i}>{l}</div>)):<div>{s.headline.substring(0,60)}... 👀</div>}</div>
               </div>
-              <span style={{fontSize:8,fontWeight:800,color:"#a78bfa"}}>JAIK</span>
-            </button>
-            <button style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer"}}>
-              <span style={{fontSize:22}}>↗️</span>
-              <span style={{fontSize:8,fontWeight:700,color:"rgba(255,255,255,0.4)"}}>Share</span>
-            </button>
-            <button onClick={()=>setShowPay(true)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer"}}>
-              <span style={{fontSize:22}}>⭐</span>
-              <span style={{fontSize:8,fontWeight:700,color:"#7c3aed"}}>Pro</span>
-            </button>
-          </div>}
+              <div style={{padding:"5px 11px 6px",display:"flex",alignItems:"center",gap:10}}>
+                <button onClick={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:liked[s.id]?"#ef4444":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700}}><span style={{fontSize:13}}>{liked[s.id]?"❤️":"🤍"}</span>{s.r.h}</button>
+                <button onClick={()=>setShowAI(a=>!a)} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:showAI?"#a78bfa":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700}}><span style={{fontSize:13}}>💬</span>{s.r.c}</button>
+                {s.url&&<a href={s.url} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:3,color:"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700,textDecoration:"none"}}><span style={{fontSize:13}}>🔗</span></a>}
+                <button style={{marginLeft:"auto",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,padding:"3px 8px",color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,cursor:"pointer"}}>{t.share}</button>
+              </div>
+            </div>
+          )}
 
-          {/* JAIK panel */}
+          {!isMemeMode&&(
+            <div style={{display:"flex",gap:10,alignItems:"center",padding:"4px 2px",flexShrink:0}}>
+              <button onClick={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:liked[s.id]?"#ef4444":"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700}}><span style={{fontSize:14}}>{liked[s.id]?"❤️":"🤍"}</span>{s.r.h}</button>
+              <button onClick={()=>setShowAI(a=>!a)} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:showAI?"#a78bfa":"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700}}><span style={{fontSize:14}}>💬</span>{s.r.c}</button>
+              {s.url&&<a href={s.url} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:3,color:"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700,textDecoration:"none"}}><span style={{fontSize:14}}>🔗</span></a>}
+              <button style={{marginLeft:"auto",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,padding:"4px 10px",color:"rgba(255,255,255,0.5)",fontSize:9,fontWeight:700,cursor:"pointer"}}>{t.share}</button>
+            </div>
+          )}
+
+          {/* Vibes */}
+          <div style={{flexShrink:0,display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none"}}>
+            {VIBES.map(v=><button key={v.k} onClick={()=>pickVibe(v.k)} style={{display:"flex",alignItems:"center",gap:3,padding:"5px 9px",borderRadius:100,border:`1.5px solid ${vibe===v.k?v.c:"rgba(255,255,255,0.12)"}`,background:vibe===v.k?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.03)",boxShadow:vibe===v.k?`0 0 8px ${v.c}55`:"none",cursor:"pointer",flexShrink:0}}><span style={{fontSize:13}}>{v.i}</span><span style={{fontSize:10,fontWeight:800,color:vibe===v.k?v.c:"rgba(255,255,255,0.5)"}}>{v.l}</span>{v.lock&&!isPro&&<span style={{fontSize:9,opacity:.6}}>🔒</span>}</button>)}
+          </div>
+
+          {!showAI&&<div style={{borderRadius:12,background:"rgba(10,8,28,0.75)",border:`1px solid ${vd.br}`,padding:"8px 11px",flexShrink:0}}><div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}><span style={{fontSize:13}}>{vd.i}</span><span style={{fontSize:11,fontWeight:800,color:vd.c}}>{vd.l}:</span></div><div style={{fontSize:12,color:"rgba(255,255,255,0.8)",lineHeight:1.55}}>{vibes[vibe]||vibes.Quick}</div></div>}
+
           {showAI&&(
-            <div style={{margin:"5px 10px 0",borderRadius:12,background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.07))",border:"1px solid rgba(139,92,246,0.3)",padding:"9px",flexShrink:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:7}}>
-                <div style={{width:28,height:28,borderRadius:8,background:"linear-gradient(135deg,#1e1040,#2d1b69)",border:"1.5px solid rgba(139,92,246,0.6)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <svg width="18" height="18" viewBox="0 0 40 40" fill="none"><path d="M20 3 L34 11 L34 29 L20 37 L6 29 L6 11 Z" fill="#1a0a3a" stroke="#8b5cf6" strokeWidth="1.5"/><rect x="11" y="14" width="7" height="4" rx="2" fill="#a78bfa"/><rect x="22" y="14" width="7" height="4" rx="2" fill="#a78bfa"/><path d="M13 26 L15 24 L18 26 L22 24 L25 26 L27 24" stroke="#8b5cf6" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                </div>
-                <div style={{flex:1,fontSize:11,fontWeight:800,color:"#c4b5fd"}}>JAIK {!isPro&&<span style={{color:"rgba(255,255,255,0.3)",fontWeight:400}}>· {Math.max(0,3-aiN)} {t.free}</span>}</div>
-                <button onClick={()=>setShowAI(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:14,cursor:"pointer"}}>✕</button>
-              </div>
+            <div style={{borderRadius:12,background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.07))",border:"1px solid rgba(139,92,246,0.3)",padding:"9px",flexShrink:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:7}}><div style={{width:24,height:24,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>🤖</div><div style={{flex:1,fontSize:11,fontWeight:800}}>JAIK {!isPro&&<span style={{color:"rgba(255,255,255,0.3)",fontWeight:400}}>· {Math.max(0,3-aiN)} {t.free}</span>}</div><button onClick={()=>setShowAI(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:14,cursor:"pointer"}}>✕</button></div>
               <div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:6}}>{(lang==="en"?["Why did this happen?","How does it affect me?","Give me context"]:["¿Por qué pasó esto?","¿Cómo me afecta?","Dame el contexto"]).map((q,i)=><button key={i} onClick={()=>askAI(q)} style={{padding:"5px 8px",background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.18)",borderRadius:8,color:"rgba(255,255,255,0.65)",fontSize:10,cursor:"pointer",textAlign:"left"}}>→ {q}</button>)}</div>
               <div style={{display:"flex",gap:5}}><input id="aiQ" placeholder={t.askJaik} onKeyDown={e=>e.key==="Enter"&&askAI(e.target.value)} style={{flex:1,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"5px 9px",color:"#fff",fontSize:10,outline:"none"}}/><button onClick={()=>askAI(document.getElementById("aiQ")?.value)} style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"#fff",fontSize:12,cursor:"pointer"}}>↑</button></div>
               {(aiLoad||aiAns)&&<div style={{marginTop:6,background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.15)",borderRadius:8,padding:"7px 9px",fontSize:11,color:"#e8f0fe",lineHeight:1.5}}>{aiLoad?t.thinking:aiAns}</div>}
             </div>
           )}
 
-          {/* Voces que mueven el mundo */}
-          {!showAI&&<div style={{margin:"4px 10px 0",flexShrink:0}}>
-            <VoicesSection lang={lang}/>
-          </div>}
-
-          {/* 4. CLIMA + TEMAS */}
-          {!showAI&&<div style={{margin:"4px 10px 0",borderRadius:10,background:"rgba(5,5,20,0.6)",border:"1px solid rgba(255,255,255,0.07)",padding:"6px 9px",flexShrink:0}}>
-            <WeatherWidget lang={lang} compact={true}/>
-            <TopicsOfDay lang={lang} country={country} onSelectArticle={a=>{setArticles(p=>[a,...p]);setSi(0);}}/>
-          </div>}
-
-          {/* 5. CONTADOR + SIGUIENTE */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"4px 12px 2px",flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,marginBottom:2}}>
             <div style={{fontSize:9,color:"rgba(255,255,255,0.15)"}}>{loadingMore?<span style={{animation:"pulse 1s infinite"}}>⚡ {t.loadingMore}</span>:<span>{t.swipe} · {si+1}/{articles.length}</span>}</div>
+            <button onClick={()=>pickVibe(VIBES[(VIBES.findIndex(v=>v.k===vibe)+1)%VIBES.length].k)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:100,padding:"4px 10px",color:"rgba(255,255,255,0.5)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{t.changeVibe}</button>
           </div>
 
-          {articles[si+1]&&<div onClick={()=>swipe(1)} style={{flexShrink:0,margin:"0 10px 5px",borderRadius:11,overflow:"hidden",position:"relative",height:50,background:"rgba(10,12,30,0.6)",border:"1px solid rgba(255,255,255,0.07)",cursor:"pointer"}}>{articles[si+1].img&&<img src={articles[si+1].img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.3)"}} onError={e=>e.target.style.display="none"}/>}<div style={{position:"absolute",inset:0,background:"linear-gradient(to right,rgba(10,12,30,0.92) 0%,rgba(10,12,30,0.6) 100%)",display:"flex",alignItems:"center",padding:"0 12px",gap:10}}><div style={{flex:1}}><div style={{fontSize:7,color:"rgba(255,255,255,0.35)",marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>{t.next} · {articles[si+1].cat}</div><div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.85)",lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:1,WebkitBoxOrient:"vertical"}}>{articles[si+1].headline}</div></div><div style={{fontSize:16,color:"rgba(255,255,255,0.25)"}}>↑</div></div></div>}
+          {articles[si+1]&&<div onClick={()=>swipe(1)} style={{flexShrink:0,borderRadius:12,overflow:"hidden",position:"relative",height:65,background:"rgba(10,12,30,0.6)",border:"1px solid rgba(255,255,255,0.08)",cursor:"pointer"}}>{articles[si+1].img&&<img src={articles[si+1].img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.35)"}} onError={e=>e.target.style.display="none"}/>}<div style={{position:"absolute",inset:0,background:"linear-gradient(to right,rgba(10,12,30,0.92) 0%,rgba(10,12,30,0.6) 100%)",display:"flex",alignItems:"center",padding:"0 12px",gap:10}}><div style={{flex:1}}><div style={{fontSize:8,color:"rgba(255,255,255,0.4)",marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>{t.next} · {articles[si+1].cat}</div><div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.85)",lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{articles[si+1].headline}</div></div><div style={{fontSize:18,color:"rgba(255,255,255,0.3)"}}>↑</div></div></div>}
         </div>
       )}
 
@@ -1255,4 +615,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
-
