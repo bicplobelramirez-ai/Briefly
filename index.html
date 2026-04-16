@@ -25,11 +25,17 @@ body{background:#05050f;font-family:'DM Sans',sans-serif;color:#fff;overflow:hid
 @keyframes slideUp{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideInUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideInDown{from{opacity:0;transform:translateY(-40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .neon{border:1px solid rgba(139,92,246,0.35)!important;animation:neonglow 3s ease-in-out infinite;}
 .neon-b{border:1px solid rgba(59,130,246,0.4)!important;box-shadow:0 0 8px rgba(59,130,246,0.2);}
 .breaking-card{border:1px solid rgba(239,68,68,0.6)!important;animation:breakingglow 2s ease-in-out infinite;}
 .slide-in-up{animation:slideInUp 0.35s cubic-bezier(0.22,1,0.36,1);}
 .slide-in-down{animation:slideInDown 0.35s cubic-bezier(0.22,1,0.36,1);}
+.ticker-track{display:flex;align-items:center;animation:tickerScroll 30s linear infinite;white-space:nowrap;}
+.ticker-item{display:inline-flex;align-items:center;gap:4px;padding:0 14px;font-size:11px;font-weight:600;color:#b0b0cc;border-right:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
+.ticker-item b{color:#fff;}
+.ticker-up{color:#22c55e;}
+.ticker-dn{color:#ef4444;}
 </style>
 </head>
 <body>
@@ -38,8 +44,8 @@ body{background:#05050f;font-family:'DM Sans',sans-serif;color:#fff;overflow:hid
 const {useState,useRef,useEffect}=React;
 
 const T={
-es:{tagline:"noticias · live",now:"AHORA",urgent:"🔴 URGENTE",changeVibe:"🔄 Cambiar vibe",swipe:"↑ desliza",next:"↑ Siguiente",share:"↗️ Share",loading:"Cargando noticias...",noResults:"Sin resultados para",searchPlaceholder:"Buscar noticias...",hotTopics:"🔥 Temas populares",chooseRegion:"🌍 Elige tu región",regionSub:"Las noticias se filtrarán para tu país",thinking:"⚡ Pensando...",askJaik:"Pregúntale a JAIK...",proMode:"MODO PRO",proSub:"Análisis profundo",source:"FUENTE",summary:"EN RESUMEN",headline:"TITULAR",readFull:"↗️ Leer nota completa",back:"← Volver",memeMode:"Meme 🤣",seriousMode:"Serio 📰",eli5:"En palabras simples: ",real:"Sin filtro: ",memeText:"Cuando ves que ",free:"gratis",loadingMore:"Cargando más..."},
-en:{tagline:"news · live",now:"NOW",urgent:"🔴 URGENT",changeVibe:"🔄 Change vibe",swipe:"↑ swipe",next:"↑ Next",share:"↗️ Share",loading:"Loading news...",noResults:"No results for",searchPlaceholder:"Search news...",hotTopics:"🔥 Hot topics",chooseRegion:"🌍 Choose your region",regionSub:"News will be filtered for your country",thinking:"⚡ Thinking...",askJaik:"Ask JAIK...",proMode:"PRO MODE",proSub:"Deep analysis",source:"SOURCE",summary:"SUMMARY",headline:"HEADLINE",readFull:"↗️ Read full article",back:"← Back",memeMode:"Meme 🤣",seriousMode:"Serious 📰",eli5:"In simple words: ",real:"No filter: ",memeText:"When you see that ",free:"free",loadingMore:"Loading more..."}
+es:{tagline:"noticias · live",now:"AHORA",urgent:"🔴 URGENTE",changeVibe:"🔄 Cambiar vibe",swipe:"↑ desliza",next:"↑ Siguiente",share:"Share",loading:"Cargando noticias...",noResults:"Sin resultados para",searchPlaceholder:"Buscar noticias...",hotTopics:"🔥 Temas populares",chooseRegion:"🌍 Elige tu región",regionSub:"Las noticias se filtrarán para tu país",thinking:"⚡ Pensando...",askJaik:"Pregúntale a JAIK...",proMode:"MODO PRO",proSub:"Análisis profundo",source:"FUENTE",summary:"EN RESUMEN",headline:"TITULAR",readFull:"↗️ Leer nota completa",back:"← Volver",memeMode:"Meme 🤣",seriousMode:"Serio 📰",eli5:"En palabras simples: ",real:"Sin filtro: ",memeText:"Cuando ves que ",free:"gratis",loadingMore:"Cargando más..."},
+en:{tagline:"news · live",now:"NOW",urgent:"🔴 URGENT",changeVibe:"🔄 Change vibe",swipe:"↑ swipe",next:"↑ Next",share:"Share",loading:"Loading news...",noResults:"No results for",searchPlaceholder:"Search news...",hotTopics:"🔥 Hot topics",chooseRegion:"🌍 Choose your region",regionSub:"News will be filtered for your country",thinking:"⚡ Thinking...",askJaik:"Ask JAIK...",proMode:"PRO MODE",proSub:"Deep analysis",source:"SOURCE",summary:"SUMMARY",headline:"HEADLINE",readFull:"↗️ Read full article",back:"← Back",memeMode:"Meme 🤣",seriousMode:"Serious 📰",eli5:"In simple words: ",real:"No filter: ",memeText:"When you see that ",free:"free",loadingMore:"Loading more..."}
 };
 
 const VIBES=[{k:"ELI5",i:"😊",l:"ELI5",c:"#22c55e",br:"rgba(34,197,94,0.45)"},{k:"Quick",i:"⚡",l:"Quick",c:"#f59e0b",br:"rgba(245,158,11,0.5)"},{k:"Real",i:"🔥",l:"Real",c:"#ef4444",br:"rgba(239,68,68,0.45)"},{k:"Meme",i:"🤣",l:"Meme",c:"#a78bfa",br:"rgba(167,139,250,0.45)"},{k:"Pro",i:"💎",l:"Pro",c:"#60a5fa",br:"rgba(96,165,250,0.45)",lock:true}];
@@ -47,33 +53,151 @@ const CATS=[{k:"",i:"🌍",l:"Todo",le:"All",color:"#60a5fa"},{k:"politica",i:"�
 const COUNTRIES=[{code:"any",flag:"🌍",name:"Todo",nameEn:"World"},{code:"ar",flag:"🇦🇷",name:"Argentina",nameEn:"Argentina"},{code:"mx",flag:"🇲🇽",name:"México",nameEn:"Mexico"},{code:"co",flag:"🇨🇴",name:"Colombia",nameEn:"Colombia"},{code:"do",flag:"🇩🇴",name:"Rep. Dom.",nameEn:"Dominican Rep."},{code:"cl",flag:"🇨🇱",name:"Chile",nameEn:"Chile"},{code:"pe",flag:"🇵🇪",name:"Perú",nameEn:"Peru"},{code:"ve",flag:"🇻🇪",name:"Venezuela",nameEn:"Venezuela"},{code:"ec",flag:"🇪🇨",name:"Ecuador",nameEn:"Ecuador"},{code:"es",flag:"🇪🇸",name:"España",nameEn:"Spain"},{code:"br",flag:"🇧🇷",name:"Brasil",nameEn:"Brazil"},{code:"us",flag:"🇺🇸",name:"EE.UU.",nameEn:"USA"},{code:"gt",flag:"🇬🇹",name:"Guatemala",nameEn:"Guatemala"},{code:"cr",flag:"🇨🇷",name:"Costa Rica",nameEn:"Costa Rica"},{code:"pa",flag:"🇵🇦",name:"Panamá",nameEn:"Panama"},{code:"cu",flag:"🇨🇺",name:"Cuba",nameEn:"Cuba"},{code:"uy",flag:"🇺🇾",name:"Uruguay",nameEn:"Uruguay"},{code:"bo",flag:"🇧🇴",name:"Bolivia",nameEn:"Bolivia"},{code:"py",flag:"🇵🇾",name:"Paraguay",nameEn:"Paraguay"}];
 const STARS=[[8,12,1.5,2.1],[15,28,1,3.4],[22,8,1.2,1.8],[35,18,0.8,2.7],[42,35,1.4,1.5],[55,10,1,4],[63,22,1.6,2.2],[70,40,0.9,3.1],[78,15,1.2,1.9],[85,30,1,2.5],[12,55,0.8,3.8],[28,62,1.3,2],[38,75,1,2.9],[50,58,1.5,1.6],[65,70,0.9,3.3]];
 
-// ── TRENDING WIDGET CON IA ──────────────────────────────────────────────────
+// ── LIVE TICKER ──────────────────────────────────────────────────────────────
+function LiveTicker({lang}){
+  const [marketItems,setMarketItems]=useState(null);
+  useEffect(()=>{
+    fetch("/api/markets").then(r=>r.json()).then(d=>{
+      if(!d||!d.gold)return;
+      setMarketItems([
+        {icon:"🥇",label:"ORO",price:d.gold.price,change:d.gold.change,up:d.gold.up},
+        {icon:"🛢️",label:"PETRO",price:d.oil.price,change:d.oil.change,up:d.oil.up},
+        {icon:"₿",label:"BTC",price:d.btc.price,change:d.btc.change,up:d.btc.up},
+        {icon:"📊",label:"S&P",price:d.sp500.price,change:d.sp500.change,up:d.sp500.up},
+        {icon:"💶",label:"EUR",price:d.eur.price,change:d.eur.change,up:d.eur.up},
+      ]);
+    }).catch(()=>{});
+  },[]);
+
+  const fallback=[
+    {icon:"₿",label:"BTC",price:"66,720",change:"0.85%",up:true},
+    {icon:"🥇",label:"ORO",price:"2,341",change:"0.3%",up:true},
+    {icon:"🛢️",label:"WTI",price:"79.42",change:"0.3%",up:false},
+    {icon:"📊",label:"S&P",price:"5,234",change:"0.5%",up:true},
+    {icon:"💶",label:"EUR",price:"1.082",change:"0.1%",up:false},
+  ];
+
+  const items=marketItems||fallback;
+  const doubled=[...items,...items];
+
+  return(
+    <div style={{display:"flex",alignItems:"center",background:"#0a0a18",borderBottom:"1px solid rgba(255,255,255,0.06)",height:30,overflow:"hidden",flexShrink:0,position:"relative",zIndex:9}}>
+      <div style={{background:"#e53935",color:"#fff",fontSize:9,fontWeight:800,padding:"0 10px",height:"100%",display:"flex",alignItems:"center",letterSpacing:1.5,flexShrink:0}}>LIVE</div>
+      <div style={{overflow:"hidden",flex:1}}>
+        <div className="ticker-track">
+          {doubled.map((item,i)=>(
+            <span key={i} className="ticker-item">
+              <span>{item.icon}</span>
+              <b>{item.label}</b>
+              <span>{item.price}</span>
+              <span className={item.up?"ticker-up":"ticker-dn"}>{item.up?"▲":"▼"}{item.change}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ACTION BUTTONS ───────────────────────────────────────────────────────────
+function ActionButtons({story,liked,onLike,onComment,onJaik,onShare,onPro,isPro,showAI,lang}){
+  function copyLink(){
+    if(story.url){navigator.clipboard?.writeText(story.url).catch(()=>{});}
+  }
+  const actions=[
+    {
+      icon: liked ? "❤️" : "🤍",
+      label: story.r?.h||"0",
+      color: liked ? "#ef4444" : null,
+      bg: liked ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.06)",
+      border: liked ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.1)",
+      onClick: onLike,
+      size: 42,
+    },
+    {
+      icon: "💬",
+      label: story.r?.c||"0",
+      color: showAI ? "#a78bfa" : null,
+      bg: showAI ? "rgba(139,92,246,0.15)" : "rgba(255,255,255,0.06)",
+      border: showAI ? "rgba(139,92,246,0.4)" : "rgba(255,255,255,0.1)",
+      onClick: onComment,
+      size: 42,
+    },
+    {
+      icon: "🔗",
+      label: "Link",
+      color: "#38bdf8",
+      bg: "rgba(56,189,248,0.08)",
+      border: "rgba(56,189,248,0.25)",
+      onClick: copyLink,
+      size: 42,
+    },
+    {
+      icon: "🤖",
+      label: "JAIK",
+      color: "#a78bfa",
+      bg: "rgba(139,92,246,0.25)",
+      border: "rgba(139,92,246,0.6)",
+      onClick: onJaik,
+      size: 48,
+      glow: "0 0 14px rgba(139,92,246,0.5)",
+      labelColor: "#a78bfa",
+      labelBold: true,
+    },
+    {
+      icon: "📤",
+      label: "Share",
+      color: "#22c55e",
+      bg: "rgba(34,197,94,0.08)",
+      border: "rgba(34,197,94,0.25)",
+      onClick: onShare,
+      size: 42,
+    },
+    {
+      icon: "⭐",
+      label: isPro ? "Pro ✓" : "Pro",
+      color: "#f59e0b",
+      bg: "rgba(245,158,11,0.08)",
+      border: "rgba(245,158,11,0.3)",
+      onClick: onPro,
+      size: 42,
+      labelColor: "#f59e0b",
+    },
+  ];
+  return(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-around",padding:"8px 4px 4px",flexShrink:0}}>
+      {actions.map((a,i)=>(
+        <div key={i} onClick={a.onClick} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,cursor:"pointer"}}>
+          <div style={{
+            width:a.size,height:a.size,borderRadius:"50%",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:a.size===48?20:17,
+            background:a.bg,
+            border:`1px solid ${a.border}`,
+            boxShadow:a.glow||"none",
+            transition:"all 0.15s",
+          }}>{a.icon}</div>
+          <div style={{fontSize:9,fontWeight:a.labelBold?800:600,color:a.labelColor||"rgba(255,255,255,0.45)"}}>{a.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── TRENDING WIDGET ──────────────────────────────────────────────────────────
 function TrendingScreen({onClose,lang}){
   const [topics,setTopics]=useState([]);
   const [loading,setLoading]=useState(true);
   const [lastUpdate,setLastUpdate]=useState("");
-
   useEffect(()=>{fetchTrending();},[]);
-
   async function fetchTrending(){
     setLoading(true);
     try{
       const today=new Date().toLocaleDateString(lang==="en"?"en-US":"es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
       const sys=lang==="en"
-        ? `You are a news editor. Today is ${today}. Return ONLY valid JSON, no markdown, no extra text: {"topics":[{"rank":1,"title":"short topic name","summary":"one sentence what's happening","category":"Politics|Tech|Economy|Sports|World|Science|Entertainment","trend":"up","emoji":"🔥"}]} with exactly 7 trending topics happening RIGHT NOW globally. Use web search to find current breaking news.`
-        : `Eres editor de noticias. Hoy es ${today}. Devuelve SOLO JSON válido, sin markdown ni texto extra: {"topics":[{"rank":1,"title":"nombre corto del tema","summary":"una oración de qué está pasando","category":"Política|Tech|Economía|Deportes|Mundial|Ciencia|Entretenimiento","trend":"up","emoji":"🔥"}]} con exactamente 7 temas trending AHORA MISMO en el mundo. Usa búsqueda web para encontrar noticias actuales de hoy.`;
-
-      const r=await fetch("https://api.anthropic.com/v1/messages",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",
-          max_tokens:1000,
-          tools:[{"type":"web_search_20250305","name":"web_search"}],
-          system:sys,
-          messages:[{role:"user",content:lang==="en"?"What are the top 7 trending news topics right now? Search and return JSON only.":"¿Cuáles son los 7 temas más trending ahora mismo? Busca y devuelve solo JSON."}]
-        })
-      });
+        ?`You are a news editor. Today is ${today}. Return ONLY valid JSON, no markdown, no extra text: {"topics":[{"rank":1,"title":"short topic name","summary":"one sentence what's happening","category":"Politics|Tech|Economy|Sports|World|Science|Entertainment","trend":"up","emoji":"🔥"}]} with exactly 7 trending topics happening RIGHT NOW globally.`
+        :`Eres editor de noticias. Hoy es ${today}. Devuelve SOLO JSON valido, sin markdown ni texto extra: {"topics":[{"rank":1,"title":"nombre corto del tema","summary":"una oracion de que esta pasando","category":"Politica|Tech|Economia|Deportes|Mundial|Ciencia|Entretenimiento","trend":"up","emoji":"🔥"}]} con exactamente 7 temas trending AHORA MISMO.`;
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,tools:[{"type":"web_search_20250305","name":"web_search"}],system:sys,messages:[{role:"user",content:lang==="en"?"What are the top 7 trending news topics right now? Return JSON only.":"Cuales son los 7 temas mas trending ahora mismo? Devuelve solo JSON."}]})});
       const d=await r.json();
       const textBlock=d.content?.find(b=>b.type==="text");
       if(textBlock){
@@ -82,95 +206,53 @@ function TrendingScreen({onClose,lang}){
         setTopics(parsed.topics||[]);
         setLastUpdate(new Date().toLocaleTimeString(lang==="en"?"en-US":"es-ES",{hour:"2-digit",minute:"2-digit"}));
       }
-    }catch(e){
-      setTopics([
-        {rank:1,title:"Error al cargar",summary:"No se pudo obtener temas trending. Intenta de nuevo.",category:"Info",trend:"up",emoji:"⚠️"}
-      ]);
-    }
+    }catch(e){setTopics([{rank:1,title:"Error al cargar",summary:"No se pudo obtener temas trending.",category:"Info",trend:"up",emoji:"⚠️"}]);}
     setLoading(false);
   }
-
-  const catColors={
-    "Política":"#ef4444","Politics":"#ef4444",
-    "Tech":"#3b82f6",
-    "Economía":"#f59e0b","Economy":"#f59e0b",
-    "Deportes":"#22c55e","Sports":"#22c55e",
-    "Mundial":"#f97316","World":"#f97316",
-    "Ciencia":"#06b6d4","Science":"#06b6d4",
-    "Entretenimiento":"#a78bfa","Entertainment":"#a78bfa",
-  };
-
+  const catColors={"Política":"#ef4444","Politics":"#ef4444","Tech":"#3b82f6","Economía":"#f59e0b","Economy":"#f59e0b","Deportes":"#22c55e","Sports":"#22c55e","Mundial":"#f97316","World":"#f97316","Ciencia":"#06b6d4","Science":"#06b6d4","Entretenimiento":"#a78bfa","Entertainment":"#a78bfa"};
   return(
     <div style={{position:"fixed",inset:0,zIndex:200,background:"#05050f",display:"flex",flexDirection:"column"}}>
-      {/* Header */}
       <div style={{padding:"12px 14px",background:"rgba(9,9,18,0.97)",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{width:34,height:34,borderRadius:10,background:"linear-gradient(135deg,#f97316,#ef4444)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔥</div>
-          <div>
-            <div style={{fontSize:15,fontWeight:900}}>{lang==="en"?"Trending Now":"Trending Ahora"}</div>
-            <div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>
-              {loading?(lang==="en"?"Searching web...":"Buscando en la web..."):(lang==="en"?`Updated ${lastUpdate}`:`Actualizado ${lastUpdate}`)}
-            </div>
-          </div>
+          <div><div style={{fontSize:15,fontWeight:900}}>{lang==="en"?"Trending Now":"Trending Ahora"}</div><div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{loading?(lang==="en"?"Searching...":"Buscando..."):(lang==="en"?`Updated ${lastUpdate}`:`Actualizado ${lastUpdate}`)}</div></div>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <button onClick={fetchTrending} disabled={loading} style={{width:30,height:30,borderRadius:"50%",background:"rgba(249,115,22,0.15)",border:"1px solid rgba(249,115,22,0.3)",color:"#fb923c",fontSize:14,cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <span style={{display:"inline-block",animation:loading?"spin 1s linear infinite":"none"}}>🔄</span>
-          </button>
+          <button onClick={fetchTrending} disabled={loading} style={{width:30,height:30,borderRadius:"50%",background:"rgba(249,115,22,0.15)",border:"1px solid rgba(249,115,22,0.3)",color:"#fb923c",fontSize:14,cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{display:"inline-block",animation:loading?"spin 1s linear infinite":"none"}}>🔄</span></button>
           <button onClick={onClose} style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:14,cursor:"pointer"}}>✕</button>
         </div>
       </div>
-
-      {/* Content */}
       <div style={{flex:1,overflowY:"auto",padding:"12px"}}>
         {loading?(
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {[1,2,3,4,5,6,7].map(i=>(
-              <div key={i} style={{borderRadius:14,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",padding:"14px",display:"flex",gap:12,alignItems:"center"}}>
-                <div style={{width:28,height:28,borderRadius:8,background:"rgba(255,255,255,0.06)",animation:"pulse 1.5s infinite"}}/>
-                <div style={{flex:1}}>
-                  <div style={{height:12,borderRadius:6,background:"rgba(255,255,255,0.06)",marginBottom:8,width:"60%",animation:"pulse 1.5s infinite"}}/>
-                  <div style={{height:10,borderRadius:6,background:"rgba(255,255,255,0.04)",width:"85%",animation:"pulse 1.5s infinite"}}/>
-                </div>
-              </div>
-            ))}
-            <div style={{textAlign:"center",padding:"10px",fontSize:11,color:"rgba(255,255,255,0.3)"}}>
-              {lang==="en"?"🤖 AI searching the web for breaking news...":"🤖 IA buscando noticias de último momento..."}
-            </div>
+            {[1,2,3,4,5,6,7].map(i=><div key={i} style={{borderRadius:14,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",padding:"14px",display:"flex",gap:12,alignItems:"center"}}><div style={{width:28,height:28,borderRadius:8,background:"rgba(255,255,255,0.06)",animation:"pulse 1.5s infinite"}}/><div style={{flex:1}}><div style={{height:12,borderRadius:6,background:"rgba(255,255,255,0.06)",marginBottom:8,width:"60%",animation:"pulse 1.5s infinite"}}/><div style={{height:10,borderRadius:6,background:"rgba(255,255,255,0.04)",width:"85%",animation:"pulse 1.5s infinite"}}/></div></div>)}
+            <div style={{textAlign:"center",padding:"10px",fontSize:11,color:"rgba(255,255,255,0.3)"}}>🤖 {lang==="en"?"AI searching the web...":"IA buscando en la web..."}</div>
           </div>
         ):(
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {topics.map((topic,i)=>{
               const color=catColors[topic.category]||"#60a5fa";
               return(
-                <div key={i} style={{borderRadius:14,background:"rgba(10,12,30,0.8)",border:`1px solid rgba(255,255,255,0.08)`,padding:"13px 14px",display:"flex",gap:12,alignItems:"flex-start",animation:`fadeUp 0.3s ${i*0.05}s both`}}>
+                <div key={i} style={{borderRadius:14,background:"rgba(10,12,30,0.8)",border:"1px solid rgba(255,255,255,0.08)",padding:"13px 14px",display:"flex",gap:12,alignItems:"flex-start",animation:`fadeUp 0.3s ${i*0.05}s both`}}>
                   <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flexShrink:0}}>
-                    <div style={{width:28,height:28,borderRadius:8,background:`rgba(${color==="#ef4444"?"239,68,68":color==="#3b82f6"?"59,130,246":color==="#f59e0b"?"245,158,11":color==="#22c55e"?"34,197,94":color==="#f97316"?"249,115,22":color==="#06b6d4"?"6,182,212":"167,139,250"},0.15)`,border:`1px solid ${color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>
-                      {topic.emoji}
-                    </div>
+                    <div style={{width:28,height:28,borderRadius:8,background:`${color}18`,border:`1px solid ${color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{topic.emoji}</div>
                     <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.2)"}}>#{topic.rank}</div>
                   </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                      <span style={{fontSize:10,fontWeight:800,color:color,padding:"1px 7px",background:`${color}18`,borderRadius:100,border:`1px solid ${color}33`}}>{topic.category}</span>
-                      <span style={{fontSize:10,color:"#22c55e"}}>↑ {lang==="en"?"trending":"trending"}</span>
-                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span style={{fontSize:10,fontWeight:800,color:color,padding:"1px 7px",background:`${color}18`,borderRadius:100,border:`1px solid ${color}33`}}>{topic.category}</span><span style={{fontSize:10,color:"#22c55e"}}>↑ trending</span></div>
                     <div style={{fontSize:13,fontWeight:800,color:"#fff",lineHeight:1.3,marginBottom:5}}>{topic.title}</div>
                     <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",lineHeight:1.5}}>{topic.summary}</div>
                   </div>
                 </div>
               );
             })}
-            <div style={{textAlign:"center",padding:"12px 0 4px",fontSize:10,color:"rgba(255,255,255,0.2)"}}>
-              🤖 {lang==="en"?"Generated by AI with live web search":"Generado por IA con búsqueda web en vivo"}
-            </div>
+            <div style={{textAlign:"center",padding:"12px 0 4px",fontSize:10,color:"rgba(255,255,255,0.2)"}}>🤖 {lang==="en"?"Generated by AI with live web search":"Generado por IA con busqueda web en vivo"}</div>
           </div>
         )}
       </div>
     </div>
   );
 }
-// ── FIN TRENDING WIDGET ────────────────────────────────────────────────────
 
 function CountrySelector({current,onSelect,onClose,lang}){
   const t=T[lang]||T.es;
@@ -199,11 +281,11 @@ function AdminPanel({onClose}){
   async function publish(){
     if(!pass||!headline){setStatus("⚠️ Completa todos los campos");return;}
     setLoading(true);setStatus("");
-    try{const r=await fetch("/api/breaking",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass,headline,description:desc,cat})});const d=await r.json();if(d.ok){setStatus("✅ ¡Publicada!");setHasBreaking(true);setHeadline("");setDesc("");}else setStatus("❌ "+(d.error||"Error"));}catch{setStatus("❌ Error");}
+    try{const r=await fetch("/api/breaking",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass,headline,description:desc,cat})});const d=await r.json();if(d.ok){setStatus("✅ Publicada!");setHasBreaking(true);setHeadline("");setDesc("");}else setStatus("❌ "+(d.error||"Error"));}catch{setStatus("❌ Error");}
     setLoading(false);
   }
   async function remove(){
-    if(!pass){setStatus("⚠️ Ingresa la contraseña");return;}
+    if(!pass){setStatus("⚠️ Ingresa la contrasena");return;}
     setLoading(true);
     try{const r=await fetch("/api/breaking",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass})});const d=await r.json();if(d.ok){setStatus("✅ Eliminada");setHasBreaking(false);}else setStatus("❌ "+(d.error||"Error"));}catch{setStatus("❌ Error");}
     setLoading(false);
@@ -216,10 +298,10 @@ function AdminPanel({onClose}){
           <button onClick={onClose} style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer"}}>✕</button>
         </div>
         {hasBreaking&&<div style={{background:"rgba(239,68,68,0.12)",border:"1px solid rgba(239,68,68,0.35)",borderRadius:13,padding:"10px 13px",marginBottom:14,display:"flex",alignItems:"center",gap:8}}><span>🔴</span><div style={{flex:1,fontSize:12,color:"#fca5a5"}}>Hay una noticia urgente activa</div><button onClick={remove} style={{padding:"4px 10px",background:"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.4)",borderRadius:100,color:"#f87171",fontSize:10,fontWeight:700,cursor:"pointer"}}>Eliminar</button></div>}
-        <div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>🔑 Contraseña</div><input type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="Tu contraseña" style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none"}}/></div>
-        <div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>📌 Etiqueta</div><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{["🔴 URGENTE","⚡ BREAKING","🚨 ALERTA","📢 ANUNCIO","🏆 EXCLUSIVO"].map(c=><button key={c} onClick={()=>setCat(c)} style={{padding:"5px 11px",borderRadius:100,border:`1.5px solid ${cat===c?"#ef4444":"rgba(255,255,255,0.1)"}`,background:cat===c?"rgba(239,68,68,0.2)":"rgba(255,255,255,0.04)",color:cat===c?"#f87171":"rgba(255,255,255,0.5)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{c}</button>)}</div></div>
-        <div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>📰 Titular</div><textarea value={headline} onChange={e=>setHeadline(e.target.value)} placeholder="Titular urgente..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none",resize:"none",height:75,fontFamily:"'DM Sans',sans-serif"}}/></div>
-        <div style={{marginBottom:16}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>📝 Descripción</div><textarea value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Más detalles..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none",resize:"none",height:60,fontFamily:"'DM Sans',sans-serif"}}/></div>
+        <div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>Contrasena</div><input type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="Tu contrasena" style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none"}}/></div>
+        <div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>Etiqueta</div><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{["🔴 URGENTE","⚡ BREAKING","🚨 ALERTA","📢 ANUNCIO","🏆 EXCLUSIVO"].map(c=><button key={c} onClick={()=>setCat(c)} style={{padding:"5px 11px",borderRadius:100,border:`1.5px solid ${cat===c?"#ef4444":"rgba(255,255,255,0.1)"}`,background:cat===c?"rgba(239,68,68,0.2)":"rgba(255,255,255,0.04)",color:cat===c?"#f87171":"rgba(255,255,255,0.5)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{c}</button>)}</div></div>
+        <div style={{marginBottom:12}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>Titular</div><textarea value={headline} onChange={e=>setHeadline(e.target.value)} placeholder="Titular urgente..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none",resize:"none",height:75,fontFamily:"'DM Sans',sans-serif"}}/></div>
+        <div style={{marginBottom:16}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>Descripcion</div><textarea value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Mas detalles..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 13px",color:"#fff",fontSize:13,outline:"none",resize:"none",height:60,fontFamily:"'DM Sans',sans-serif"}}/></div>
         {status&&<div style={{background:status.includes("✅")?"rgba(34,197,94,0.1)":"rgba(239,68,68,0.1)",border:`1px solid ${status.includes("✅")?"rgba(34,197,94,0.3)":"rgba(239,68,68,0.3)"}`,borderRadius:10,padding:"9px 12px",marginBottom:12,fontSize:12,color:status.includes("✅")?"#4ade80":"#f87171"}}>{status}</div>}
         <button onClick={publish} disabled={loading} style={{width:"100%",padding:"14px",background:loading?"rgba(255,255,255,0.05)":"linear-gradient(135deg,#ef4444,#dc2626)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:loading?"rgba(255,255,255,0.3)":"#fff",cursor:loading?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
           {loading?<><span style={{animation:"spin .8s linear infinite",display:"inline-block"}}>⚡</span>Publicando...</>:"🔴 Publicar ahora"}
@@ -245,7 +327,7 @@ function SearchScreen({onClose,onSelectArticle,country,lang}){
         <input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&search()} placeholder={t.searchPlaceholder} autoFocus style={{flex:1,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:100,padding:"8px 14px",color:"#fff",fontSize:13,outline:"none"}}/>
         <button onClick={()=>search()} style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"#fff",fontSize:16,cursor:"pointer"}}>🔍</button>
       </div>
-      {!searched&&<div style={{padding:"14px"}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:10}}>{t.hotTopics}</div><div style={{display:"flex",flexWrap:"wrap",gap:7}}>{(lang==="en"?["Bitcoin","AI","Trump","Soccer","Economy","Tesla","Mexico","Elections"]:["Bitcoin","IA","Trump","Fútbol","Economía","Tesla","México","Elecciones"]).map(topic=><button key={topic} onClick={()=>search(topic)} style={{padding:"6px 13px",borderRadius:100,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.65)",fontSize:11,fontWeight:700,cursor:"pointer"}}>{topic}</button>)}</div></div>}
+      {!searched&&<div style={{padding:"14px"}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:10}}>{t.hotTopics}</div><div style={{display:"flex",flexWrap:"wrap",gap:7}}>{(lang==="en"?["Bitcoin","AI","Trump","Soccer","Economy","Tesla","Mexico","Elections"]:["Bitcoin","IA","Trump","Futbol","Economia","Tesla","Mexico","Elecciones"]).map(topic=><button key={topic} onClick={()=>search(topic)} style={{padding:"6px 13px",borderRadius:100,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.65)",fontSize:11,fontWeight:700,cursor:"pointer"}}>{topic}</button>)}</div></div>}
       {loading&&<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,animation:"spin 1s linear infinite"}}>⚡</div>}
       {!loading&&searched&&<div style={{flex:1,overflowY:"auto",padding:"10px 12px"}}>{results.length===0?<div style={{textAlign:"center",padding:"40px 20px"}}><div style={{fontSize:32,marginBottom:10}}>🤷</div><div style={{fontSize:14,color:"rgba(255,255,255,0.4)"}}>{t.noResults} "{q}"</div></div>:results.map((item,i)=><div key={i} onClick={()=>onSelectArticle(item)} style={{display:"flex",gap:10,padding:"10px",marginBottom:8,borderRadius:13,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",cursor:"pointer"}}><div style={{width:52,height:52,borderRadius:10,overflow:"hidden",flexShrink:0,background:"#1a1a2e"}}>{item.img&&<img src={item.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>}</div><div style={{flex:1,minWidth:0}}><div style={{fontSize:9,color:"rgba(255,255,255,0.35)",marginBottom:3,textTransform:"uppercase"}}>{item.cat} · {item.time}</div><div style={{fontSize:12,fontWeight:700,lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{item.headline}</div></div></div>)}</div>}
     </div>
@@ -257,13 +339,9 @@ function Paywall({onClose,onBuy,lang}){
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:400,background:"rgba(0,0,0,0.88)",backdropFilter:"blur(18px)",display:"flex",alignItems:"flex-end"}}>
       <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:400,margin:"0 auto",background:"#0d0d1f",borderRadius:"22px 22px 0 0",border:"1px solid rgba(96,165,250,0.2)",padding:"20px 18px 40px",color:"#fff"}}>
         <div style={{width:32,height:4,background:"rgba(255,255,255,0.12)",borderRadius:2,margin:"0 auto 18px"}}/>
-        <div style={{textAlign:"center",marginBottom:16}}>
-          <div style={{fontSize:34,marginBottom:5}}>⭐</div>
-          <div style={{fontSize:19,fontWeight:900,marginBottom:3}}>QuickNews Pro</div>
-          <div style={{fontSize:30,fontWeight:900,color:"#60a5fa",marginBottom:8}}>$2.99<span style={{fontSize:12,color:"rgba(255,255,255,0.3)",fontWeight:400}}>/mes</span></div>
-        </div>
-        {[["💎",lang==="en"?"Pro analysis":"Análisis Pro"],["🎙️",lang==="en"?"Daily AI briefing":"Resumen diario IA"],["🤖",lang==="en"?"Unlimited JAIK":"JAIK ilimitado"],["🚫",lang==="en"?"No ads":"Sin anuncios"],["🌍",lang==="en"?"Local news":"Noticias locales"]].map(([ic,tx])=><div key={tx} style={{display:"flex",gap:9,alignItems:"center",marginBottom:8}}><span>{ic}</span><span style={{fontSize:12,color:"rgba(255,255,255,0.6)"}}>{tx}</span></div>)}
-        <button onClick={onBuy} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#7c3aed,#4f46e5)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginTop:12,marginBottom:7}}>⭐ {lang==="en"?"7 days free":"7 días gratis"}</button>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:34,marginBottom:5}}>⭐</div><div style={{fontSize:19,fontWeight:900,marginBottom:3}}>QuickNews Pro</div><div style={{fontSize:30,fontWeight:900,color:"#60a5fa",marginBottom:8}}>$2.99<span style={{fontSize:12,color:"rgba(255,255,255,0.3)",fontWeight:400}}>/mes</span></div></div>
+        {[["💎",lang==="en"?"Pro analysis":"Analisis Pro"],["🎙️",lang==="en"?"Daily AI briefing":"Resumen diario IA"],["🤖",lang==="en"?"Unlimited JAIK":"JAIK ilimitado"],["🚫",lang==="en"?"No ads":"Sin anuncios"],["🌍",lang==="en"?"Local news":"Noticias locales"]].map(([ic,tx])=><div key={tx} style={{display:"flex",gap:9,alignItems:"center",marginBottom:8}}><span>{ic}</span><span style={{fontSize:12,color:"rgba(255,255,255,0.6)"}}>{tx}</span></div>)}
+        <button onClick={onBuy} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#7c3aed,#4f46e5)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginTop:12,marginBottom:7}}>⭐ {lang==="en"?"7 days free":"7 dias gratis"}</button>
         <button onClick={onClose} style={{width:"100%",padding:"10px",background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,cursor:"pointer",fontSize:11,color:"rgba(255,255,255,0.25)"}}>{lang==="en"?"Continue free":"Continuar gratis"}</button>
       </div>
     </div>
@@ -317,10 +395,7 @@ function BriefingPanel({onClose,isPro,onUpgrade,articles,lang}){
     u.onend=()=>{if(i<arr.length-1){setPlayIdx(i+1);speak(i+1,arr);}else{setPlaying(false);setPlayIdx(0);}};
     window.speechSynthesis.speak(u);
   }
-  function togglePlay(){
-    if(playing){window.speechSynthesis?.cancel();setPlaying(false);}
-    else{setPlaying(true);speak(playIdx,items);}
-  }
+  function togglePlay(){if(playing){window.speechSynthesis?.cancel();setPlaying(false);}else{setPlaying(true);speak(playIdx,items);}}
   return(
     <div style={{position:"fixed",inset:0,zIndex:350,background:"rgba(0,0,0,0.92)",backdropFilter:"blur(18px)",overflowY:"auto",color:"#fff"}}>
       <div style={{maxWidth:400,margin:"0 auto",paddingBottom:32}}>
@@ -329,31 +404,26 @@ function BriefingPanel({onClose,isPro,onUpgrade,articles,lang}){
           <button onClick={onClose} style={{width:30,height:30,borderRadius:"50%",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer"}}>✕</button>
         </div>
         <div style={{padding:"16px"}}>
-          {!ready&&(
-            <>
-              <div style={{textAlign:"center",marginBottom:16}}><div style={{width:86,height:86,borderRadius:"50%",background:"linear-gradient(135deg,rgba(59,130,246,0.2),rgba(99,102,241,0.1))",border:"2px solid rgba(59,130,246,0.3)",display:"inline-flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}><div style={{fontSize:22,fontWeight:900,color:"#60a5fa"}}>{hour}</div><div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{lang==="en"?"your time":"tu hora"}</div></div></div>
-              <div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>⏰ {lang==="en"?"What time?":"¿A qué hora?"}</div><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{HOURS.map(h=><button key={h} onClick={()=>setHour(h)} style={{padding:"6px 12px",borderRadius:100,border:`1.5px solid ${hour===h?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:hour===h?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.04)",color:hour===h?"#60a5fa":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:700,cursor:"pointer"}}>{h}</button>)}</div></div>
-              <div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>⏱ {lang==="en"?"Duration":"Duración"}</div><div style={{display:"flex",gap:8}}>{[["5",lang==="en"?"3 key news":"3 noticias"],["10",lang==="en"?"5 news":"5 noticias"]].map(([d,sub])=><button key={d} onClick={()=>setDuration(d)} style={{flex:1,padding:"10px",borderRadius:12,border:`1.5px solid ${duration===d?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:duration===d?"rgba(59,130,246,0.18)":"rgba(255,255,255,0.04)",cursor:"pointer"}}><div style={{fontSize:18,fontWeight:900,color:duration===d?"#60a5fa":"rgba(255,255,255,0.6)"}}>{d} min</div><div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:2}}>{sub}</div></button>)}</div></div>
-              {scheduled?<div style={{background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:14,padding:"12px",textAlign:"center",marginBottom:10}}><div style={{fontSize:18,marginBottom:4}}>✅</div><div style={{fontSize:13,fontWeight:800,color:"#4ade80"}}>{lang==="en"?`Scheduled for ${hour}!`:`¡Programado para las ${hour}!`}</div></div>:<button onClick={()=>setScheduled(true)} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginBottom:8}}>⏰ {lang==="en"?`Schedule for ${hour}`:`Programar para las ${hour}`}</button>}
-              <button onClick={generate} disabled={generating} style={{width:"100%",padding:"13px",background:generating?"rgba(255,255,255,0.05)":"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",borderRadius:14,fontSize:13,fontWeight:700,color:generating?"rgba(255,255,255,0.3)":"#fff",cursor:generating?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7,boxShadow:generating?"none":"0 4px 15px rgba(59,130,246,0.35)"}}>
-                {generating?<><span style={{animation:"spin .8s linear infinite",display:"inline-block"}}>⚡</span>{lang==="en"?"Generating...":"Generando..."}</>:<>▶️ {lang==="en"?"Listen now":"Escuchar ahora"} {!isPro&&<span style={{fontSize:10,opacity:.8}}>· Pro</span>}</>}
-              </button>
-              {!isPro&&<div style={{textAlign:"center",fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6}}>{lang==="en"?"Activate Pro to listen":"Activa Pro para escuchar"}</div>}
-            </>
-          )}
-          {ready&&items.length>0&&(
-            <>
-              <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end",gap:3,height:36,marginBottom:14}}>{Array(16).fill(0).map((_,i)=><div key={i} style={{width:3,background:playing?"#3b82f6":"rgba(255,255,255,0.15)",borderRadius:2,height:playing?undefined:4,animation:playing?`wave ${0.45+i*0.06}s ${i*0.04}s infinite ease-in-out`:"none",minHeight:4}}/>)}</div>
-              <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{items.map((item,i)=><div key={i} onClick={()=>{setPlayIdx(i);if(playing)speak(i,items);}} style={{display:"flex",gap:10,padding:"10px 12px",borderRadius:13,background:playIdx===i?"rgba(59,130,246,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${playIdx===i?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.07)"}`,cursor:"pointer"}}><div style={{width:24,height:24,borderRadius:"50%",background:playIdx===i?"#3b82f6":"rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:playIdx===i?"#fff":"rgba(255,255,255,0.3)",flexShrink:0}}>{i+1}</div><div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:playIdx===i?"#fff":"rgba(255,255,255,0.7)",marginBottom:3}}>{item.titulo}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.45)",lineHeight:1.5}}>{item.resumen}</div><div style={{fontSize:10,color:"#60a5fa",marginTop:4}}>💡 {item.dato}</div></div>{playing&&playIdx===i&&<span>🔊</span>}</div>)}</div>
-              <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:12}}>{[0.75,1,1.25,1.5,2].map(sp=><button key={sp} onClick={()=>setSpeed(sp)} style={{padding:"4px 10px",borderRadius:100,border:`1px solid ${speed===sp?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:speed===sp?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.04)",color:speed===sp?"#60a5fa":"rgba(255,255,255,0.35)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{sp}x</button>)}</div>
-              <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:16,marginBottom:14}}>
-                <button onClick={()=>setPlayIdx(p=>Math.max(0,p-1))} style={{width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",fontSize:17,cursor:"pointer"}}>⏮</button>
-                <button onClick={togglePlay} style={{width:60,height:60,borderRadius:"50%",background:"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",color:"#fff",fontSize:24,cursor:"pointer",boxShadow:"0 6px 20px rgba(59,130,246,0.4)"}}>{playing?"⏸":"▶️"}</button>
-                <button onClick={()=>setPlayIdx(p=>Math.min(items.length-1,p+1))} style={{width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",fontSize:17,cursor:"pointer"}}>⏭</button>
-              </div>
-              <button onClick={()=>{setReady(false);setItems([]);setPlaying(false);}} style={{width:"100%",padding:"11px",background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,cursor:"pointer",fontSize:12,color:"rgba(255,255,255,0.35)"}}>{T[lang]?.back||"← Volver"}</button>
-            </>
-          )}
+          {!ready&&(<>
+            <div style={{textAlign:"center",marginBottom:16}}><div style={{width:86,height:86,borderRadius:"50%",background:"linear-gradient(135deg,rgba(59,130,246,0.2),rgba(99,102,241,0.1))",border:"2px solid rgba(59,130,246,0.3)",display:"inline-flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}><div style={{fontSize:22,fontWeight:900,color:"#60a5fa"}}>{hour}</div><div style={{fontSize:9,color:"rgba(255,255,255,0.35)"}}>{lang==="en"?"your time":"tu hora"}</div></div></div>
+            <div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>⏰ {lang==="en"?"What time?":"A que hora?"}</div><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{HOURS.map(h=><button key={h} onClick={()=>setHour(h)} style={{padding:"6px 12px",borderRadius:100,border:`1.5px solid ${hour===h?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:hour===h?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.04)",color:hour===h?"#60a5fa":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:700,cursor:"pointer"}}>{h}</button>)}</div></div>
+            <div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",letterSpacing:1.5,textTransform:"uppercase",marginBottom:8}}>⏱ {lang==="en"?"Duration":"Duracion"}</div><div style={{display:"flex",gap:8}}>{[["5",lang==="en"?"3 key news":"3 noticias"],["10",lang==="en"?"5 news":"5 noticias"]].map(([d,sub])=><button key={d} onClick={()=>setDuration(d)} style={{flex:1,padding:"10px",borderRadius:12,border:`1.5px solid ${duration===d?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:duration===d?"rgba(59,130,246,0.18)":"rgba(255,255,255,0.04)",cursor:"pointer"}}><div style={{fontSize:18,fontWeight:900,color:duration===d?"#60a5fa":"rgba(255,255,255,0.6)"}}>{d} min</div><div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:2}}>{sub}</div></button>)}</div></div>
+            {scheduled?<div style={{background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:14,padding:"12px",textAlign:"center",marginBottom:10}}><div style={{fontSize:18,marginBottom:4}}>✅</div><div style={{fontSize:13,fontWeight:800,color:"#4ade80"}}>{lang==="en"?`Scheduled for ${hour}!`:`Programado para las ${hour}!`}</div></div>:<button onClick={()=>setScheduled(true)} style={{width:"100%",padding:"13px",background:"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",borderRadius:14,fontSize:14,fontWeight:800,color:"#fff",cursor:"pointer",marginBottom:8}}>⏰ {lang==="en"?`Schedule for ${hour}`:`Programar para las ${hour}`}</button>}
+            <button onClick={generate} disabled={generating} style={{width:"100%",padding:"13px",background:generating?"rgba(255,255,255,0.05)":"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",borderRadius:14,fontSize:13,fontWeight:700,color:generating?"rgba(255,255,255,0.3)":"#fff",cursor:generating?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+              {generating?<><span style={{animation:"spin .8s linear infinite",display:"inline-block"}}>⚡</span>{lang==="en"?"Generating...":"Generando..."}</>:<>▶️ {lang==="en"?"Listen now":"Escuchar ahora"} {!isPro&&<span style={{fontSize:10,opacity:.8}}>· Pro</span>}</>}
+            </button>
+          </>)}
+          {ready&&items.length>0&&(<>
+            <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end",gap:3,height:36,marginBottom:14}}>{Array(16).fill(0).map((_,i)=><div key={i} style={{width:3,background:playing?"#3b82f6":"rgba(255,255,255,0.15)",borderRadius:2,height:playing?undefined:4,animation:playing?`wave ${0.45+i*0.06}s ${i*0.04}s infinite ease-in-out`:"none",minHeight:4}}/>)}</div>
+            <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{items.map((item,i)=><div key={i} onClick={()=>{setPlayIdx(i);if(playing)speak(i,items);}} style={{display:"flex",gap:10,padding:"10px 12px",borderRadius:13,background:playIdx===i?"rgba(59,130,246,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${playIdx===i?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.07)"}`,cursor:"pointer"}}><div style={{width:24,height:24,borderRadius:"50%",background:playIdx===i?"#3b82f6":"rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:playIdx===i?"#fff":"rgba(255,255,255,0.3)",flexShrink:0}}>{i+1}</div><div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:playIdx===i?"#fff":"rgba(255,255,255,0.7)",marginBottom:3}}>{item.titulo}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.45)",lineHeight:1.5}}>{item.resumen}</div><div style={{fontSize:10,color:"#60a5fa",marginTop:4}}>💡 {item.dato}</div></div>{playing&&playIdx===i&&<span>🔊</span>}</div>)}</div>
+            <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:12}}>{[0.75,1,1.25,1.5,2].map(sp=><button key={sp} onClick={()=>setSpeed(sp)} style={{padding:"4px 10px",borderRadius:100,border:`1px solid ${speed===sp?"#3b82f6":"rgba(255,255,255,0.1)"}`,background:speed===sp?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.04)",color:speed===sp?"#60a5fa":"rgba(255,255,255,0.35)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{sp}x</button>)}</div>
+            <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:16,marginBottom:14}}>
+              <button onClick={()=>setPlayIdx(p=>Math.max(0,p-1))} style={{width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",fontSize:17,cursor:"pointer"}}>⏮</button>
+              <button onClick={togglePlay} style={{width:60,height:60,borderRadius:"50%",background:"linear-gradient(135deg,#3b82f6,#6366f1)",border:"none",color:"#fff",fontSize:24,cursor:"pointer",boxShadow:"0 6px 20px rgba(59,130,246,0.4)"}}>{playing?"⏸":"▶️"}</button>
+              <button onClick={()=>setPlayIdx(p=>Math.min(items.length-1,p+1))} style={{width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",fontSize:17,cursor:"pointer"}}>⏭</button>
+            </div>
+            <button onClick={()=>{setReady(false);setItems([]);setPlaying(false);}} style={{width:"100%",padding:"11px",background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,cursor:"pointer",fontSize:12,color:"rgba(255,255,255,0.35)"}}>{T[lang]?.back||"Volver"}</button>
+          </>)}
         </div>
       </div>
     </div>
@@ -385,7 +455,7 @@ function App(){
   const [loadingMore,setLoadingMore]=useState(false);
   const [page,setPage]=useState(1);
   const [activeCat,setActiveCat]=useState("");
-  const [country,setCountry]=useState("any");
+  const [country,setCountry]=useState("do");
   const [tapCount,setTapCount]=useState(0);
   const ty=useRef(null);
   const timer=useRef(null);
@@ -449,12 +519,17 @@ function App(){
     if(!isPro&&aiN>=3){setShowPay(true);return;}
     setAiN(n=>n+1);setAiLoad(true);setAiAns("");
     try{
-      const sys=lang==="en"?`You are JAIK from QuickNews. News: "${s.headline}". Answer in English, max 2 sentences.`:`Eres JAIK de QuickNews. Noticia: "${s.headline}". Responde en español, máx 2 oraciones. Sin bullets.`;
+      const sys=lang==="en"?`You are JAIK from QuickNews. News: "${s.headline}". Answer in English, max 2 sentences.`:`Eres JAIK de QuickNews. Noticia: "${s.headline}". Responde en espanol, max 2 oraciones. Sin bullets.`;
       const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:150,system:sys,messages:[{role:"user",content:q}]})});
       const d=await r.json();
       setAiAns(d.content?.find(b=>b.type==="text")?.text||"Error.");
-    }catch{setAiAns(lang==="en"?"Connection error.":"Error de conexión.");}
+    }catch{setAiAns(lang==="en"?"Connection error.":"Error de conexion.");}
     setAiLoad(false);
+  }
+
+  function handleShare(){
+    if(s?.url&&navigator.share){navigator.share({title:s.headline,url:s.url}).catch(()=>{});}
+    else if(s?.url){navigator.clipboard?.writeText(s.url).catch(()=>{});}
   }
 
   function getVibes(a){
@@ -509,9 +584,12 @@ function App(){
         </div>
       </div>
 
+      {/* LIVE TICKER */}
+      <LiveTicker lang={lang}/>
+
       {isBreaking&&<div style={{padding:"5px 12px",background:"rgba(239,68,68,0.15)",borderBottom:"1px solid rgba(239,68,68,0.3)",flexShrink:0,display:"flex",alignItems:"center",gap:7,position:"relative",zIndex:9}}><span style={{width:7,height:7,borderRadius:"50%",background:"#ef4444",flexShrink:0,animation:"blink .7s infinite"}}/><span style={{fontSize:10,fontWeight:800,color:"#f87171",letterSpacing:1,textTransform:"uppercase"}}>{t.urgent}</span></div>}
 
-      {/* Categorías */}
+      {/* Categorias */}
       <div style={{padding:"5px 10px",background:"rgba(9,9,18,0.95)",borderBottom:"1px solid rgba(255,255,255,0.04)",flexShrink:0,display:"flex",gap:5,overflowX:"auto",scrollbarWidth:"none",position:"relative",zIndex:8}}>
         {CATS.map(c=><button key={c.k} onClick={()=>setActiveCat(c.k)} style={{display:"flex",alignItems:"center",gap:3,padding:"4px 10px",borderRadius:100,border:`1.5px solid ${activeCat===c.k?c.color:"rgba(255,255,255,0.08)"}`,background:activeCat===c.k?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.03)",color:activeCat===c.k?c.color:"rgba(255,255,255,0.45)",fontSize:10,fontWeight:700,cursor:"pointer",flexShrink:0,boxShadow:activeCat===c.k?`0 0 8px ${c.color}44`:"none"}}><span style={{fontSize:11}}>{c.i}</span><span>{lang==="en"?c.le:c.l}</span></button>)}
       </div>
@@ -543,30 +621,19 @@ function App(){
             )}
           </div>
 
-          {isMemeMode&&(
-            <div className="neon" style={{borderRadius:13,overflow:"hidden",background:"rgba(10,8,28,0.8)",flexShrink:0}}>
-              <div style={{padding:"4px 9px 3px",display:"inline-flex",alignItems:"center",gap:4,background:"rgba(139,92,246,0.2)",borderRadius:"0 0 9px 0",border:"1px solid rgba(139,92,246,0.35)"}}><span style={{fontSize:10}}>🤣</span><span style={{fontSize:9,fontWeight:800,color:"#c4b5fd"}}>Meme take</span></div>
-              <div style={{margin:"3px 9px 0",borderRadius:11,overflow:"hidden",position:"relative",height:85,background:"linear-gradient(135deg,#1a1a2e,#0d0d1f)"}}>
-                {s.img&&<img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.45)"}} onError={e=>e.target.style.display="none"}/>}
-                <div style={{position:"absolute",top:8,left:10,right:10,fontSize:12,fontWeight:900,lineHeight:1.3,textShadow:"0 2px 8px rgba(0,0,0,0.9)"}}>{s.memeText?(s.memeText.split("\n").map((l,i)=><div key={i}>{l}</div>)):<div>{s.headline.substring(0,60)}... 👀</div>}</div>
-              </div>
-              <div style={{padding:"5px 11px 6px",display:"flex",alignItems:"center",gap:10}}>
-                <button onClick={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:liked[s.id]?"#ef4444":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700}}><span style={{fontSize:13}}>{liked[s.id]?"❤️":"🤍"}</span>{s.r.h}</button>
-                <button onClick={()=>setShowAI(a=>!a)} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:showAI?"#a78bfa":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700}}><span style={{fontSize:13}}>💬</span>{s.r.c}</button>
-                {s.url&&<a href={s.url} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:3,color:"rgba(255,255,255,0.5)",fontSize:11,fontWeight:700,textDecoration:"none"}}><span style={{fontSize:13}}>🔗</span></a>}
-                <button style={{marginLeft:"auto",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,padding:"3px 8px",color:"rgba(255,255,255,0.6)",fontSize:9,fontWeight:700,cursor:"pointer"}}>{t.share}</button>
-              </div>
-            </div>
-          )}
-
-          {!isMemeMode&&(
-            <div style={{display:"flex",gap:10,alignItems:"center",padding:"4px 2px",flexShrink:0}}>
-              <button onClick={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:liked[s.id]?"#ef4444":"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700}}><span style={{fontSize:14}}>{liked[s.id]?"❤️":"🤍"}</span>{s.r.h}</button>
-              <button onClick={()=>setShowAI(a=>!a)} style={{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:showAI?"#a78bfa":"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700}}><span style={{fontSize:14}}>💬</span>{s.r.c}</button>
-              {s.url&&<a href={s.url} target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:3,color:"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700,textDecoration:"none"}}><span style={{fontSize:14}}>🔗</span></a>}
-              <button style={{marginLeft:"auto",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,padding:"4px 10px",color:"rgba(255,255,255,0.5)",fontSize:9,fontWeight:700,cursor:"pointer"}}>{t.share}</button>
-            </div>
-          )}
+          {/* ACTION BUTTONS - nuevo diseño */}
+          <ActionButtons
+            story={s}
+            liked={!!liked[s.id]}
+            onLike={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))}
+            onComment={()=>setShowAI(a=>!a)}
+            onJaik={()=>setShowAI(a=>!a)}
+            onShare={handleShare}
+            onPro={()=>isPro?setShowPro(true):setShowPay(true)}
+            isPro={isPro}
+            showAI={showAI}
+            lang={lang}
+          />
 
           {/* Vibes */}
           <div style={{flexShrink:0,display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none"}}>
@@ -578,7 +645,7 @@ function App(){
           {showAI&&(
             <div style={{borderRadius:12,background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.07))",border:"1px solid rgba(139,92,246,0.3)",padding:"9px",flexShrink:0}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:7}}><div style={{width:24,height:24,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>🤖</div><div style={{flex:1,fontSize:11,fontWeight:800}}>JAIK {!isPro&&<span style={{color:"rgba(255,255,255,0.3)",fontWeight:400}}>· {Math.max(0,3-aiN)} {t.free}</span>}</div><button onClick={()=>setShowAI(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:14,cursor:"pointer"}}>✕</button></div>
-              <div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:6}}>{(lang==="en"?["Why did this happen?","How does it affect me?","Give me context"]:["¿Por qué pasó esto?","¿Cómo me afecta?","Dame el contexto"]).map((q,i)=><button key={i} onClick={()=>askAI(q)} style={{padding:"5px 8px",background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.18)",borderRadius:8,color:"rgba(255,255,255,0.65)",fontSize:10,cursor:"pointer",textAlign:"left"}}>→ {q}</button>)}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:6}}>{(lang==="en"?["Why did this happen?","How does it affect me?","Give me context"]:["Por que paso esto?","Como me afecta?","Dame el contexto"]).map((q,i)=><button key={i} onClick={()=>askAI(q)} style={{padding:"5px 8px",background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.18)",borderRadius:8,color:"rgba(255,255,255,0.65)",fontSize:10,cursor:"pointer",textAlign:"left"}}>→ {q}</button>)}</div>
               <div style={{display:"flex",gap:5}}><input id="aiQ" placeholder={t.askJaik} onKeyDown={e=>e.key==="Enter"&&askAI(e.target.value)} style={{flex:1,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"5px 9px",color:"#fff",fontSize:10,outline:"none"}}/><button onClick={()=>askAI(document.getElementById("aiQ")?.value)} style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"#fff",fontSize:12,cursor:"pointer"}}>↑</button></div>
               {(aiLoad||aiAns)&&<div style={{marginTop:6,background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.15)",borderRadius:8,padding:"7px 9px",fontSize:11,color:"#e8f0fe",lineHeight:1.5}}>{aiLoad?t.thinking:aiAns}</div>}
             </div>
