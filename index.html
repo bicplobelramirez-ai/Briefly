@@ -595,55 +595,46 @@ function App(){
       </div>
 
       {s&&(
-        <div key={animKey} className={slideDir==="up"?"slide-in-up":"slide-in-down"} style={{flex:1,display:"flex",flexDirection:"column",padding:"5px 11px",overflow:"hidden",gap:5,position:"relative",zIndex:1}}>
+        <div key={animKey} className={slideDir==="up"?"slide-in-up":"slide-in-down"} style={{flex:1,overflowY:"auto",scrollbarWidth:"none",position:"relative",zIndex:1}}>
 
-          {/* Tarjeta principal */}
-          <div className={isBreaking?"breaking-card":"neon-b"} style={{borderRadius:13,overflow:"hidden",background:isBreaking?"rgba(30,5,5,0.85)":"rgba(10,12,30,0.75)",backdropFilter:"blur(12px)",flexShrink:0}}>
-            {s.img?(
-              <div style={{position:"relative",height:140,overflow:"hidden",background:"#111"}}>
-                <img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.65)"}} onError={e=>e.target.parentNode.style.minHeight="60px"}/>
-                <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 20%,rgba(10,12,30,0.97) 100%)"}}/>
-                <div style={{position:"absolute",bottom:8,left:10,right:10}}>
-                  <div style={{display:"flex",gap:5,marginBottom:4,flexWrap:"wrap"}}>
-                    <span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:isBreaking?"rgba(239,68,68,0.5)":"rgba(239,68,68,0.35)",border:"1px solid rgba(239,68,68,0.6)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span>
-                    <span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.2)",color:"rgba(255,255,255,0.85)"}}>{s.cat}</span>
-                  </div>
-                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,color:isBreaking?"#fca5a5":"#fff",textShadow:"0 1px 4px rgba(0,0,0,0.8)"}}>{s.headline}</div>
-                  <div style={{fontSize:9,color:"rgba(255,255,255,0.5)",marginTop:2}}>{s.time}</div>
-                </div>
-              </div>
-            ):(
-              <div style={{padding:"8px 10px"}}>
-                <div style={{display:"flex",gap:5,marginBottom:5}}><span style={{fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:100,background:"rgba(239,68,68,0.2)",border:"1px solid rgba(239,68,68,0.5)",color:"#f87171",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#ef4444",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span><span style={{fontSize:8,fontWeight:700,padding:"2px 7px",borderRadius:100,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)"}}>{s.cat}</span></div>
-                <div style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,lineHeight:1.25,color:isBreaking?"#fca5a5":"#fff"}}>{s.headline}</div>
-                <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:2}}>{s.time}</div>
-              </div>
-            )}
+          {/* HERO — imagen grande ~mitad pantalla */}
+          <div style={{position:"relative",width:"100%",height:"42vh",overflow:"hidden",background:"#0d0d20",flexShrink:0}}>
+            {s.img&&<img src={s.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.6)"}} onError={e=>e.target.style.display="none"}/>}
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 30%,rgba(8,8,24,1) 100%)"}}/>
+            <div style={{position:"absolute",top:10,left:12,display:"flex",gap:6}}>
+              <span style={{fontSize:9,fontWeight:800,padding:"3px 8px",borderRadius:100,background:isBreaking?"rgba(239,68,68,0.7)":"rgba(239,68,68,0.5)",color:"#fff",display:"flex",alignItems:"center",gap:3}}><span style={{width:4,height:4,borderRadius:"50%",background:"#fff",display:"inline-block",animation:"blink 1s infinite"}}/>{isBreaking?t.urgent:t.now}</span>
+              <span style={{fontSize:9,fontWeight:600,padding:"3px 8px",borderRadius:100,background:"rgba(0,0,0,0.55)",color:"rgba(255,255,255,0.8)",border:"1px solid rgba(255,255,255,0.15)"}}>{s.time}</span>
+            </div>
+            <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 14px 14px"}}>
+              <div style={{display:"inline-block",background:"rgba(139,92,246,0.75)",color:"#fff",fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:5,marginBottom:7}}>{s.cat}</div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:900,lineHeight:1.25,color:"#fff",textShadow:"0 2px 8px rgba(0,0,0,0.9)"}}>{s.headline}</div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginTop:4}}>{s.time}</div>
+            </div>
           </div>
 
-          {/* ACTION BUTTONS - nuevo diseño */}
-          <ActionButtons
-            story={s}
-            liked={!!liked[s.id]}
-            onLike={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))}
-            onComment={()=>setShowAI(a=>!a)}
-            onJaik={()=>setShowAI(a=>!a)}
-            onShare={handleShare}
-            onPro={()=>isPro?setShowPro(true):setShowPay(true)}
-            isPro={isPro}
-            showAI={showAI}
-            lang={lang}
-          />
-
-          {/* Vibes */}
-          <div style={{flexShrink:0,display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none"}}>
-            {VIBES.map(v=><button key={v.k} onClick={()=>pickVibe(v.k)} style={{display:"flex",alignItems:"center",gap:3,padding:"5px 9px",borderRadius:100,border:`1.5px solid ${vibe===v.k?v.c:"rgba(255,255,255,0.12)"}`,background:vibe===v.k?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.03)",boxShadow:vibe===v.k?`0 0 8px ${v.c}55`:"none",cursor:"pointer",flexShrink:0}}><span style={{fontSize:13}}>{v.i}</span><span style={{fontSize:10,fontWeight:800,color:vibe===v.k?v.c:"rgba(255,255,255,0.5)"}}>{v.l}</span>{v.lock&&!isPro&&<span style={{fontSize:9,opacity:.6}}>🔒</span>}</button>)}
+          {/* BOTONES — una sola píldora larga */}
+          <div style={{margin:"10px 12px 6px",background:"rgba(20,20,40,0.85)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:100,display:"flex",alignItems:"center",overflow:"hidden"}}>
+            <div onClick={()=>setLiked(l=>({...l,[s.id]:!l[s.id]}))} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,padding:"10px 4px",cursor:"pointer",borderRight:"1px solid rgba(255,255,255,0.08)"}}>
+              <span style={{fontSize:14}}>{liked[s.id]?"❤️":"🤍"}</span>
+              <span style={{fontSize:11,fontWeight:700,color:liked[s.id]?"#f87171":"rgba(255,255,255,0.75)"}}>Me gusta</span>
+            </div>
+            <div onClick={()=>setShowAI(a=>!a)} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,padding:"10px 4px",cursor:"pointer",borderRight:"1px solid rgba(255,255,255,0.08)"}}>
+              <span style={{fontSize:14}}>💬</span>
+              <span style={{fontSize:11,fontWeight:700,color:showAI?"#a78bfa":"rgba(255,255,255,0.75)"}}>Comentar</span>
+            </div>
+            <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,padding:"10px 4px",cursor:"pointer",borderRight:"1px solid rgba(255,255,255,0.08)",background:"rgba(99,102,241,0.1)"}}>
+              <span style={{fontSize:14}}>🔖</span>
+              <span style={{fontSize:11,fontWeight:700,color:"#a78bfa"}}>Guardar</span>
+            </div>
+            <div onClick={handleShare} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,padding:"10px 4px",cursor:"pointer"}}>
+              <span style={{fontSize:14}}>📤</span>
+              <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.75)"}}>Compartir</span>
+            </div>
           </div>
 
-          {!showAI&&<div style={{borderRadius:12,background:"rgba(10,8,28,0.75)",border:`1px solid ${vd.br}`,padding:"8px 11px",flexShrink:0}}><div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}><span style={{fontSize:13}}>{vd.i}</span><span style={{fontSize:11,fontWeight:800,color:vd.c}}>{vd.l}:</span></div><div style={{fontSize:12,color:"rgba(255,255,255,0.8)",lineHeight:1.55}}>{vibes[vibe]||vibes.Quick}</div></div>}
-
+          {/* JAIK panel */}
           {showAI&&(
-            <div style={{borderRadius:12,background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.07))",border:"1px solid rgba(139,92,246,0.3)",padding:"9px",flexShrink:0}}>
+            <div style={{margin:"0 12px 8px",borderRadius:12,background:"linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.07))",border:"1px solid rgba(139,92,246,0.3)",padding:"9px"}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:7}}><div style={{width:24,height:24,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>🤖</div><div style={{flex:1,fontSize:11,fontWeight:800}}>JAIK {!isPro&&<span style={{color:"rgba(255,255,255,0.3)",fontWeight:400}}>· {Math.max(0,3-aiN)} {t.free}</span>}</div><button onClick={()=>setShowAI(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:14,cursor:"pointer"}}>✕</button></div>
               <div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:6}}>{(lang==="en"?["Why did this happen?","How does it affect me?","Give me context"]:["Por que paso esto?","Como me afecta?","Dame el contexto"]).map((q,i)=><button key={i} onClick={()=>askAI(q)} style={{padding:"5px 8px",background:"rgba(99,102,241,0.08)",border:"1px solid rgba(99,102,241,0.18)",borderRadius:8,color:"rgba(255,255,255,0.65)",fontSize:10,cursor:"pointer",textAlign:"left"}}>→ {q}</button>)}</div>
               <div style={{display:"flex",gap:5}}><input id="aiQ" placeholder={t.askJaik} onKeyDown={e=>e.key==="Enter"&&askAI(e.target.value)} style={{flex:1,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"5px 9px",color:"#fff",fontSize:10,outline:"none"}}/><button onClick={()=>askAI(document.getElementById("aiQ")?.value)} style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"#fff",fontSize:12,cursor:"pointer"}}>↑</button></div>
@@ -651,12 +642,29 @@ function App(){
             </div>
           )}
 
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,marginBottom:2}}>
-            <div style={{fontSize:9,color:"rgba(255,255,255,0.15)"}}>{loadingMore?<span style={{animation:"pulse 1s infinite"}}>⚡ {t.loadingMore}</span>:<span>{t.swipe} · {si+1}/{articles.length}</span>}</div>
-            <button onClick={()=>pickVibe(VIBES[(VIBES.findIndex(v=>v.k===vibe)+1)%VIBES.length].k)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:100,padding:"4px 10px",color:"rgba(255,255,255,0.5)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{t.changeVibe}</button>
+          {/* TEMAS DEL DIA */}
+          <div style={{padding:"4px 14px 6px",display:"flex",alignItems:"center",gap:6}}>
+            <div style={{fontSize:11,fontWeight:800,color:"rgba(255,255,255,0.5)",letterSpacing:1.5,textTransform:"uppercase"}}>TEMAS DEL DIA</div>
+            <div style={{width:6,height:6,borderRadius:"50%",background:"#22c55e",boxShadow:"0 0 5px #22c55e"}}/>
           </div>
 
-          {articles[si+1]&&<div onClick={()=>swipe(1)} style={{flexShrink:0,borderRadius:12,overflow:"hidden",position:"relative",height:65,background:"rgba(10,12,30,0.6)",border:"1px solid rgba(255,255,255,0.08)",cursor:"pointer"}}>{articles[si+1].img&&<img src={articles[si+1].img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",filter:"brightness(0.35)"}} onError={e=>e.target.style.display="none"}/>}<div style={{position:"absolute",inset:0,background:"linear-gradient(to right,rgba(10,12,30,0.92) 0%,rgba(10,12,30,0.6) 100%)",display:"flex",alignItems:"center",padding:"0 12px",gap:10}}><div style={{flex:1}}><div style={{fontSize:8,color:"rgba(255,255,255,0.4)",marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>{t.next} · {articles[si+1].cat}</div><div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.85)",lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{articles[si+1].headline}</div></div><div style={{fontSize:18,color:"rgba(255,255,255,0.3)"}}>↑</div></div></div>}
+          {articles.slice(si+1,si+3).map((item,i)=>(
+            <div key={i} onClick={()=>swipe(i+1)} style={{display:"flex",alignItems:"center",gap:0,margin:"0 12px 8px",borderRadius:13,background:"rgba(14,14,32,0.9)",border:"1px solid rgba(255,255,255,0.07)",overflow:"hidden",cursor:"pointer"}}>
+              <div style={{width:110,height:82,background:"#1a1a2e",flexShrink:0,position:"relative",overflow:"hidden"}}>
+                {item.img&&<img src={item.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",filter:"brightness(0.7)"}} onError={e=>e.target.style.display="none"}/>}
+                <div style={{position:"absolute",bottom:5,left:5,fontSize:8,fontWeight:800,color:"#fff",background:"rgba(139,92,246,0.85)",padding:"2px 6px",borderRadius:4}}>{item.cat}</div>
+              </div>
+              <div style={{flex:1,padding:"8px 10px",position:"relative"}}>
+                <div style={{position:"absolute",top:8,right:8,fontSize:14,color:"rgba(255,255,255,0.2)"}}>···</div>
+                <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:3}}>{item.time}</div>
+                <div style={{fontSize:12,fontWeight:700,lineHeight:1.35,color:"#e0e0f5",paddingRight:16}}>{item.headline}</div>
+              </div>
+            </div>
+          ))}
+
+          <div style={{textAlign:"right",padding:"0 14px 16px",fontSize:11,color:"#6c63ff",fontWeight:600,cursor:"pointer"}} onClick={()=>swipe(1)}>Ver mas ›</div>
+
+          <div style={{padding:"0 14px 8px",fontSize:9,color:"rgba(255,255,255,0.12)"}}>{loadingMore?<span style={{animation:"pulse 1s infinite"}}>⚡ {t.loadingMore}</span>:<span>{t.swipe} · {si+1}/{articles.length}</span>}</div>
         </div>
       )}
 
@@ -682,4 +690,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
-
