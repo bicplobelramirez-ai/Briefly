@@ -176,3 +176,15 @@ function timeAgo(dateStr) {
 function rnd(min, max) {
   return (Math.floor(Math.random() * (max - min + 1)) + min).toFixed(1);
 }
+CREATE TABLE manual_articles (
+  id TEXT PRIMARY KEY,
+  headline TEXT NOT NULL,
+  description TEXT,
+  img TEXT,
+  url TEXT,
+  cat TEXT,
+  time TEXT,
+  source TEXT,
+  published_at TIMESTAMPTZ DEFAULT NOW(),
+  active BOOLEAN DEFAULT TRUE
+);
