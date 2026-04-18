@@ -31,8 +31,8 @@ body{background:#05050f;font-family:'DM Sans',sans-serif;color:#fff;overflow:hid
 .breaking-card{border:1px solid rgba(239,68,68,0.6)!important;animation:breakingglow 2s ease-in-out infinite;}
 .slide-in-up{animation:slideInUp 0.35s cubic-bezier(0.22,1,0.36,1);}
 .slide-in-down{animation:slideInDown 0.35s cubic-bezier(0.22,1,0.36,1);}
-.ticker-track{display:flex;align-items:center;animation:tickerScroll 30s linear infinite;white-space:nowrap;}
-.ticker-item{display:inline-flex;align-items:center;gap:4px;padding:0 14px;font-size:11px;font-weight:600;color:#b0b0cc;border-right:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
+.ticker-track{display:flex;align-items:center;animation:tickerScroll 12s linear infinite;white-space:nowrap;}
+.ticker-item{display:inline-flex;align-items:center;gap:4px;padding:0 12px;font-size:11px;font-weight:600;color:#b0b0cc;border-right:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
 .ticker-item b{color:#fff;}
 .ticker-up{color:#22c55e;}
 .ticker-dn{color:#ef4444;}
@@ -56,17 +56,28 @@ const STARS=[[8,12,1.5,2.1],[15,28,1,3.4],[22,8,1.2,1.8],[35,18,0.8,2.7],[42,35,
 // ── LIVE TICKER ──────────────────────────────────────────────────────────────
 function LiveTicker({lang}){
   const [marketItems,setMarketItems]=useState(null);
+  const [weather,setWeather]=useState(null);
+
   useEffect(()=>{
+    // Markets
     fetch("/api/markets").then(r=>r.json()).then(d=>{
       if(!d||!d.gold)return;
       setMarketItems([
-        {icon:"🥇",label:"ORO",price:d.gold.price,change:d.gold.change,up:d.gold.up},
-        {icon:"🛢️",label:"PETRO",price:d.oil.price,change:d.oil.change,up:d.oil.up},
         {icon:"₿",label:"BTC",price:d.btc.price,change:d.btc.change,up:d.btc.up},
+        {icon:"🥇",label:"ORO",price:d.gold.price,change:d.gold.change,up:d.gold.up},
+        {icon:"🛢️",label:"WTI",price:d.oil.price,change:d.oil.change,up:d.oil.up},
         {icon:"📊",label:"S&P",price:d.sp500.price,change:d.sp500.change,up:d.sp500.up},
         {icon:"💶",label:"EUR",price:d.eur.price,change:d.eur.change,up:d.eur.up},
       ]);
     }).catch(()=>{});
+    // Weather via Open-Meteo (Santo Domingo by default)
+    fetch("https://api.open-meteo.com/v1/forecast?latitude=18.4861&longitude=-69.9312&current=temperature_2m,weathercode&timezone=America/Santo_Domingo")
+      .then(r=>r.json()).then(d=>{
+        const temp=Math.round(d.current?.temperature_2m||29);
+        const code=d.current?.weathercode||0;
+        const icon=code===0?"☀️":code<=3?"⛅":code<=67?"🌧️":"🌩️";
+        setWeather({temp,icon});
+      }).catch(()=>{setWeather({temp:29,icon:"☀️"});});
   },[]);
 
   const fallback=[
@@ -78,7 +89,8 @@ function LiveTicker({lang}){
   ];
 
   const items=marketItems||fallback;
-  const doubled=[...items,...items];
+  const weatherItem=weather?[{icon:weather.icon,label:`${weather.temp}°C`,price:"",change:"",up:true,isWeather:true}]:[];
+  const doubled=[...items,...weatherItem,...items,...weatherItem];
 
   return(
     <div style={{display:"flex",alignItems:"center",background:"#0a0a18",borderBottom:"1px solid rgba(255,255,255,0.06)",height:30,overflow:"hidden",flexShrink:0,position:"relative",zIndex:9}}>
@@ -89,8 +101,7 @@ function LiveTicker({lang}){
             <span key={i} className="ticker-item">
               <span>{item.icon}</span>
               <b>{item.label}</b>
-              <span>{item.price}</span>
-              <span className={item.up?"ticker-up":"ticker-dn"}>{item.up?"▲":"▼"}{item.change}</span>
+              {!item.isWeather&&<><span>{item.price}</span><span className={item.up?"ticker-up":"ticker-dn"}>{item.up?"▲":"▼"}{item.change}</span></>}
             </span>
           ))}
         </div>
@@ -195,18 +206,28 @@ function TrendingScreen({onClose,lang}){
     try{
       const today=new Date().toLocaleDateString(lang==="en"?"en-US":"es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
       const sys=lang==="en"
-        ?`You are a news editor. Today is ${today}. Return ONLY valid JSON, no markdown, no extra text: {"topics":[{"rank":1,"title":"short topic name","summary":"one sentence what's happening","category":"Politics|Tech|Economy|Sports|World|Science|Entertainment","trend":"up","emoji":"🔥"}]} with exactly 7 trending topics happening RIGHT NOW globally.`
-        :`Eres editor de noticias. Hoy es ${today}. Devuelve SOLO JSON valido, sin markdown ni texto extra: {"topics":[{"rank":1,"title":"nombre corto del tema","summary":"una oracion de que esta pasando","category":"Politica|Tech|Economia|Deportes|Mundial|Ciencia|Entretenimiento","trend":"up","emoji":"🔥"}]} con exactamente 7 temas trending AHORA MISMO.`;
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,tools:[{"type":"web_search_20250305","name":"web_search"}],system:sys,messages:[{role:"user",content:lang==="en"?"What are the top 7 trending news topics right now? Return JSON only.":"Cuales son los 7 temas mas trending ahora mismo? Devuelve solo JSON."}]})});
-      const d=await r.json();
-      const textBlock=d.content?.find(b=>b.type==="text");
+        ?`You are a news editor. Today is ${today}. Return ONLY valid JSON, no markdown: {"topics":[{"rank":1,"title":"short topic name","summary":"one sentence","category":"Politics|Tech|Economy|Sports|World|Science|Entertainment","trend":"up","emoji":"🔥"}]} with exactly 7 trending topics.`
+        :`Eres editor de noticias. Hoy es ${today}. Devuelve SOLO JSON valido, sin markdown: {"topics":[{"rank":1,"title":"nombre del tema","summary":"una oracion","category":"Politica|Tech|Economia|Deportes|Mundial|Ciencia|Entretenimiento","trend":"up","emoji":"🔥"}]} con exactamente 7 temas trending ahora.`;
+      const r=await fetch("/api/trending",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({lang,today,sys})});
+      if(r.ok){
+        const d=await r.json();
+        if(d.topics){setTopics(d.topics);setLastUpdate(new Date().toLocaleTimeString(lang==="en"?"en-US":"es-ES",{hour:"2-digit",minute:"2-digit"}));setLoading(false);return;}
+      }
+      // fallback directo a Claude API
+      const r2=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,tools:[{"type":"web_search_20250305","name":"web_search"}],system:sys,messages:[{role:"user",content:lang==="en"?"Top 7 trending news now? JSON only.":"7 temas mas trending ahora? Solo JSON."}]})});
+      const d2=await r2.json();
+      const textBlock=d2.content?.find(b=>b.type==="text");
       if(textBlock){
         const raw=textBlock.text.replace(/```json|```/g,"").trim();
         const parsed=JSON.parse(raw);
         setTopics(parsed.topics||[]);
         setLastUpdate(new Date().toLocaleTimeString(lang==="en"?"en-US":"es-ES",{hour:"2-digit",minute:"2-digit"}));
       }
-    }catch(e){setTopics([{rank:1,title:"Error al cargar",summary:"No se pudo obtener temas trending.",category:"Info",trend:"up",emoji:"⚠️"}]);}
+    }catch(e){
+      setTopics([
+        {rank:1,title:"Error de conexion",summary:"No se pudo cargar trending. Verifica tu conexion e intenta de nuevo.",category:"Info",trend:"up",emoji:"⚠️"},
+      ]);
+    }
     setLoading(false);
   }
   const catColors={"Política":"#ef4444","Politics":"#ef4444","Tech":"#3b82f6","Economía":"#f59e0b","Economy":"#f59e0b","Deportes":"#22c55e","Sports":"#22c55e","Mundial":"#f97316","World":"#f97316","Ciencia":"#06b6d4","Science":"#06b6d4","Entretenimiento":"#a78bfa","Entertainment":"#a78bfa"};
@@ -439,6 +460,9 @@ function App(){
   const [animKey,setAnimKey]=useState(0);
   const [vibe,setVibe]=useState("Quick");
   const [liked,setLiked]=useState({});
+  const [showComments,setShowComments]=useState(false);
+  const [commentText,setCommentText]=useState("");
+  const [comments,setComments]=useState({});
   const [showPay,setShowPay]=useState(false);
   const [showPro,setShowPro]=useState(false);
   const [isPro,setIsPro]=useState(false);
@@ -532,6 +556,13 @@ function App(){
     else if(s?.url){navigator.clipboard?.writeText(s.url).catch(()=>{});}
   }
 
+  function submitComment(){
+    if(!commentText.trim()||!s)return;
+    const newComment={text:commentText.trim(),user:"Tu",time:new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})};
+    setComments(prev=>({...prev,[s.id]:[...(prev[s.id]||[]),newComment]}));
+    setCommentText("");
+  }
+
   function getVibes(a){
     const desc=a.description||a.headline;
     return{ELI5:t.eli5+desc,Quick:desc,Real:t.real+a.headline+". "+desc,Meme:t.memeText+a.headline.substring(0,50)+"... 💀"};
@@ -618,9 +649,9 @@ function App(){
               <span style={{fontSize:14}}>{liked[s.id]?"❤️":"🤍"}</span>
               <span style={{fontSize:11,fontWeight:700,color:liked[s.id]?"#f87171":"rgba(255,255,255,0.75)"}}>Me gusta</span>
             </div>
-            <div onClick={()=>setShowAI(a=>!a)} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,padding:"10px 4px",cursor:"pointer",borderRight:"1px solid rgba(255,255,255,0.08)"}}>
+            <div onClick={()=>setShowComments(c=>!c)} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,padding:"10px 4px",cursor:"pointer",borderRight:"1px solid rgba(255,255,255,0.08)"}}>
               <span style={{fontSize:14}}>💬</span>
-              <span style={{fontSize:11,fontWeight:700,color:showAI?"#a78bfa":"rgba(255,255,255,0.75)"}}>Comentar</span>
+              <span style={{fontSize:11,fontWeight:700,color:showComments?"#a78bfa":"rgba(255,255,255,0.75)"}}>Comentar</span>
             </div>
             <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,padding:"10px 4px",cursor:"pointer",borderRight:"1px solid rgba(255,255,255,0.08)",background:"rgba(99,102,241,0.1)"}}>
               <span style={{fontSize:14}}>🔖</span>
@@ -631,6 +662,32 @@ function App(){
               <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.75)"}}>Compartir</span>
             </div>
           </div>
+
+          {/* PANEL COMENTARIOS */}
+          {showComments&&(
+            <div style={{margin:"0 12px 8px",borderRadius:12,background:"rgba(15,15,35,0.9)",border:"1px solid rgba(255,255,255,0.1)",padding:"10px"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                <div style={{fontSize:11,fontWeight:800,color:"#fff"}}>💬 Comentarios</div>
+                <button onClick={()=>setShowComments(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:14,cursor:"pointer"}}>✕</button>
+              </div>
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
+                <input value={commentText} onChange={e=>setCommentText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submitComment()} placeholder="Escribe un comentario..." style={{flex:1,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:20,padding:"7px 12px",color:"#fff",fontSize:11,outline:"none"}}/>
+                <button onClick={submitComment} style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"#fff",fontSize:13,cursor:"pointer"}}>↑</button>
+              </div>
+              {comments[s.id]?.length>0?(
+                <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:120,overflowY:"auto"}}>
+                  {comments[s.id].map((c,i)=>(
+                    <div key={i} style={{background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"6px 10px"}}>
+                      <div style={{fontSize:10,fontWeight:700,color:"#a78bfa",marginBottom:2}}>{c.user||"Anonimo"}</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.75)"}}>{c.text}</div>
+                    </div>
+                  ))}
+                </div>
+              ):(
+                <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",textAlign:"center",padding:"8px 0"}}>Sin comentarios aun. Se el primero!</div>
+              )}
+            </div>
+          )}
 
           {/* JAIK panel */}
           {showAI&&(
@@ -648,8 +705,8 @@ function App(){
             <div style={{width:6,height:6,borderRadius:"50%",background:"#22c55e",boxShadow:"0 0 5px #22c55e"}}/>
           </div>
 
-          {articles.slice(si+1,si+3).map((item,i)=>(
-            <div key={i} onClick={()=>swipe(i+1)} style={{display:"flex",alignItems:"center",gap:0,margin:"0 12px 8px",borderRadius:13,background:"rgba(14,14,32,0.9)",border:"1px solid rgba(255,255,255,0.07)",overflow:"hidden",cursor:"pointer"}}>
+          {articles.filter((_,i)=>i!==si).slice(0,2).map((item,i)=>(
+            <div key={i} onClick={()=>{setSi(articles.indexOf(item));setAnimKey(k=>k+1);setShowComments(false);setShowAI(false);}} style={{display:"flex",alignItems:"center",gap:0,margin:"0 12px 8px",borderRadius:13,background:"rgba(14,14,32,0.9)",border:"1px solid rgba(255,255,255,0.07)",overflow:"hidden",cursor:"pointer"}}>
               <div style={{width:110,height:82,background:"#1a1a2e",flexShrink:0,position:"relative",overflow:"hidden"}}>
                 {item.img&&<img src={item.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",filter:"brightness(0.7)"}} onError={e=>e.target.style.display="none"}/>}
                 <div style={{position:"absolute",bottom:5,left:5,fontSize:8,fontWeight:800,color:"#fff",background:"rgba(139,92,246,0.85)",padding:"2px 6px",borderRadius:4}}>{item.cat}</div>
