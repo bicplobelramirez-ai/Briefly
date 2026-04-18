@@ -149,7 +149,32 @@ export default async function handler(req, res) {
       }
     }));
 
-    res.status(200).json({ country: "do", articles });
+    // Leer noticias manuales de Supabase
+let manualArts = [];
+try {
+  const { createClient } = await import('@supabase/supabase-js');
+  const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+  const { data } = await sb
+    .from('manual_articles')
+    .select('*')
+    .eq('active', true)
+    .order('published_at', { ascending: false })
+    .limit(10);
+  if (data && data.length > 0) {
+    manualArts = data.map(a => ({
+      id: a.id,
+      cat: a.cat,
+      time: a.time || 'Ahora',
+      headline: a.headline,
+      description: a.description || '',
+      img: a.img || '',
+      url: a.url || '',
+      r: { h: '0', c: '0' }
+    }));
+  }
+} catch(e) {}
+
+res.status(200).json({ country: "do", articles: [...manualArts, ...articles] });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
