@@ -89,8 +89,8 @@ function LiveTicker({lang}){
   ];
 
   const items=marketItems||fallback;
-  const weatherItem=weather?[{icon:weather.icon,label:`${weather.temp}°C`,price:"",change:"",up:true,isWeather:true}]:[];
-  const doubled=[...items,...weatherItem,...items,...weatherItem];
+  const weatherItem={icon:weather?weather.icon:"☀️",label:weather?`${weather.temp}°C`:"...",price:"",change:"",up:true,isWeather:true};
+  const doubled=[...items,weatherItem,...items,weatherItem];
 
   return(
     <div style={{display:"flex",alignItems:"center",background:"#0a0a18",borderBottom:"1px solid rgba(255,255,255,0.06)",height:30,overflow:"hidden",flexShrink:0,position:"relative",zIndex:9}}>
@@ -706,16 +706,19 @@ function App(){
           </div>
 
           {articles.filter((_,i)=>i!==si).slice(0,2).map((item,i)=>(
-            <div key={i} onClick={()=>{setSi(articles.indexOf(item));setAnimKey(k=>k+1);setShowComments(false);setShowAI(false);}} style={{display:"flex",alignItems:"center",gap:0,margin:"0 12px 8px",borderRadius:13,background:"rgba(14,14,32,0.9)",border:"1px solid rgba(255,255,255,0.07)",overflow:"hidden",cursor:"pointer"}}>
-              <div style={{width:110,height:82,background:"#1a1a2e",flexShrink:0,position:"relative",overflow:"hidden"}}>
+            <div key={i} style={{display:"flex",alignItems:"center",gap:0,margin:"0 12px 8px",borderRadius:13,background:"rgba(14,14,32,0.9)",border:"1px solid rgba(255,255,255,0.07)",overflow:"hidden"}}>
+              <div onClick={()=>{setSi(articles.indexOf(item));setAnimKey(k=>k+1);setShowComments(false);setShowAI(false);}} style={{width:110,height:82,background:"#1a1a2e",flexShrink:0,position:"relative",overflow:"hidden",cursor:"pointer"}}>
                 {item.img&&<img src={item.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",filter:"brightness(0.7)"}} onError={e=>e.target.style.display="none"}/>}
                 <div style={{position:"absolute",bottom:5,left:5,fontSize:8,fontWeight:800,color:"#fff",background:"rgba(139,92,246,0.85)",padding:"2px 6px",borderRadius:4}}>{item.cat}</div>
               </div>
-              <div style={{flex:1,padding:"8px 10px",position:"relative"}}>
-                <div style={{position:"absolute",top:8,right:8,fontSize:14,color:"rgba(255,255,255,0.2)"}}>···</div>
+              <div onClick={()=>{setSi(articles.indexOf(item));setAnimKey(k=>k+1);setShowComments(false);setShowAI(false);}} style={{flex:1,padding:"8px 10px",position:"relative",cursor:"pointer"}}>
                 <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:3}}>{item.time}</div>
-                <div style={{fontSize:12,fontWeight:700,lineHeight:1.35,color:"#e0e0f5",paddingRight:16}}>{item.headline}</div>
+                <div style={{fontSize:12,fontWeight:700,lineHeight:1.35,color:"#e0e0f5",paddingRight:30}}>{item.headline}</div>
               </div>
+              {item.url&&<a href={item.url} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{padding:"0 12px",display:"flex",flexDirection:"column",alignItems:"center",gap:2,textDecoration:"none",flexShrink:0}}>
+                <span style={{fontSize:16}}>🔗</span>
+                <span style={{fontSize:8,color:"#38bdf8",fontWeight:600}}>Ver</span>
+              </a>}
             </div>
           ))}
 
