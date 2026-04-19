@@ -1,4 +1,4 @@
-const { createClient } = require('@supabase/supabase-js');// Medios dominicanos con RSS feeds
+// Medios dominicanos con RSS feeds
 const MEDIOS_RD = [
   // Generales
   { name: "Diario Libre",     url: "https://www.diariolibre.com/rss/noticias.xml",           cats: ["general","politica","economia"] },
