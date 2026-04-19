@@ -48,9 +48,8 @@ export default async function handler(req, res) {
     // Fetch en paralelo via rss2json
     const results = await Promise.allSettled(
       feedsToUse.map(feed =>
-        fetch(`${RSS2JSON}${encodeURIComponent(feed.url)}&count=8`, {
-          signal: AbortSignal.timeout(5000)
-        })
+        fetch(`${RSS2JSON}${encodeURIComponent(feed.url)}&count=8`)
+          
         .then(r => r.json())
         .then(data => {
           if (data.status !== "ok" || !data.items?.length) return [];
