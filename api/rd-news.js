@@ -1,27 +1,22 @@
 // Medios dominicanos con RSS feeds
 const MEDIOS_RD = [
-  // Generales
-  { name: "Diario Libre",     url: "https://www.diariolibre.com/rss/noticias.xml",           cats: ["general","politica","economia"] },
-  { name: "Listín Diario",    url: "https://listindiario.com/rss",                           cats: ["general","politica","economia"] },
-  { name: "El Caribe",        url: "https://www.elcaribe.com.do/feed/",                      cats: ["general","politica"] },
-  { name: "Acento",           url: "https://acento.com.do/feed/",                            cats: ["general","politica","economia"] },
-  { name: "N Digital",        url: "https://ndigital.do/feed/",                              cats: ["general","politica"] },
-  { name: "CDN",              url: "https://cdn.com.do/feed/",                               cats: ["general","politica"] },
-  { name: "El Nuevo Diario",  url: "https://www.elnuevodiario.com.do/feed/",                 cats: ["general","politica"] },
-  { name: "Diario Digital",   url: "https://diariodigitalrd.com/feed/",                      cats: ["general","politica"] },
-  { name: "Hoy Digital",      url: "https://hoy.com.do/feed/",                               cats: ["general","politica","economia"] },
-  { name: "El Nacional",      url: "https://elnacional.com.do/feed/",                        cats: ["general","politica"] },
-  // Deportes
-  { name: "Listín Deportes",  url: "https://listindiario.com/deportes/rss",                  cats: ["deportes"] },
-  { name: "Diario Libre Dep", url: "https://www.diariolibre.com/rss/deportes.xml",           cats: ["deportes"] },
-  { name: "Récord RD",        url: "https://recordrd.com/feed/",                             cats: ["deportes"] },
-  // Economía
-  { name: "Listín Economía",  url: "https://listindiario.com/economia/rss",                  cats: ["economia"] },
-  { name: "El Dinero",        url: "https://eldinero.com.do/feed/",                          cats: ["economia"] },
-  // Entretenimiento
-  { name: "Listín Vida",      url: "https://listindiario.com/la-vida/rss",                   cats: ["entretenimiento"] },
-  // Tecnología
-  { name: "Listín Tech",      url: "https://listindiario.com/tecnologia/rss",                cats: ["tech","ciencia"] },
+  { name: "Diario Libre", url: "https://www.diariolibre.com/rss/noticias.xml", cats: ["general","politica","economia"] },
+  { name: "Listin Diario", url: "https://listindiario.com/rss", cats: ["general","politica","economia"] },
+  { name: "El Caribe", url: "https://www.elcaribe.com.do/feed/", cats: ["general","politica"] },
+  { name: "Acento", url: "https://acento.com.do/feed/", cats: ["general","politica","economia"] },
+  { name: "N Digital", url: "https://ndigital.do/feed/", cats: ["general","politica"] },
+  { name: "CDN", url: "https://cdn.com.do/feed/", cats: ["general","politica"] },
+  { name: "El Nuevo Diario", url: "https://www.elnuevodiario.com.do/feed/", cats: ["general","politica"] },
+  { name: "Diario Digital", url: "https://diariodigitalrd.com/feed/", cats: ["general","politica"] },
+  { name: "Hoy Digital", url: "https://hoy.com.do/feed/", cats: ["general","politica","economia"] },
+  { name: "El Nacional", url: "https://elnacional.com.do/feed/", cats: ["general","politica"] },
+  { name: "Listin Deportes", url: "https://listindiario.com/deportes/rss", cats: ["deportes"] },
+  { name: "Diario Libre Dep", url: "https://www.diariolibre.com/rss/deportes.xml", cats: ["deportes"] },
+  { name: "Record RD", url: "https://recordrd.com/feed/", cats: ["deportes"] },
+  { name: "Listin Economia", url: "https://listindiario.com/economia/rss", cats: ["economia"] },
+  { name: "El Dinero", url: "https://eldinero.com.do/feed/", cats: ["economia"] },
+  { name: "Listin Vida", url: "https://listindiario.com/la-vida/rss", cats: ["entretenimiento"] },
+  { name: "Listin Tech", url: "https://listindiario.com/tecnologia/rss", cats: ["tech","ciencia"] },
 ];
 
 const RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
@@ -39,30 +34,27 @@ export default async function handler(req, res) {
     ciencia: "ciencia", mundial: "general",
   };
 
-  // Filtrar medios por categoría
   const mapped = cat && catMap[cat] ? catMap[cat] : "general";
   const feeds = MEDIOS_RD.filter(f => f.cats.includes(mapped));
   const feedsToUse = feeds.length > 0 ? feeds : MEDIOS_RD.filter(f => f.cats.includes("general"));
 
   try {
-    // Fetch en paralelo via rss2json
     const results = await Promise.allSettled(
       feedsToUse.map(feed =>
         fetch(`${RSS2JSON}${encodeURIComponent(feed.url)}&count=8`)
-          
-        .then(r => r.json())
-        .then(data => {
-          if (data.status !== "ok" || !data.items?.length) return [];
-          return data.items.map(item => ({
-            title: cleanText(item.title || ""),
-            link: item.link || "",
-            description: cleanText(item.description || item.content || ""),
-            pubDate: item.pubDate || "",
-            img: item.thumbnail || item.enclosure?.link || "",
-            source: feed.name,
-          })).filter(i => i.title && i.link);
-        })
-        .catch(() => [])
+          .then(r => r.json())
+          .then(data => {
+            if (data.status !== "ok" || !data.items?.length) return [];
+            return data.items.map(item => ({
+              title: cleanText(item.title || ""),
+              link: item.link || "",
+              description: cleanText(item.description || item.content || ""),
+              pubDate: item.pubDate || "",
+              img: item.thumbnail || item.enclosure?.link || "",
+              source: feed.name,
+            })).filter(i => i.title && i.link);
+          })
+          .catch(() => [])
       )
     );
 
@@ -71,7 +63,6 @@ export default async function handler(req, res) {
       if (r.status === "fulfilled") all = [...all, ...r.value];
     });
 
-    // Filtrar por búsqueda
     if (q) {
       const qL = q.toLowerCase();
       all = all.filter(a =>
@@ -80,10 +71,8 @@ export default async function handler(req, res) {
       );
     }
 
-    // Ordenar por fecha más reciente
     all.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
 
-    // Eliminar duplicados
     const seen = new Set();
     all = all.filter(a => {
       const key = a.title.substring(0, 50).toLowerCase();
@@ -91,7 +80,6 @@ export default async function handler(req, res) {
       seen.add(key); return true;
     });
 
-    // Si rss2json no trae nada, usar NewsData como fallback
     if (all.length === 0) {
       const ndKey = process.env.NEWSDATA_API_KEY;
       if (ndKey) {
@@ -111,14 +99,7 @@ export default async function handler(req, res) {
               description: a.description || a.title,
               img: a.image_url || "",
               url: a.link || "",
-              memeText: a.title.substring(0, 55) + "... 👀",
               r: { h: rnd(1,20)+"K", c: rnd(1,8)+"K", s: rnd(1,5)+"K" },
-              vibes: {
-                ELI5: "En palabras simples: " + (a.description || a.title),
-                Quick: a.description || a.title,
-                Real: "Sin filtro: " + a.title,
-                Meme: "Cuando ves que " + a.title.substring(0, 50) + "... 💀",
-              }
             }))
           });
         }
@@ -126,7 +107,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ country: "do", articles: [] });
     }
 
-    // Paginar
     const perPage = 10;
     const paged = all.slice((pageNum - 1) * perPage, pageNum * perPage);
 
@@ -138,17 +118,13 @@ export default async function handler(req, res) {
       description: item.description || item.title,
       img: item.img || "",
       url: item.link,
-      memeText: item.title.substring(0, 55) + "... 👀",
       r: { h: rnd(1,20)+"K", c: rnd(1,8)+"K", s: rnd(1,5)+"K" },
-      vibes: {
-        ELI5: "En palabras simples: " + (item.description || item.title),
-        Quick: item.description || item.title,
-        Real: "Sin filtro: " + item.title,
-        Meme: "Cuando ves que " + item.title.substring(0, 50) + "... 💀",
-      }
     }));
 
     res.status(200).json({ country: "do", articles });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 }
 
 function cleanText(str) {
