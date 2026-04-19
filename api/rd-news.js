@@ -93,7 +93,7 @@ export default async function handler(req, res) {
     });
 
     // Si rss2json no trae nada, usar NewsData como fallback
-    if (all.length >= 0) {
+    if (all.length === 0) {
       const ndKey = process.env.NEWSDATA_API_KEY;
       if (ndKey) {
         const ndCatMap = { politica:"politics", tech:"technology", deportes:"sports", economia:"business", entretenimiento:"entertainment", ciencia:"science" };
