@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+h<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
@@ -583,7 +583,7 @@ function BriefingPanel({onClose,isPro,onUpgrade,articles,lang}){
     try{
       const headlines=articles.slice(0,5).map((n,i)=>i+1+". "+n.headline).join("\n");
       const sys=lang==="en"?`You are the QuickNews host. Generate a ${duration}-minute summary. ONLY JSON: {"items":[{"titulo":"...","resumen":"...","dato":"..."}]} with ${duration==="5"?"3":"5"} items.`:`Eres el locutor de QuickNews. Genera resumen para ${duration} minutos. SOLO JSON: {"items":[{"titulo":"...","resumen":"...","dato":"..."}]} con ${duration==="5"?"3":"5"} noticias.`;
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,system:sys,messages:[{role:"user",content:headlines}]})});
+      const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,system:sys,messages:[{role:"user",content:headlines}]})});
       const d=await r.json();
       const raw=d.content?.find(b=>b.type==="text")?.text||"{}";
       const p=JSON.parse(raw.replace(/```json|```/g,"").trim());
@@ -727,7 +727,7 @@ function App(){
     setAiN(n=>n+1);setAiLoad(true);setAiAns("");
     try{
       const sys=lang==="en"?`You are JAIK from QuickNews. News: "${s.headline}". Answer in English, max 2 sentences.`:`Eres JAIK de QuickNews. Noticia: "${s.headline}". Responde en espanol, max 2 oraciones. Sin bullets.`;
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:150,system:sys,messages:[{role:"user",content:q}]})});
+      const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:150,system:sys,messages:[{role:"user",content:q}]})});
       const d=await r.json();
       setAiAns(d.content?.find(b=>b.type==="text")?.text||"Error.");
     }catch{setAiAns(lang==="en"?"Connection error.":"Error de conexion.");}
