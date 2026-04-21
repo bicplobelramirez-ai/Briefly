@@ -385,7 +385,7 @@ function AdminPanel({onClose}){
       const d=await r.json();
       if(d.ok){setStatus("✅ Urgente publicada!");setHasBreaking(true);setUrgHeadline("");setUrgDesc("");}
       else setStatus("❌ "+(d.error||"Error"));
-    }catch{setStatus("❌ Error");}
+    }catch(err){setStatus("X "+err.message);}
     setLoading(false);
   }
 
