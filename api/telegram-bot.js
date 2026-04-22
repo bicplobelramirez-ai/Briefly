@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     source: 'QuickNews',
     published_at: new Date().toISOString(),
     active: true,
-    r: { h: '0', c: '0' }
+    r: JSON.stringify({ h: '0', c: '0' })
   }]);
 
   if (error) {
