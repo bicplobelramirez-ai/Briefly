@@ -29,7 +29,16 @@ export default async function handler(req, res) {
     source: 'QuickNews',
     published_at: new Date().toISOString(),
     active: true,
-    r: JSON.stringify({ h: '0', c: '0' })
+    const { error } = await supabase.from('manual_articles').insert([{
+    id: 'tg_' + Date.now(),
+    headline,
+    description: description || '',
+    cat: cat || 'mundial',
+    time: 'Ahora',
+    source: 'QuickNews',
+    published_at: new Date().toISOString(),
+    active: true
+}]);
   }]);
 
   if (error) {
