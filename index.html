@@ -693,7 +693,7 @@ function App(){
       const arts=data.articles||data;
       if(Array.isArray(arts)&&arts.length>0){
         const combined=breaking&&p===1?[breaking,...arts]:arts;
-if(p===1){try{const mr=await fetch("/api/get-manual");const md=await mr.json();if(Array.isArray(md)&&md.length>0)combined=[...md,...combined];}catch{}}
+if(p===1){try{const mr=await fetch("https://irhedtvljmrftyfvdrzf.supabase.co/rest/v1/manual_articles?active=eq.true&order=published_at.desc&limit=20&apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyaGVkdHZsam1yZnR5ZnZkcnpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MTAwOTcsImV4cCI6MjA5MDk4NjA5N30.GvcTpKCM8UH-kL1MDA1hwqKoVJvCqR_5Xm-xkPFVkjg");const md=await mr.json();if(Array.isArray(md)&&md.length>0)combined=[...md,...combined];}catch{}}
         setArticles(prev=>replace?combined:[...prev,...arts]);
         setPage(p);
         if(replace)setSi(0);
