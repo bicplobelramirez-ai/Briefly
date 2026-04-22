@@ -693,6 +693,7 @@ function App(){
       const arts=data.articles||data;
       if(Array.isArray(arts)&&arts.length>0){
         const combined=breaking&&p===1?[breaking,...arts]:arts;
+if(p===1){try{const mr=await fetch("/api/get-manual");const md=await mr.json();if(Array.isArray(md)&&md.length>0)combined=[...md,...combined];}catch{}}
         setArticles(prev=>replace?combined:[...prev,...arts]);
         setPage(p);
         if(replace)setSi(0);
