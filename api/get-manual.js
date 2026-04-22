@@ -7,6 +7,7 @@ module.exports = async function handler(req, res) {
       'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY}`
     }
   });
+
   
   const data = await r.json();
   res.status(200).json(data);
