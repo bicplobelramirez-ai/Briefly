@@ -1,4 +1,6 @@
-export default async function handler(req, res) {
+const { createClient } = require('@supabase/supabase-js');
+
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const CHAT_ID = '5866782166';
@@ -9,12 +11,11 @@ export default async function handler(req, res) {
   const parts = text.split('|').map(p => p.trim());
 
   if (parts.length < 2) {
-    await sendMessage(req, 'Formato: titular | descripcion | categoria');
+    await sendMessage(process.env.TELEGRAM_BOT_TOKEN, 'Formato: titular | descripcion | categoria');
     return res.status(200).json({ ok: true });
   }
 
   const [headline, description, cat] = parts;
-  const { createClient } = await import('@supabase/supabase-js');
   const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY
@@ -28,34 +29,22 @@ export default async function handler(req, res) {
     time: 'Ahora',
     source: 'QuickNews',
     published_at: new Date().toISOString(),
-    active: true,
-    const { error } = await supabase.from('manual_articles').insert([{
-    id: 'tg_' + Date.now(),
-    headline,
-    description: description || '',
-    cat: cat || 'mundial',
-    time: 'Ahora',
-    source: 'QuickNews',
-    published_at: new Date().toISOString(),
     active: true
-}]);
   }]);
 
   if (error) {
-    await sendMessage(req, 'Error: ' + error.message);
+    await sendMessage(process.env.TELEGRAM_BOT_TOKEN, 'Error: ' + error.message);
   } else {
-    await sendMessage(req, '✅ Publicada en QuickNews!');
+    await sendMessage(process.env.TELEGRAM_BOT_TOKEN, '✅ Publicada en QuickNews!');
   }
 
   res.status(200).json({ ok: true });
 }
 
-async function sendMessage(req, text) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = '5866782166';
+async function sendMessage(token, text) {
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text })
+    body: JSON.stringify({ chat_id: '5866782166', text })
   });
 }
