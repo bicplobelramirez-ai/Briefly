@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "api/telegram-bot.js": {
-      "regions": ["iad1"]
-    }
-  }
-}
