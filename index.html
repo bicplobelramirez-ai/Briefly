@@ -482,7 +482,7 @@ function BriefingPanel({onClose,isPro,onUpgrade,articles,lang}){
   const HOURS=["06:00","06:30","07:00","07:30","08:00","09:00","12:00","18:00","21:00","22:00"];
 
   async function generate(){
-    if(!isPro){onUpgrade();return;}
+    // if(!isPro){onUpgrade();return;}
     setGenerating(true);setItems([]);
     try{
       const headlines=articles.slice(0,5).map((n,i)=>i+1+". "+n.headline).join("\n");
