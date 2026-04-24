@@ -928,7 +928,7 @@ if(p===1){try{const mr=await fetch("https://irhedtvljmrftyfvdrzf.supabase.co/res
 
       {/* Navbar */}
       <div style={{background:"rgba(5,5,15,0.95)",backdropFilter:"blur(20px)",borderTop:"1px solid rgba(139,92,246,0.25)",display:"flex",zIndex:20,flexShrink:0}}>
-        {[["🏠","Feed"],["🔥","Hot"],["🤖","AI"],["🔍","Search"],["⭐","Pro"]].map(([e,l])=>(
+        {[["🏠","Feed"],["🔥","Hot"],["🤖","AI"],["🔍","Search"],["🎙️","Podcast"],["⭐","Pro"]].map(([e,l])=>(
           <button key={l} onClick={()=>{
             if(l==="AI")setShowAI(a=>!a);
             else if(l==="Pro")setShowPay(true);
