@@ -22,8 +22,8 @@ export default async function handler(req, res) {
   const proto = req.headers["x-forwarded-proto"] || "https";
   const base = `${proto}://${host}`;
 
-  // Fecha de hace 12 horas para forzar noticias recientes
-  const fromDate = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString().split("T")[0];
+  // ✅ FIX 1: desde hace 2h en vez de 12h
+  const fromDate = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString().replace("T", " ").substring(0, 16);
 
   // 🇺🇸 EE.UU.
   if (detectedCountry === "us") {
@@ -54,7 +54,8 @@ export default async function handler(req, res) {
   // NewsData.io para países específicos
   if (key && detectedCountry !== "any") {
     try {
-      let url = `https://newsdata.io/api/1/news?apikey=${key}&language=es&size=10&country=${detectedCountry}&timeframe=12`;
+      // ✅ FIX 2: size=20, timeframe=6
+      let url = `https://newsdata.io/api/1/news?apikey=${key}&language=es&size=20&country=${detectedCountry}&timeframe=6`;
       if (cat && catMap[cat]) url += `&category=${catMap[cat]}`;
       if (q) url += `&q=${encodeURIComponent(q)}`;
       const r = await fetch(url);
@@ -68,26 +69,27 @@ export default async function handler(req, res) {
     } catch {}
   }
 
-  // Fallback: GNews con filtro de fecha reciente
+  // Fallback: GNews
   try {
     let gnewsUrl;
     if (q) {
-      gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=es&country=any&max=10&from=${fromDate}&sortby=publishedAt&apikey=${gnewsKey}`;
+      // ✅ FIX 3: max=20, from=2h
+      gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=es&country=any&max=20&from=${fromDate}&sortby=publishedAt&apikey=${gnewsKey}`;
     } else if (cat && catMap[cat]) {
-      gnewsUrl = `https://gnews.io/api/v4/top-headlines?topic=${catMap[cat]}&lang=es&country=any&max=10&from=${fromDate}&sortby=publishedAt&apikey=${gnewsKey}`;
+      gnewsUrl = `https://gnews.io/api/v4/top-headlines?topic=${catMap[cat]}&lang=es&country=any&max=20&from=${fromDate}&sortby=publishedAt&apikey=${gnewsKey}`;
     } else {
-      gnewsUrl = `https://gnews.io/api/v4/top-headlines?lang=es&country=any&max=10&from=${fromDate}&sortby=publishedAt&apikey=${gnewsKey}`;
+      gnewsUrl = `https://gnews.io/api/v4/top-headlines?lang=es&country=any&max=20&from=${fromDate}&sortby=publishedAt&apikey=${gnewsKey}`;
     }
 
     const r = await fetch(gnewsUrl);
     const data = await r.json();
 
     if (data.articles?.length > 0) {
-      // Filtrar noticias de más de 24h
+      // ✅ FIX 4: filtro más permisivo, 48h en vez de 24h
       const recent = data.articles.filter(a => {
         if (!a.publishedAt) return true;
         const diff = Date.now() - new Date(a.publishedAt).getTime();
-        return diff < 24 * 60 * 60 * 1000;
+        return diff < 48 * 60 * 60 * 1000;
       });
       const list = recent.length > 0 ? recent : data.articles;
       return res.status(200).json({
@@ -153,15 +155,3 @@ function timeAgo(dateStr) {
 function rnd(min, max) {
   return (Math.floor(Math.random() * (max - min + 1)) + min).toFixed(1);
 }
-CREATE TABLE manual_articles (
-  id TEXT PRIMARY KEY,
-  headline TEXT NOT NULL,
-  description TEXT,
-  img TEXT,
-  url TEXT,
-  cat TEXT,
-  time TEXT,
-  source TEXT,
-  published_at TIMESTAMPTZ DEFAULT NOW(),
-  active BOOLEAN DEFAULT TRUE
-);
