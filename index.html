@@ -699,7 +699,7 @@ useEffect(()=>{
     try{
       let breaking=null;
       if(p===1){try{const rb=await fetch("/api/get-breaking");breaking=await rb.json();}catch{}}
-      let url="/api/rd-news?page="+p;
+      let url="/api/news?page="+p;
       if(cat)url+="&cat="+cat;
       if(ctry&&ctry!=="any")url+="&country="+ctry;
       const r=await fetch(url);
