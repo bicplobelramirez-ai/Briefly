@@ -1,31 +1,22 @@
 const MEDIOS_US = [
-  // Noticias generales en español
-  { name: "CNN Español",      url: "https://cnnespanol.cnn.com/feed/",                      cats: ["general","politica","mundial"] },
-  { name: "BBC Mundo",        url: "https://feeds.bbci.co.uk/mundo/rss.xml",                cats: ["general","politica","mundial"] },
-  { name: "Univision",        url: "https://www.univision.com/rss",                         cats: ["general","politica"] },
-  { name: "Telemundo",        url: "https://www.telemundo.com/rss",                         cats: ["general","politica"] },
-  { name: "El Diario NY",     url: "https://eldiariony.com/feed/",                          cats: ["general","politica"] },
-  { name: "La Opinión",       url: "https://laopinion.com/feed/",                           cats: ["general","politica","economia"] },
-  { name: "Mundo Hispánico",  url: "https://mundohispanico.com/feed/",                      cats: ["general","politica"] },
-  { name: "Noticias Telemundo",url:"https://www.telemundo.com/noticias/rss",                cats: ["politica","mundial"] },
-  // Deportes
-  { name: "Marca USA",        url: "https://www.marca.com/rss/portada.xml",                 cats: ["deportes"] },
-  { name: "ESPN Deportes",    url: "https://espndeportes.espn.com/rss/noticias",            cats: ["deportes"] },
-  // Economía
-  { name: "Forbes ES",        url: "https://www.forbes.com.mx/feed/",                       cats: ["economia","tech"] },
-  // Tecnología
-  { name: "Hipertextual",     url: "https://hipertextual.com/feed",                         cats: ["tech","ciencia"] },
-  { name: "Xataka",           url: "https://www.xataka.com/feedburner.xml",                 cats: ["tech","ciencia"] },
-  // Grandes medios americanos en español
-  { name: "Fox News Latino",  url: "https://feeds.foxnews.com/foxnews/spanish",             cats: ["general","politica","mundial"] },
-  { name: "NBC Latino",       url: "https://www.nbcnews.com/feed/noticias",                 cats: ["general","politica"] },
-  { name: "ABC Noticias",     url: "https://abcnews.go.com/ABC_Univision/feed",             cats: ["general","politica"] },
-  { name: "NYT Español",      url: "https://www.nytimes.com/es/rss/",                       cats: ["general","politica","mundial"] },
-  { name: "Washington Post ES",url:"https://www.washingtonpost.com/es/rss/",               cats: ["general","politica","mundial"] },
-  { name: "AP Noticias",      url: "https://rsshub.app/apnews/topics/apf-espanol",          cats: ["general","mundial"] },
-  { name: "Reuters ES",       url: "https://feeds.reuters.com/reuters/MXTopNews",           cats: ["general","economia","mundial"] },
-  { name: "VOA Español",      url: "https://www.voanoticias.com/api/z-mgm_vp-ero",         cats: ["general","politica","mundial"] },
-  { name: "NPR Español",      url: "https://feeds.npr.org/1048973/rss.xml",                cats: ["general","politica"] },
+  { name: "CNN Español", url: "https://cnnespanol.cnn.com/feed/", cats: ["general","politica","mundial"] },
+  { name: "Univision", url: "https://www.univision.com/rss", cats: ["general","politica"] },
+  { name: "Telemundo", url: "https://www.telemundo.com/rss", cats: ["general","politica"] },
+  { name: "Noticias Telemundo", url: "https://www.telemundo.com/noticias/rss", cats: ["politica","mundial"] },
+  { name: "El Diario NY", url: "https://eldiariony.com/feed/", cats: ["general","politica"] },
+  { name: "La Opinión", url: "https://laopinion.com/feed/", cats: ["general","politica","economia"] },
+  { name: "Mundo Hispánico", url: "https://mundohispanico.com/feed/", cats: ["general","politica"] },
+  { name: "NBC Latino", url: "https://www.nbcnews.com/feed/noticias", cats: ["general","politica"] },
+  { name: "Fox News Latino", url: "https://feeds.foxnews.com/foxnews/spanish", cats: ["general","politica","mundial"] },
+  { name: "VOA Español", url: "https://www.voanoticias.com/api/z-mgm_vp-ero", cats: ["general","politica","mundial"] },
+  { name: "NPR Español", url: "https://feeds.npr.org/1048973/rss.xml", cats: ["general","politica"] },
+  { name: "AP Noticias", url: "https://rsshub.app/apnews/topics/apf-espanol", cats: ["general","mundial"] },
+  { name: "ESPN Deportes", url: "https://espndeportes.espn.com/rss/noticias", cats: ["deportes"] },
+  { name: "Marca USA", url: "https://www.marca.com/rss/portada.xml", cats: ["deportes"] },
+  { name: "Hipertextual", url: "https://hipertextual.com/feed", cats: ["tech","ciencia"] },
+  { name: "Xataka", url: "https://www.xataka.com/feedburner.xml", cats: ["tech","ciencia"] },
+  { name: "El Nuevo Herald", url: "https://www.elnuevoherald.com/rss", cats: ["general","politica","economia"] },
+  { name: "Axios Latino", url: "https://api.axios.com/feed/", cats: ["general","economia","politica"] },
 ];
 
 export default async function handler(req, res) {
@@ -74,7 +65,6 @@ export default async function handler(req, res) {
       if (r.status === "fulfilled") all = [...all, ...r.value];
     });
 
-    // Filtrar por búsqueda
     if (q) {
       const qL = q.toLowerCase();
       all = all.filter(a =>
@@ -83,7 +73,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // Ordenar y deduplicar
     all.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
     const seen = new Set();
     all = all.filter(a => {
@@ -92,28 +81,28 @@ export default async function handler(req, res) {
       seen.add(key); return true;
     });
 
-    // Fallback a NewsData si no hay artículos
     if (all.length === 0) {
       const ndKey = process.env.NEWSDATA_API_KEY;
       if (ndKey) {
         const ndCatMap = { politica:"politics", tech:"technology", deportes:"sports", economia:"business", entretenimiento:"entertainment", ciencia:"science" };
-        let ndUrl = `https://newsdata.io/api/1/news?apikey=${ndKey}&country=us&language=es&size=10`;
+        let ndUrl = `https://newsdata.io/api/1/news?apikey=${ndKey}&country=us&language=es&size=20`;
         if (cat && ndCatMap[cat]) ndUrl += `&category=${ndCatMap[cat]}`;
         const r = await fetch(ndUrl);
         const data = await r.json();
         if (data.status === "success" && data.results?.length) {
           return res.status(200).json({
             country: "us",
-            articles: mapNewsData(data.results, pageNum)
+            articles: mapNewsData(data.results, pageNum),
+            hasMore: false
           });
         }
       }
-      return res.status(200).json({ country: "us", articles: [] });
+      return res.status(200).json({ country: "us", articles: [], hasMore: false });
     }
 
-    // Paginar
-    const perPage = 10;
+    const perPage = 20;
     const paged = all.slice((pageNum - 1) * perPage, pageNum * perPage);
+    const hasMore = all.length > pageNum * perPage;
 
     const articles = paged.map((item, i) => ({
       id: `us-${pageNum}-${i}`,
@@ -133,7 +122,7 @@ export default async function handler(req, res) {
       }
     }));
 
-    res.status(200).json({ country: "us", articles, hasMore: all.length > pageNum * perPage });
+    res.status(200).json({ country: "us", articles, hasMore });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
