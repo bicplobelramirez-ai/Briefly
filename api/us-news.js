@@ -1,131 +1,66 @@
-const MEDIOS_US = [
-  { name: "CNN Español", url: "https://cnnespanol.cnn.com/feed/", cats: ["general","politica","mundial"] },
-  { name: "Univision", url: "https://www.univision.com/rss", cats: ["general","politica"] },
-  { name: "Telemundo", url: "https://www.telemundo.com/rss", cats: ["general","politica"] },
-  { name: "Noticias Telemundo", url: "https://www.telemundo.com/noticias/rss", cats: ["politica","mundial"] },
-  { name: "El Diario NY", url: "https://eldiariony.com/feed/", cats: ["general","politica"] },
-  { name: "La Opinión", url: "https://laopinion.com/feed/", cats: ["general","politica","economia"] },
-  { name: "Mundo Hispánico", url: "https://mundohispanico.com/feed/", cats: ["general","politica"] },
-  { name: "NBC Latino", url: "https://www.nbcnews.com/feed/noticias", cats: ["general","politica"] },
-  { name: "Fox News Latino", url: "https://feeds.foxnews.com/foxnews/spanish", cats: ["general","politica","mundial"] },
-  { name: "VOA Español", url: "https://www.voanoticias.com/api/z-mgm_vp-ero", cats: ["general","politica","mundial"] },
-  { name: "NPR Español", url: "https://feeds.npr.org/1048973/rss.xml", cats: ["general","politica"] },
-  { name: "AP Noticias", url: "https://rsshub.app/apnews/topics/apf-espanol", cats: ["general","mundial"] },
-  { name: "ESPN Deportes", url: "https://espndeportes.espn.com/rss/noticias", cats: ["deportes"] },
-  { name: "Marca USA", url: "https://www.marca.com/rss/portada.xml", cats: ["deportes"] },
-  { name: "Hipertextual", url: "https://hipertextual.com/feed", cats: ["tech","ciencia"] },
-  { name: "Xataka", url: "https://www.xataka.com/feedburner.xml", cats: ["tech","ciencia"] },
-  { name: "El Nuevo Herald", url: "https://www.elnuevoherald.com/rss", cats: ["general","politica","economia"] },
-  { name: "Axios Latino", url: "https://api.axios.com/feed/", cats: ["general","economia","politica"] },
-];
-
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Cache-Control", "s-maxage=300");
+  res.setHeader("Cache-Control", "s-maxage=120");
 
+  const key = process.env.NEWSDATA_API_KEY;
+  const gnewsKey = process.env.GNEWS_API_KEY;
   const { page = 1, cat, q } = req.query;
   const pageNum = parseInt(page);
+  const fromDate = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString().substring(0, 10);
 
   const catMap = {
-    politica: "politica", tech: "tech", deportes: "deportes",
-    economia: "economia", entretenimiento: "entretenimiento",
-    ciencia: "ciencia", mundial: "mundial",
+    politica: "politics", tech: "technology", deportes: "sports",
+    economia: "business", entretenimiento: "entertainment",
+    ciencia: "science", mundial: "world",
   };
 
-  const mapped = cat && catMap[cat] ? catMap[cat] : "general";
-  const feeds = MEDIOS_US.filter(f => f.cats.includes(mapped));
-  const feedsToUse = feeds.length > 0 ? feeds : MEDIOS_US.filter(f => f.cats.includes("general"));
-
-  try {
-    const RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
-
-    const results = await Promise.allSettled(
-      feedsToUse.map(feed =>
-        fetch(`${RSS2JSON}${encodeURIComponent(feed.url)}&count=8`, {
-          signal: AbortSignal.timeout(5000)
-        })
-        .then(r => r.json())
-        .then(data => {
-          if (data.status !== "ok" || !data.items?.length) return [];
-          return data.items.map(item => ({
-            title: cleanText(item.title || ""),
-            link: item.link || "",
-            description: cleanText(item.description || item.content || ""),
-            pubDate: item.pubDate || "",
-            img: item.thumbnail || item.enclosure?.link || "",
-            source: feed.name,
-          })).filter(i => i.title && i.link);
-        })
-        .catch(() => [])
-      )
-    );
-
-    let all = [];
-    results.forEach(r => {
-      if (r.status === "fulfilled") all = [...all, ...r.value];
-    });
-
-    if (q) {
-      const qL = q.toLowerCase();
-      all = all.filter(a =>
-        a.title.toLowerCase().includes(qL) ||
-        a.description.toLowerCase().includes(qL)
-      );
-    }
-
-    all.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
-    const seen = new Set();
-    all = all.filter(a => {
-      const key = a.title.substring(0, 50).toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key); return true;
-    });
-
-    if (all.length === 0) {
-      const ndKey = process.env.NEWSDATA_API_KEY;
-      if (ndKey) {
-        const ndCatMap = { politica:"politics", tech:"technology", deportes:"sports", economia:"business", entretenimiento:"entertainment", ciencia:"science" };
-        let ndUrl = `https://newsdata.io/api/1/news?apikey=${ndKey}&country=us&language=es&size=20`;
-        if (cat && ndCatMap[cat]) ndUrl += `&category=${ndCatMap[cat]}`;
-        const r = await fetch(ndUrl);
-        const data = await r.json();
-        if (data.status === "success" && data.results?.length) {
-          return res.status(200).json({
-            country: "us",
-            articles: mapNewsData(data.results, pageNum),
-            hasMore: false
-          });
-        }
+  const [gnewsResult, newsdataResult] = await Promise.allSettled([
+    (async () => {
+      let url;
+      if (q) {
+        url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=es&country=us&max=10&from=${fromDate}&sortby=publishedAt&apikey=${gnewsKey}`;
+      } else if (cat && catMap[cat]) {
+        url = `https://gnews.io/api/v4/top-headlines?topic=${catMap[cat]}&lang=es&country=us&max=10&from=${fromDate}&sortby=publishedAt&apikey=${gnewsKey}`;
+      } else {
+        url = `https://gnews.io/api/v4/top-headlines?lang=es&country=us&max=10&from=${fromDate}&sortby=publishedAt&apikey=${gnewsKey}`;
       }
-      return res.status(200).json({ country: "us", articles: [], hasMore: false });
-    }
+      const r = await fetch(url);
+      const data = await r.json();
+      return data.articles || [];
+    })(),
+    (async () => {
+      if (!key) return [];
+      const ndCatMap = { politica:"politics", tech:"technology", deportes:"sports", economia:"business", entretenimiento:"entertainment", ciencia:"science" };
+      let url = `https://newsdata.io/api/1/news?apikey=${key}&country=us&language=en,es&size=10&timeframe=6`;
+      if (cat && ndCatMap[cat]) url += `&category=${ndCatMap[cat]}`;
+      if (q) url += `&q=${encodeURIComponent(q)}`;
+      const r = await fetch(url);
+      const data = await r.json();
+      return data.status === "success" ? (data.results || []) : [];
+    })()
+  ]);
 
-    const perPage = 20;
-    const paged = all.slice((pageNum - 1) * perPage, pageNum * perPage);
-    const hasMore = all.length > pageNum * perPage;
+  const gnewsArticles = gnewsResult.status === "fulfilled" ? gnewsResult.value : [];
+  const newsdataArticles = newsdataResult.status === "fulfilled" ? newsdataResult.value : [];
 
-    const articles = paged.map((item, i) => ({
-      id: `us-${pageNum}-${i}`,
-      cat: item.source,
-      time: timeAgo(item.pubDate),
-      headline: item.title,
-      description: item.description || item.title,
-      img: item.img || "",
-      url: item.link,
-      memeText: item.title.substring(0, 55) + "... 👀",
-      r: { h: rnd(5,50)+"K", c: rnd(1,15)+"K", s: rnd(1,8)+"K" },
-      vibes: {
-        ELI5: "En palabras simples: " + (item.description || item.title),
-        Quick: item.description || item.title,
-        Real: "Sin filtro: " + item.title,
-        Meme: "Cuando ves que " + item.title.substring(0, 50) + "... 💀",
-      }
-    }));
+  const mapped = [...mapGNews(gnewsArticles, pageNum), ...mapNewsData(newsdataArticles, pageNum)];
 
-    res.status(200).json({ country: "us", articles, hasMore });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+  const seen = new Set();
+  const combined = mapped.filter(a => {
+    const k = a.headline.substring(0, 50).toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+
+  const perPage = 20;
+  const paged = combined.slice((pageNum - 1) * perPage, pageNum * perPage);
+  const hasMore = combined.length > pageNum * perPage;
+
+  if (paged.length > 0) {
+    return res.status(200).json({ country: "us", articles: paged, hasMore });
   }
+
+  res.status(200).json({ country: "us", articles: [], hasMore: false });
 }
 
 function mapNewsData(results, page) {
@@ -148,12 +83,24 @@ function mapNewsData(results, page) {
   }));
 }
 
-function cleanText(str) {
-  return str
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, " ")
-    .replace(/\s+/g, " ").trim().substring(0, 400);
+function mapGNews(articles, page) {
+  return articles.filter(a => a.title && a.description).map((a, i) => ({
+    id: `gn-us-${page}-${i}`,
+    cat: a.source?.name || "EE.UU.",
+    time: timeAgo(a.publishedAt),
+    headline: a.title,
+    description: a.description,
+    img: a.image || "",
+    url: a.url,
+    memeText: a.title.substring(0, 55) + "... 👀",
+    r: { h: rnd(5,50)+"K", c: rnd(1,15)+"K", s: rnd(1,8)+"K" },
+    vibes: {
+      ELI5: "En palabras simples: " + a.description,
+      Quick: a.description,
+      Real: "Sin filtro: " + a.title + ". " + a.description,
+      Meme: "Cuando ves que " + a.title.substring(0, 60) + "... 💀",
+    }
+  }));
 }
 
 function timeAgo(dateStr) {
