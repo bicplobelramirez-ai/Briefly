@@ -107,8 +107,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ country: "do", articles: [] });
     }
 
-    const perPage = 10;
-    const paged = all.slice((pageNum - 1) * perPage, pageNum * perPage);
+    const perPage = 20;    const paged = all.slice((pageNum - 1) * perPage, pageNum * perPage);
 
     const articles = paged.map((item, i) => ({
       id: `rd-${pageNum}-${i}`,
