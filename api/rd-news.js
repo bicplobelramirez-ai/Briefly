@@ -1,4 +1,4 @@
-// Medios dominicanos con RSS feeds
+/ Medios dominicanos con RSS feeds
 const MEDIOS_RD = [
   { name: "Diario Libre", url: "https://www.diariolibre.com/rss/noticias.xml", cats: ["general","politica","economia"] },
   { name: "Listin Diario", url: "https://listindiario.com/rss", cats: ["general","politica","economia"] },
@@ -120,7 +120,7 @@ export default async function handler(req, res) {
       r: { h: rnd(1,20)+"K", c: rnd(1,8)+"K", s: rnd(1,5)+"K" },
     }));
 
-    res.status(200).json({ country: "do", articles });
+    res.status(200).json({ country: "do", articles, hasMore: all.length > pageNum * perPage });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
