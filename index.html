@@ -684,6 +684,15 @@ const [hasMore,setHasMore]=useState(true);
     timer.current=setInterval(()=>loadNews(1,true,activeCat,country),5*60*1000);
     return()=>clearInterval(timer.current);
   },[activeCat,country]);
+useEffect(()=>{
+  const onScroll=()=>{
+    if(loadingMore||!hasMore)return;
+    const near=window.innerHeight+window.scrollY>=document.body.offsetHeight-500;
+    if(near)loadNews(page+1,false,activeCat,country);
+  };
+  window.addEventListener("scroll",onScroll,{passive:true});
+  return()=>window.removeEventListener("scroll",onScroll);
+},[loadingMore,hasMore,page,activeCat,country]);
 
   async function loadNews(p,replace,cat,ctry){
     if(p===1)setLoading(true);else setLoadingMore(true);
