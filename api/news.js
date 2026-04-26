@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   const host = req.headers.host;
   const proto = req.headers["x-forwarded-proto"] || "https";
   const base = `${proto}://${host}`;
-  const fromDate = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString().replace("T", " ").substring(0, 16);
+  const fromDate = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString().substring(0, 10);
 
   const catMap = {
     politica: "politics", tech: "technology", deportes: "sports",
